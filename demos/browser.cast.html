@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <script src="../dist/orgy.devel.js"></script>
+    
+<script>
+    
+    // CONVERT A $.ajax OBEJCT TO A SELF-RESOLVING DEFERRED, RESOLVED WHEN \
+    // AJAX REQUEST COMPLETED
+    
+    //AJAX OPTTIONS
+    var options = {
+        url : "data/data1.json"
+        ,dataType : "json"
+    };
+    
+    
+    //JQUERY AJAX OBJECT
+    var castable1 = $.ajax(options);
+    
+    
+    //CASTED OBJECTS NEED AN ID
+    castable1.id = options.url;
+
+    
+    //CAST
+    var c1 = Orgy.cast(castable1);
+    
+    
+    //AJAX OPTTIONS
+    var options = {
+        url : "data/data2.json"
+        ,dataType : "json"
+    };
+
+
+    c1.done(function(r){
+        console.log("c1 done");
+        console.log(r);
+    });
+
+    
+    c1.then(function(r){
+        console.log("c1 then");
+    });
+    
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>

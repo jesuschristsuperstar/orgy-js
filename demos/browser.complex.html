@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <script src="../dist/orgy.devel.js"></script>
+    
+<script>
+
+    //SET TIMER
+    console.log("begin " + new Date());
+
+
+    //CAST $.ajax
+    var options = {
+        url : "data/data1.json"
+        ,dataType : "json"
+    };
+    var castable1 = $.ajax(options);
+
+
+    //SET ID
+    castable1.id = options.url;
+    var c1 = Orgy.cast(castable1);
+
+
+    //SET DEPENDENCIES
+    var deps = [
+       {
+           comment : "Document ready."
+           ,id : "DOMContentLoaded"
+           ,type : "event"
+       },
+       {
+           type : "timer"
+           ,timeout : 2000
+       },
+        {
+           type : "json"
+           ,url : "data/data2.json"
+       }
+    ];
+
+
+    //CREATE QUEUE
+    var q1 = Orgy.queue(deps,{
+       id : "q1"
+        //QUEUE RESOLUTION CAN BE HELD BACK BY A RESOLVER
+       ,resolver : function(deferred,result){
+
+            console.log("resolver called " + new Date());
+
+           var r = {
+               value : 1
+           };
+           console.info(result); //ARRAY OF DEPENDENCY RETURN VALUES
+           deferred.resolve(r);
+       }
+    });
+
+
+    //CALLBACK TO RUN WHEN QUEUE RESOLVED
+    q1.done(function(value){
+        console.log("done " + new Date());
+    });
+
+
+    //ADD CASTED OBJECT c1 AS A DEPENDENCY TO QUEUE
+    q1.add([c1]);
+
+
+    //CREATE A DEFERRED
+    var d1 = Orgy.deferred({
+        id : "throttler"
+    });
+    setTimeout(function(){
+        console.log("d1 resolving " + new Date());
+        d1.resolve("august");
+    },4000);
+
+
+    // YOU CAN PASS RETURN VALUES ALONG THEN CHAIN
+    // WHEN YOU PASS A DEFERRED, THEN CHAiN PAUSED UNTIL DEFERRED RESOLVED
+    q1.then(function(value){
+        console.log("then 1 " + new Date());
+        return d1;
+    });
+
+
+    //WILL FIRE AFTER d1 RESOLVED
+    q1.then(function(value){
+        //value = d1
+        console.log("then 2 " + new Date());
+    });
+
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>

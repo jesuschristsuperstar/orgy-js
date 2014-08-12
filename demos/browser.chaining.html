@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <script src="../dist/orgy.devel.js"></script>
+    
+<script>
+
+    var q = Orgy.queue([
+        {
+            comment : "Document ready."
+            ,id : "DOMContentLoaded"
+            ,type : "event"
+        },
+        {
+            id : "debugger-timer"
+            ,type : "timer"
+            ,timeout : 1000
+        }
+    ],{
+        id : "q1"
+    });
+
+    //FIRES WHEN RESOLVED
+    q.then(function(r){
+        var msg = this.id + " then-1";
+        console.log(msg);
+    });
+    
+    //FIRES WHEN RESOLVED
+    q.then(function(r){
+        var msg = this.id + " then-2";
+        console.log(msg);
+    });
+    
+    //FIRES WHEN RESOLVED
+    q.then(function(r){
+        var msg = this.id + " then-3";
+        console.log(msg);
+    });
+
+
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>

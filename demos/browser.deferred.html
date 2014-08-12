@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <script src="../dist/orgy.devel.js"></script>
+    
+<script>
+
+    var d1 = Orgy.deferred({
+        id : "d1"
+    });
+    
+    d1.then(function(r){
+        console.log("then 1");
+    })
+
+    d1.then(function(r){
+        console.log("then 2");
+    })
+    
+    d1.done(function(r){
+        console.log("done");
+    })
+    
+    d1.resolve("wayfarers");
+
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>
