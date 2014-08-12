@@ -48,4 +48,4 @@ q.done(function(value){
 
 ## More demos 
 
-[Here](https://github.com/tecfu/orgy-js/tree/master/demos).
+[Here](https://github.com/tecfu/orgy/tree/master/demos).
