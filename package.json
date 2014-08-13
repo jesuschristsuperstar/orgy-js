@@ -1,7 +1,7 @@
 {
   "name": "orgy",
   "description": "Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable.",
-  "author": "Tecfu <help@tecfu.com> (http://github.com/tecfu)",
+  "author": "tecfu.com <help@tecfu.com> (http://github.com/tecfu)",
   "main": "dist/orgy.devel.js",
   "version": "1.0.1",
   "dependencies": {},
