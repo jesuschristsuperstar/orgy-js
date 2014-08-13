@@ -21,5 +21,8 @@
     "type": "git",
     "url": "https://github.com/tecfu/orgy.git"
   },
-  "bugs": "https://github.com/tecfu/orgy/issues"
+  "bugs": "https://github.com/tecfu/orgy/issues", 
+  "engines" : { 
+    "node" : ">=0.10.25" 
+  }
 }
