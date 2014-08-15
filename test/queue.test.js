@@ -9,7 +9,6 @@
 require('source-map-support').install({
   handleUncaughtExceptions: false
 });
-require("mocha-as-promised")();
 var chai = require('chai');
 var expect = chai.expect;
 var assert = require("assert");
