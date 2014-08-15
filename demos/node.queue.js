@@ -1,54 +1,50 @@
-require('source-map-support').install({
-  handleUncaughtExceptions: false
-});
-
 Orgy = require("../dist/orgy.devel.js");
-
-var q = Orgy.queue([
+    
+var basepath = __dirname;
+var dependencies = [
     {
-        timeout : 2500
-        ,type : "timer"
+        type : "timer"
+        ,timeout : 1000
     }
     ,{
-        url : "data/data1.json"
+        url : basepath + "/data/data1.json"
         ,type : "json"
     }
     ,{
-        url : "data/data2.json"
+        url : basepath + "/data/data2.json"
         ,type : "json"
     }
     ,{
-        url : "data/data3.json"
+        url : basepath + "/data/data3.json"
         ,type : "json"
     }
-    ,
-    {
-        type : "css"
-        ,url : "data/sample.css"
+    ,{
+        url : basepath + "/data/sample.css"
+        ,type : "css"
     }
-],{
-   id : "q1" //GLOBAL ACCESSOR
-});
+];
 
-
-/*
-If a then statement returns a value, that value becomes the new 
-value of the queue and is passed to any subsequent
-then() or done() statements.
-*/
-
-q.then(function(value){
-    value.push('foo');
-    return value;
+var q = Orgy.queue(dependencies,{
+    id : "q1"
 });
 
 q.then(function(value){
-    value.pop(); //'foo'
-    value.push('bar');
-    return value;
-});
-
-q.done(function(value){ 
-    //Done value is carried from last then .then() statement.
+    console.log("then");
     console.log(value);
 });
+
+q.done(function(value){
+    console.log("done");
+    console.log(value);
+});
+
+
+
+
+
+
+
+
+/** IGNORE UNIT TESTING INFO **/
+exports.dependencies = dependencies;
+/** END IGNORE UNIT TESTING INFO **/

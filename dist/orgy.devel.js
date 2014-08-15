@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.0.2 
+Version: 1.1.0 
 Built: 2014-08-15 
 Author: tecfu.com  
 */
@@ -237,10 +237,7 @@ private.deferred = {
                 clearTimeout(this._timeout_id);
             }
             private.deferred._set_state.call(this, 1);
-            if (this.done_fn !== null) {
-                this.done_fired = 1;
-                this.done_fn.call(this, this.value);
-            }
+            this.done();
             return this;
         },
         reject: function(err) {
@@ -286,9 +283,16 @@ private.deferred = {
         },
         done: function(fn) {
             if (this.done_fn === null) {
-                this.done_fn = fn;
-            } else {
+                if (fn) {
+                    this.done_fn = fn;
+                }
+            } else if (fn) {
                 public.debug("done() can only be called once.");
+                return;
+            }
+            if (this.settled === 1 && this._state === 1 && this.done_fn) {
+                this.done_fired = 1;
+                this.done_fn.call(this, this.value);
             }
         }
     },
@@ -407,9 +411,7 @@ private.deferred = {
                     obj.id = obj.id.join(".");
                 }
             } else {
-                console.error("Dependency type " + obj.type + " requires id, but id undefined.", obj);
-                debugger;
-                return false;
+                return public.debug([ "Dependency type '" + obj.type + "' requires id, but id undefined.", obj ]);
             }
         }
         if (obj.type !== "timer") {
@@ -639,11 +641,6 @@ private.deferred = {
                 });
             } else {
                 var path = dep.url;
-                while (path.substring(0, 1) === "." || path.substring(0, 1) === "/") {
-                    path = path.substring(1);
-                }
-                var cwd = process.cwd();
-                path = cwd + "/" + path;
                 if (dep.type === "script") {
                     var data = require(path);
                     private.deferred.load_script(deferred, data);
@@ -652,7 +649,7 @@ private.deferred = {
                     (function(deferred, dep) {
                         fs.readFile(path, "utf8", function(err, data) {
                             if (err) {
-                                public.debug("File " + dep.url + " not found @ local path '" + path + "'");
+                                public.debug([ "File " + dep.url + " not found @ local path '" + path + "'", "CWD: " + cwd ]);
                                 process.exit();
                             }
                             process_result(deferred, data, dep);
@@ -667,9 +664,11 @@ private.deferred = {
 
 public.queue = function(deps, options) {
     var _o;
-    deps = deps || [];
+    if (!(deps instanceof Array)) {
+        return public.debug("Queue dependencies must be an array.");
+    }
     if (!options || !options.id) {
-        public.debug("Queues require an id.");
+        return public.debug("Queues require an id.");
     }
     if (!public.list[options.id]) {
         var _o = private.queue.factory(options);

@@ -1,10 +1,12 @@
 public.queue = function(deps,options){
 
     var _o;
-    deps = deps || [];  
+    if(!(deps instanceof Array)){
+        return public.debug("Queue dependencies must be an array.");
+    }
     
     if(!options || !options.id){
-        public.debug("Queues require an id.");
+        return public.debug("Queues require an id.");
     }
     
     //DOES NOT ALREADY EXIST

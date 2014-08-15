@@ -170,10 +170,7 @@ private.deferred = {
             //SET STATE TO RESOLVED
             private.deferred._set_state.call(this,1);
 
-            if(this.done_fn !== null){
-                this.done_fired = 1;
-                this.done_fn.call(this,this.value); 
-            }
+            this.done();
                 
             return this;
         }
@@ -244,10 +241,18 @@ private.deferred = {
         ,done : function(fn){
             
             if(this.done_fn === null){
-                this.done_fn = fn
+                if(fn){
+                    this.done_fn = fn
+                }
             }
-            else{
+            else if(fn){
                 public.debug("done() can only be called once.");
+                return;
+            }
+            
+            if(this.settled === 1 && this._state === 1 && this.done_fn){
+                this.done_fired = 1;
+                this.done_fn.call(this,this.value); 
             }
         }
 
@@ -504,9 +509,7 @@ private.deferred = {
                 }
             }
             else{
-                console.error("Dependency type "+obj.type+" requires id, but id undefined.",obj);
-                debugger;
-                return false;
+                return public.debug(["Dependency type '"+obj.type+"' requires id, but id undefined.",obj]);
             }
         }
 
@@ -860,7 +863,7 @@ private.deferred = {
                 
                 //PREPEND PATH WITH CURRENT WORKING DIRECTORY OF PROCESS
                 var path = dep.url;
-
+/*
                 //REMOVE ANY RELATIVE PATH CHARACTERS 
                 //AS LONG AS PATH DOES NOT START WITH *
                 //WHICH INDICATES ABSOLUTE PATH
@@ -871,7 +874,7 @@ private.deferred = {
                 
                 var cwd = process.cwd();
                 path = cwd + '/' + path;
-
+*/
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){
                     var data = require(path);
@@ -886,7 +889,7 @@ private.deferred = {
                         fs.readFile(path, 'utf8', function (err, data) {
 
                             if (err){
-                                public.debug("File " + dep.url + " not found @ local path '" + path +"'");
+                                public.debug(["File " + dep.url + " not found @ local path '" + path +"'","CWD: "+cwd]);
                                 process.exit();
                             }
 
