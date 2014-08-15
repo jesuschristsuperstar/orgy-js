@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.0.0 
-Built: 2014-08-12 
+Version: 1.0.2 
+Built: 2014-08-15 
 Author: tecfu.com  
 */
 
@@ -11,11 +11,20 @@ var private = {};
 
 public.list = {};
 
+public.modules_exported = [];
+
+public.modules_loaded = 0;
+
 public.registered_callbacks = {};
 
-public.debug_mode = true;
+public.debug_mode = 1;
 
 public.i = 0;
+
+public.export = function(obj) {
+    public.modules_exported.push(obj);
+    return obj;
+};
 
 public.define = function(id, data) {
     if (!public.list[id] || public.list[id].settled !== 1) {
@@ -178,13 +187,12 @@ private.deferred = {
         value: [],
         error_q: [],
         then_q: [],
+        done_fn: null,
         reject_q: [],
-        done_q: [],
         downstream: {},
         execution_history: [],
         overwritable: 0,
         timeout: 5e3,
-        rol: 1,
         remote: 1,
         list: 1,
         resolve: function(value) {
@@ -205,16 +213,13 @@ private.deferred = {
                 fn = this.then_q.splice(0, 1);
                 v = fn[0].call(this, v || this.value);
                 this.execution_history.push(fn[0]);
-                if (v && v.then) {
+                if (typeof v !== "undefined" && v.then) {
                     this._state = 0;
                     this.add([ v ]);
                     return;
+                } else if (typeof v !== "undefined") {
+                    this.value = v;
                 }
-            }
-            this.done_fired = 1;
-            for (var i in this.done_q) {
-                this.done_q[i].call(this, this.value);
-                this.execution_history.push(this.done_q[i]);
             }
             if (this.set) {
                 if (this.set instanceof Array) {
@@ -232,6 +237,10 @@ private.deferred = {
                 clearTimeout(this._timeout_id);
             }
             private.deferred._set_state.call(this, 1);
+            if (this.done_fn !== null) {
+                this.done_fired = 1;
+                this.done_fn.call(this, this.value);
+            }
             return this;
         },
         reject: function(err) {
@@ -259,9 +268,11 @@ private.deferred = {
                 public.debug(this.id + " can't attach .then() after .done() has fired.");
                 break;
 
-              case this.settled === 1 && this._state === 1 && this.done_fired === 0:
+              case this.settled === 1 && this._state === 1 && !this.done_fired:
                 var r = fn.call(this, this.value);
-                this.value.push(r);
+                if (typeof r !== "undefined") {
+                    this.value = r;
+                }
                 break;
 
               default:
@@ -274,13 +285,11 @@ private.deferred = {
             return this;
         },
         done: function(fn) {
-            if (this.settled === 1) {
-                this.done_fired = 1;
-                fn.call(this, this.value);
+            if (this.done_fn === null) {
+                this.done_fn = fn;
             } else {
-                this.done_q.push(fn);
+                public.debug("done() can only be called once.");
             }
-            return this;
         }
     },
     _set_state: function(int) {
@@ -506,29 +515,48 @@ private.deferred = {
         })(prom);
         return prom;
     },
-    _wrap_xhr: function(obj) {
+    _wrap_xhr: function(dep) {
         var required = [ "id", "url" ];
         for (var i in required) {
-            if (!obj[required[i]]) {
+            if (!dep[required[i]]) {
                 return public.debug("File requests converted to promises require: " + required[i]);
             }
         }
-        if (public.list[obj.id]) {
-            return public.list[obj.id];
+        if (public.list[dep.id]) {
+            return public.list[dep.id];
         }
         var deferred;
-        deferred = public.deferred(obj);
-        deferred = private.deferred.attach_xhr(deferred, obj);
+        deferred = public.deferred(dep);
+        deferred = private.deferred.attach_xhr(deferred, dep);
         return deferred;
     },
-    attach_xhr: function(deferred, obj) {
-        obj.rol = typeof obj.rol !== "undefined" ? obj.rol : 1;
+    load_script: function(deferred, data) {
+        if (public.modules_exported.length > public.modules_loaded) {
+            var m = public.modules_exported[public.modules_exported.length - 1];
+            if (m.__dependencies instanceof Array) {
+                m.__id = deferred.id;
+                public.queue(m.__dependencies || [], {
+                    id: m.__id,
+                    resolver: function() {
+                        m.__resolver.call(m, deferred, deferred.value);
+                    }
+                });
+            } else {
+                deferred.resolve(m);
+            }
+            public.modules_loaded++;
+        } else {
+            deferred.resolve(data);
+        }
+    },
+    attach_xhr: function(deferred, dep) {
+        dep.rol = typeof dep.rol !== "undefined" ? dep.rol : 1;
         if (typeof process !== "object" || process + "" !== "[object process]") {
             this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
-              case obj.type === "css" || obj.type === "link":
+              case dep.type === "css" || dep.type === "link":
                 var node = document.createElement("link");
-                node.setAttribute("href", obj.url);
+                node.setAttribute("href", dep.url);
                 node.setAttribute("type", "text/css");
                 node.setAttribute("rel", "stylesheet");
                 (function() {
@@ -539,102 +567,98 @@ private.deferred = {
                 this.head.appendChild(node);
                 break;
 
-              case obj.type === "script":
+              case dep.type === "script":
                 var node = document.createElement("script");
                 node.type = "text/javascript";
-                node.setAttribute("src", obj.url);
-                node.setAttribute("id", obj.id);
+                node.setAttribute("src", dep.url);
+                node.setAttribute("id", dep.id);
                 node.onerror = function() {
-                    deferred.reject("Failed to load path: " + obj.url);
+                    deferred.reject("Failed to load path: " + dep.url);
                 };
-                if (obj.rol === 1) {
-                    (function(node) {
-                        node.onload = node.onreadystatechange = function() {
-                            if (deferred.settled !== 1) {
-                                deferred.resolve(node);
-                            }
-                        };
-                    })(node);
-                }
+                (function(node, dep) {
+                    node.onload = node.onreadystatechange = function() {
+                        private.deferred.load_script(deferred, node);
+                    };
+                })(node, dep);
                 this.head.appendChild(node);
                 break;
 
-              case obj.type === "json":
+              case dep.type === "json":
               default:
                 var r;
                 var req = new XMLHttpRequest();
-                req.open("GET", obj.url, true);
-                if (typeof obj.show_messages !== "undefined") {
-                    req.setRequestHeader("show-messages", obj.show_messages);
+                req.open("GET", dep.url, true);
+                if (typeof dep.show_messages !== "undefined") {
+                    req.setRequestHeader("show-messages", dep.show_messages);
                 }
-                if (typeof obj.return_packet !== "undefined") {
-                    req.setRequestHeader("return-packet", obj.return_packet);
+                if (typeof dep.return_packet !== "undefined") {
+                    req.setRequestHeader("return-packet", dep.return_packet);
                 }
                 req.onreadystatechange = function() {
                     if (req.readyState === 4) {
                         if (req.status === 200) {
                             r = req.responseText;
-                            if (obj.type === "json") {
+                            if (dep.type === "json") {
                                 try {
                                     r = JSON.parse(r);
                                 } catch (e) {
-                                    public.debug([ "Could not decode JSON", obj.url, r ]);
+                                    public.debug([ "Could not decode JSON", dep.url, r ]);
                                 }
                             }
                             deferred.resolve(r);
                         } else {
-                            deferred.reject("Error loading " + obj.url);
+                            deferred.reject("Error loading " + dep.url);
                         }
                     }
                 };
                 req.send(null);
             }
         } else {
-            function process_result(deferred, data, obj) {
+            function process_result(deferred, data, dep) {
                 switch (true) {
-                  case obj.type === "script":
-                    data = require(data);
-                    if (obj.rol === 1) {
-                        if (!deferred.settled) {
-                            deferred.resolve(data);
-                        }
-                    }
+                  case dep.type === "script":
+                    private.deferred.load_script(deferred, data);
                     break;
 
-                  case obj.type === "json":
+                  case dep.type === "json":
                     data = JSON.parse(data);
                     deferred.resolve(data);
                     break;
 
-                  case obj.type === "css" || obj.type === "link":
+                  case dep.type === "css" || dep.type === "link":
                   default:
                     deferred.resolve(data);
                 }
             }
-            if (obj.remote) {
+            if (dep.remote) {
                 var request = require("request");
-                request.get(obj.url, function(error, response, body) {
+                request.get(dep.url, function(error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        process_result(deferred, body, obj);
+                        process_result(deferred, body, dep);
                     }
                 });
             } else {
-                var fs = require("fs");
+                var path = dep.url;
+                while (path.substring(0, 1) === "." || path.substring(0, 1) === "/") {
+                    path = path.substring(1);
+                }
                 var cwd = process.cwd();
-                (function(deferred, obj) {
-                    var path = obj.url;
-                    while (path.substring(0, 1) === "." || path.substring(0, 1) === "/") {
-                        path = path.substring(1);
-                    }
-                    path = cwd + "/" + path;
-                    fs.readFile(path, "utf8", function(err, data) {
-                        if (err) {
-                            public.debug("File " + obj.url + " not found @ local path '" + path + "'");
-                            process.exit();
-                        }
-                        process_result(deferred, data, obj);
-                    });
-                })(deferred, obj);
+                path = cwd + "/" + path;
+                if (dep.type === "script") {
+                    var data = require(path);
+                    private.deferred.load_script(deferred, data);
+                } else {
+                    var fs = require("fs");
+                    (function(deferred, dep) {
+                        fs.readFile(path, "utf8", function(err, data) {
+                            if (err) {
+                                public.debug("File " + dep.url + " not found @ local path '" + path + "'");
+                                process.exit();
+                            }
+                            process_result(deferred, data, dep);
+                        });
+                    })(deferred, dep);
+                }
             }
         }
         return deferred;

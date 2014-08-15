@@ -23,23 +23,25 @@
 
     //FIRES WHEN RESOLVED
     q.then(function(r){
-        var msg = this.id + " then-1";
-        console.log(msg);
+        console.log("Original value:");
+        console.log(r);
+        return 1;
     });
     
     //FIRES WHEN RESOLVED
     q.then(function(r){
-        var msg = this.id + " then-2";
-        console.log(msg);
+        return 2;
     });
     
     //FIRES WHEN RESOLVED
     q.then(function(r){
-        var msg = this.id + " then-3";
-        console.log(msg);
+        return 3;
     });
 
-
+    q.done(function (r){
+        console.log("Final value:");
+        console.log(r);
+    });
 </script>
 </head>
 <body>

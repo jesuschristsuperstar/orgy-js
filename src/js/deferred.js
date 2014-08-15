@@ -57,27 +57,14 @@ private.deferred = {
 
         ,error_q : []  
         ,then_q : []
+        ,done_fn : null
         ,reject_q : []
-        ,done_q : []
 
         //PROMISE HAS OBSERVERS BUT DOES NOT OBSERVE OTHERS
         ,downstream : {}
         ,execution_history : []
         ,overwritable : 0   //WHEN TRUE, ALLOWS RE-INIT [FOR UPGRADES TO A QUEUE]          
         ,timeout : 5000
-
-        /**
-         * RESOLVE-ON-LOAD. Whether to resolve the promise on load.
-         * 
-         * ROL == 1     =>  Promise is resolved onload.
-         *                  No value can be set to promise object.
-         *                  Must define itself into global space. 
-         *                  
-         * ROL == 0     =>  Promise NOT resolved onload. 
-         *                  Value can be set to promise object.
-         *                  Must define itself into global space.
-         */          
-        ,rol : 1
 
         /**
          * REMOTE
@@ -137,7 +124,8 @@ private.deferred = {
 
                 //IF fn RETURNED AN UNSETTLED PROMISE
                 //WAIT FOR IT TO RESOLVE BEFORE PROCEEDING
-                if(v && v.then){
+                //AND ADD THE RESULT TO THE END OF VALUE ARRAY
+                if(typeof v !== 'undefined' && v.then){
                     
                     //SET THE STATE BACK TO WAITING
                     this._state = 0;
@@ -148,19 +136,12 @@ private.deferred = {
                     //END RESOLUTION ATTEMPT AND WAIT FOR v TO RESOLVE
                     return;
                 }
+                //IF V RETURNED A VALUE MAKE IT THE NEW QUEUE VALUE
+                else if(typeof v !== 'undefined'){
+                    this.value = v;
+                }
             }
-
-
-            //RUN DONE FUNCTION[S] IF THEY EXIST
-            this.done_fired = 1;
-            for(var i in this.done_q){
-                
-                this.done_q[i].call(this,this.value);
-                
-                //REMOVE fn AND PLACE IN EXECUTION HISTORY
-                this.execution_history.push(this.done_q[i]);
-            }
-            
+                        
             //SET RETURN VALUE TO A GIVEN OBJECT PROPERTY
             if(this.set){
                 //ARRAY IS TRANSORMED INTO A PATH TO POINT TO
@@ -189,6 +170,11 @@ private.deferred = {
             //SET STATE TO RESOLVED
             private.deferred._set_state.call(this,1);
 
+            if(this.done_fn !== null){
+                this.done_fired = 1;
+                this.done_fn.call(this,this.value); 
+            }
+                
             return this;
         }
 
@@ -233,9 +219,11 @@ private.deferred = {
                     public.debug(this.id+" can't attach .then() after .done() has fired.");
                     break;
 
-                case(this.settled === 1 && this._state === 1 && this.done_fired === 0):
+                case(this.settled === 1 && this._state === 1 && !this.done_fired):
                     var r = fn.call(this,this.value);
-                    this.value.push(r);
+                    if(typeof r !== 'undefined'){
+                        this.value = r;
+                    }
                     break;
 
                 default:
@@ -252,27 +240,15 @@ private.deferred = {
 
             return this;
         }
-
-
-        /**
-         * Executes fn immediately if target is settled,
-         * otherwise adds to an array of callbacks that will execute upon
-         * settlement.
-         * 
-         * @param {type} fn
-         * @returns {private.deferred.tpl}
-         */
+        
         ,done : function(fn){
-
-            if(this.settled === 1){
-                this.done_fired = 1;
-                fn.call(this,this.value); 
+            
+            if(this.done_fn === null){
+                this.done_fn = fn
             }
             else{
-                this.done_q.push(fn);
+                public.debug("done() can only be called once.");
             }
-
-            return this;
         }
 
     }
@@ -691,57 +667,84 @@ private.deferred = {
      * @param {object} obj
      * @returns {object} deferred object
      */
-    ,_wrap_xhr : function(obj){
+    ,_wrap_xhr : function(dep){
         
         
         var required = ["id","url"];
         for(var i in required){
-            if(!obj[required[i]]){
+            if(!dep[required[i]]){
                 return public.debug("File requests converted to promises require: " + required[i]);
             }
         }
 
         
         //IF PROMISE FOR THIS URL ALREADY EXISTS, RETURN IT
-        if(public.list[obj.id]){
-            return public.list[obj.id];
+        if(public.list[dep.id]){
+            return public.list[dep.id];
         }
         
 
         //CONVERT TO DEFERRED:
         var deferred;
-        deferred = public.deferred(obj);
-        deferred = private.deferred.attach_xhr(deferred,obj);
+        deferred = public.deferred(dep);
+        deferred = private.deferred.attach_xhr(deferred,dep);
         return deferred;
     }
     
+    
+    ,load_script : function(deferred,data){
+
+        //CHECK IF LAST SCRIPT LOADED RETURNED A MODULE
+        if(public.modules_exported.length > public.modules_loaded){
+            
+            //GET LAST MODULE EXPORTED
+            var m = public.modules_exported[public.modules_exported.length-1];
+
+            //IF RESOLVER EXISTS, LOAD ONCE RESOLVED
+            if(m.__dependencies instanceof Array){
+                
+                //AUTO SET ID PROPERTY ON MODULE
+                m.__id = deferred.id;
+                
+                public.queue(m.__dependencies || [],{
+                    id : m.__id
+                    ,resolver : function(){
+                        m.__resolver.call(m,deferred,deferred.value);
+                    }
+                });
+            }
+            else{
+                //ELSE RESOLVE NOW
+                deferred.resolve(m)
+            }
+
+            //INCREMENT MODULES LOADED
+            public.modules_loaded ++;
+        }
+        else{
+            
+            deferred.resolve(data);
+        }
+        
+    }
     
     /**
      *    
      * 
      * @param {type} deferred
-     * @param {type} obj
+     * @param {type} dep
      * 
-     * obj:
+     * dep:
      * =========
-     * <rol> boolean. RESOLVE-ON-LOAD. Whether to resolve the XHR / included file on  load.
-     * 
-     * rol == 1     =>  Promise is resolved onload.
-     *                  No value can be set to promise object.
-     *                  Must define itself into global space. 
-     *                  
-     * rol == 0     =>  Promise NOT resolved onload. 
-     *                  Value can be set to promise object.
-     *                  Must define itself into global space.
      *                  
      * <fs> boolean. Filesystem. Whether to loda the file from server filesytem or via http server
      *                  
      * @returns {unresolved}
      */
-    ,attach_xhr : function(deferred,obj){
+    ,attach_xhr : function(deferred,dep){
 
         //DEFAULT ALL TO RESOLVE-ON-LOAD
-        obj.rol = (typeof obj.rol !== 'undefined') ? obj.rol : 1;
+        dep.rol = (typeof dep.rol !== 'undefined') ? dep.rol : 1;
 
         //BROWSER
         if(typeof process !== 'object' || process + '' !== '[object process]'){
@@ -750,10 +753,10 @@ private.deferred = {
 
             switch(true){
 
-                case(obj.type==='css' || obj.type==='link'):
+                case(dep.type==='css' || dep.type==='link'):
 
                     var node = document.createElement("link");
-                    node.setAttribute("href",obj.url);
+                    node.setAttribute("href",dep.url);
                     node.setAttribute("type","text/css");
                     node.setAttribute("rel","stylesheet");
                     (function(){
@@ -764,61 +767,57 @@ private.deferred = {
                     this.head.appendChild(node);
                     break;
 
-                case(obj.type==='script'):
+                case(dep.type==='script'):
                     
                     var node = document.createElement("script");
                     node.type = 'text/javascript';
-                    node.setAttribute("src",obj.url);
-                    node.setAttribute("id",obj.id);
+                    node.setAttribute("src",dep.url);
+                    node.setAttribute("id",dep.id);
                     node.onerror = function(){
-                        deferred.reject("Failed to load path: " + obj.url);
+                        deferred.reject("Failed to load path: " + dep.url);
                     };
                     
-                    if(obj.rol === 1){
-                        (function(node){
-                            node.onload = node.onreadystatechange = function(){
-                                if(deferred.settled !== 1){
-                                    deferred.resolve(node);
-                                }
-                            };
-                        }(node))
-                    }
+                    (function(node,dep){
+                        node.onload = node.onreadystatechange = function(){
+                            private.deferred.load_script(deferred,node);
+                        };
+                    }(node,dep))
                     
                     //put scripts before <base> elements, after <meta>
                     this.head.appendChild(node);
                     break;
 
-                case(obj.type==='json'):
+                case(dep.type==='json'):
                 default:
                     
                     var r;
                     var req = new XMLHttpRequest();
-                    req.open('GET', obj.url, true);
+                    req.open('GET', dep.url, true);
 
-                    if(typeof obj.show_messages !== 'undefined'){
-                        req.setRequestHeader('show-messages', obj.show_messages);
+                    if(typeof dep.show_messages !== 'undefined'){
+                        req.setRequestHeader('show-messages', dep.show_messages);
                     }
-                    if(typeof obj.return_packet !== 'undefined'){
-                        req.setRequestHeader('return-packet', obj.return_packet);
+                    if(typeof dep.return_packet !== 'undefined'){
+                        req.setRequestHeader('return-packet', dep.return_packet);
                     }
 
                     req.onreadystatechange = function() {
                         if (req.readyState === 4) {
                             if(req.status === 200){
                                 r = req.responseText;
-                                if(obj.type === 'json'){
+                                if(dep.type === 'json'){
                                     try{
                                         r = JSON.parse(r);
                                     }
                                     catch(e){
-                                        public.debug(["Could not decode JSON",obj.url,r]);
+                                        public.debug(["Could not decode JSON",dep.url,r]);
 
                                     }
                                 }
                                 deferred.resolve(r);
                             }
                             else{
-                                deferred.reject("Error loading "+obj.url);
+                                deferred.reject("Error loading "+dep.url);
                             }
                         }
                     };
@@ -827,76 +826,77 @@ private.deferred = {
         }
         //NODEJS
         else{
-            
-            function process_result(deferred,data,obj){
+
+            function process_result(deferred,data,dep){
 
                 switch(true){
 
-                    case(obj.type==='script'):
-                        
-                        //INTERPRET STRING AS JS
-                        data = require(data);
-
-                        //RESOLVE ON LOAD?
-                        if(obj.rol === 1){
-                            if(!deferred.settled){
-                                deferred.resolve(data);
-                            }
-                        }
+                    case(dep.type==='script'):
+                        private.deferred.load_script(deferred,data);
                         break;
 
-                    case(obj.type === 'json'):
+                    case(dep.type === 'json'):
                         data = JSON.parse(data);
                         deferred.resolve(data);
                         break;
                         
-                    case(obj.type==='css' || obj.type==='link'):
+                    case(dep.type==='css' || dep.type==='link'):
                     default:
                         deferred.resolve(data);
                 }
             }
             
             
-            if(obj.remote){
+            if(dep.remote){
                 var request = require('request');
-                request.get(obj.url, function (error, response, body) {
+                request.get(dep.url, function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        process_result(deferred,body,obj);
+                        process_result(deferred,body,dep);
                     }
                 });
 
             }
             else{
-                var fs = require('fs');
-                var cwd = process.cwd();
                 
-                (function(deferred,obj){
+                //PREPEND PATH WITH CURRENT WORKING DIRECTORY OF PROCESS
+                var path = dep.url;
+
+                //REMOVE ANY RELATIVE PATH CHARACTERS 
+                //AS LONG AS PATH DOES NOT START WITH *
+                //WHICH INDICATES ABSOLUTE PATH
+                while (path.substring(0, 1) === "."
+                || path.substring(0, 1) === "/") {
+                    path = path.substring(1);
+                }
+                
+                var cwd = process.cwd();
+                path = cwd + '/' + path;
+
+                //DON'T GET SCRIPTS AS TEXT
+                if(dep.type === 'script'){
+                    var data = require(path);
+                    private.deferred.load_script(deferred,data);
+                }
+                else{
                     
-                    //PREPEND PATH WITH CURRENT WORKING DIRECTORY OF PROCESS
-                    var path = obj.url;
+                    var fs = require('fs');
+
+                    (function(deferred,dep){
+                        
+                        fs.readFile(path, 'utf8', function (err, data) {
+
+                            if (err){
+                                public.debug("File " + dep.url + " not found @ local path '" + path +"'");
+                                process.exit();
+                            }
+
+                            process_result(deferred,data,dep);
+                        });
+
+                    }(deferred,dep));
                     
-                    //REMOVE ANY RELATIVE PATH CHARACTERS 
-                    //AS LONG AS PATH DOES NOT START WITH *
-                    //WHICH INDICATES ABSOLUTE PATH
-                    while (path.substring(0, 1) === "."
-                    || path.substring(0, 1) === "/") {
-                        path = path.substring(1);
-                    }
-
-                    path = cwd + '/' + path;
-                     
-                    fs.readFile(path, 'utf8', function (err, data) {
-
-                        if (err){
-                            public.debug("File " + obj.url + " not found @ local path '" + path +"'");
-                            process.exit();
-                        }
-
-                        process_result(deferred,data,obj);
-                    });
-
-                }(deferred,obj));
-                    
+                }
+                
             }
 
         }

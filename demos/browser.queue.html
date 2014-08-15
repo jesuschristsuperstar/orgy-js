@@ -23,39 +23,37 @@
             url : "data/data3.json"
             ,type : "json"
         }
-        ,{
+        ,
+        {
             type : "css"
             ,url : "data/sample.css"
         }
     ],{
-        id : "q1"
+       id : "q1" //GLOBAL ACCESSOR
     });
 
-    //FIRES WHEN RESOLVED
-    q.then(function(r){
-        var msg = this.id + " then-1";
-        console.log(msg);
+
+    /*
+    If a then statement returns a value, that value becomes the new 
+    value of the queue and is passed to any subsequent
+    then() or done() statements.
+    */
+
+    q.then(function(value){
+        value.push('foo');
+        return value;
     });
 
-    //FIRES WHEN RESOLVED
-    q.then(function(r){
-        var msg = this.id + " then-2";
-        console.log(msg);
+    q.then(function(value){
+        value.pop(); //'foo'
+        value.push('bar');
+        return value;
     });
 
-    //FIRES WHEN RESOLVED
-    q.then(function(r){
-        var msg = this.id + " then-3";
-        console.log(msg);
+    q.done(function(value){ 
+        //Done value is carried from last then .then() statement.
+        console.log(value);
     });
-
-    q.done(function(r){
-        var msg = this.id + " done-";
-        console.log(msg);
-        console.log(r);
-    });
-
-    //console.log(Orgy.list.q1.value); //GLOBAL ACCESSOR TO Q1 SETTLEMENT VALUE 
 </script>
 </head>
 <body>

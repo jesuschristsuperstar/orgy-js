@@ -21,7 +21,10 @@ npm install orgy
 
 - Wait for an array of dependencies to resolve prior to executing a callback:
 
+
 ```
+var Orgy = require("orgy");
+
 var q = Orgy.queue([
    {
        type : "timer"
@@ -36,14 +39,32 @@ var q = Orgy.queue([
        ,url : "data/sample.css"
    }
 ],{
-   id : "q1"    //GLOBAL ACCESSOR
+   id : "q1" //GLOBAL ACCESSOR
 });
 
-q.done(function(value){
+
+/**
+If a then statement returns a value, that value becomes the new 
+value of the queue and is passed to any subsequent
+then() or done() statements.
+*/
+
+q.then(function(value){
+    value.push('foo');
+    return value;
+});
+
+q.then(function(value){
+    value.pop(); //'foo'
+    value.push('bar');
+    return value;
+});
+
+q.done(function(value){ 
+    //Done value is carried from last then .then() statement.
+    console.log('Done');
     console.log(value);
 });
-
-//console.log(Orgy.list.q1.value); //GLOBAL ACCESSOR TO Q1 SETTLEMENT VALUE 
 ```
 
 ## More demos 

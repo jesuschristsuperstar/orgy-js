@@ -14,6 +14,20 @@ var private = {};
 public.list = {};
 
 
+/**
+ * Array of all exported modules
+ * @type Array
+ */
+public.modules_exported = [];
+
+
+/**
+ * Index number of last module loaded in public.modules_exported
+ * @type Number
+ */
+public.modules_loaded = 0;
+
+
 /** 
  * Callbacks that are run on every resolved item
  * 
@@ -25,7 +39,7 @@ public.registered_callbacks = {};
  * Debugging mode
  * @type Number
  */
-public.debug_mode = true;
+public.debug_mode = 1;
 
 
 /**
@@ -38,6 +52,13 @@ public.i = 0;
 ////////////////////////////////////////
 //  PUBLIC METHODS
 ////////////////////////////////////////
+
+
+public.export = function(obj){
+    
+    public.modules_exported.push(obj);
+    return obj;
+}
 
 
 /**
