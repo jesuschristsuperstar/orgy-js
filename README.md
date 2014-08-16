@@ -5,6 +5,14 @@ Orgy
 
 Promise / Deferred / Queue library and file loader that yields to no spec.  
 
+## Features:
+- Works both with nodejs and with browsers. 
+- Creates deferreds or queues.
+- Queues can be held back from settling after their dependencies have resolved by a resolver method. 
+- When then() is passed a return value that value is passed down the execution chain.
+- When then() is passed an unsettled thenable, it pauses further execution until that thenable is settled.
+
+
 ## Nodejs install:
 
 ```
@@ -17,7 +25,7 @@ npm install orgy
 <script src="/dist/orgy.min.js"></script>
 ```
 
-## Usage:
+## Example:
 
 - Wait for an array of dependencies to resolve prior to executing a callback:
 
@@ -67,6 +75,6 @@ q.done(function(value){
 });
 ```
 
-## More demos 
+## More examples:
 
 [Here](https://github.com/tecfu/orgy/tree/master/demos).
