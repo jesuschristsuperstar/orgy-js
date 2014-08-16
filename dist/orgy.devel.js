@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.0 
-Built: 2014-08-15 
+Version: 1.1.2 
+Built: 2014-08-16 
 Author: tecfu.com  
 */
 
