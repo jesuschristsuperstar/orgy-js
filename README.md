@@ -1,7 +1,7 @@
 Orgy
 ====
 
-[![Build Status](https://travis-ci.org/tecfu/orgy.svg?branch=master)](https://travis-ci.org/tecfu/orgy) [![Dependency Status](https://gemnasium.com/tecfu/orgy.png)](https://gemnasium.com/tecfu/orgy) 
+[![Build Status](https://travis-ci.org/tecfu/orgy.svg?branch=master)](https://travis-ci.org/tecfu/orgy) [![Dependency Status](https://david-dm.org/tecfu/orgy.png)](https://david-dm.org/tecfu/orgy) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy)
 
 Promise / Deferred / Queue library and file loader that yields to no spec.  
 
