@@ -10,7 +10,7 @@ Promise / Deferred / Queue library and file loader that yields to no spec.
 - Creates deferreds or queues.
 - Queues can be held back from settling after their dependencies have resolved by a resolver method. 
 - When then() is passed a return value that value is passed down the execution chain.
-- When then() is passed an unsettled thenable, it pauses further execution until that thenable is settled. The return value of the thenable is then appended to the existing queue value.
+- When then() is passed an unsettled thenable, it pauses further execution until that thenable is settled. The return value of the child thenable is appended to the parent then's return value.
 
 
 ## Nodejs install:
