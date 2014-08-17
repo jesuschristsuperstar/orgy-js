@@ -12,17 +12,24 @@
     "source-map-support": "",
     "chai": "~1.9.1",
     "sinon": "~1.10.3",
-    "mocha": "~1.21.4"
+    "mocha": "~1.21.4",
+    "karma": "~0.12.21",
+    "karma-mocha": "~0.1.7",
+    "karma-chai": "~0.1.0",
+    "karma-sinon": "~1.0.3",
+    "requirejs": "~2.1.14",
+    "karma-requirejs": "~0.2.2",
+    "karma-chrome-launcher": "~0.1.4"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha test/mocha"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/tecfu/orgy.git"
   },
-  "bugs": "https://github.com/tecfu/orgy/issues", 
-  "engines" : { 
-    "node" : ">=0.10.25" 
+  "bugs": "https://github.com/tecfu/orgy/issues",
+  "engines": {
+    "node": ">=0.10.25"
   }
 }
