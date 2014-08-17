@@ -33,6 +33,10 @@ npm install orgy
 ```
 var Orgy = require("orgy");
 
+Orgy.config({
+    document : "<html><head></head></html>"
+})
+
 var q = Orgy.queue([
    {
        type : "timer"

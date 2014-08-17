@@ -1,8 +1,9 @@
 Orgy = require("../dist/orgy.devel.js");
 
 Orgy.config({
-    document : "<html><head></head></html>"
-})
+    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+    document : "<html><head></head><body>hi there</body></html>"
+});
 
 var basepath = __dirname;
 var dependencies = [
@@ -40,6 +41,8 @@ q.then(function(value){
 q.done(function(value){
     console.log("done");
     console.log(value);
+    
+    //GET MODIFIED DOM CONTENT 
     console.log(Orgy.config().document);
 });
 
