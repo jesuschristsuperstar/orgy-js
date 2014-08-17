@@ -731,6 +731,7 @@ private.deferred = {
         
     }
     
+    
     /**
      *    
      * 
@@ -780,11 +781,11 @@ private.deferred = {
                         deferred.reject("Failed to load path: " + dep.url);
                     };
                     
-                    (function(node,dep){
+                    (function(node){
                         node.onload = node.onreadystatechange = function(){
                             private.deferred.load_script(deferred,node);
                         };
-                    }(node,dep))
+                    }(node))
                     
                     //put scripts before <base> elements, after <meta>
                     this.head.appendChild(node);
@@ -843,9 +844,9 @@ private.deferred = {
                         deferred.resolve(data);
                         break;
                         
-                    case(dep.type==='css' || dep.type==='link'):
                     default:
                         deferred.resolve(data);
+                        
                 }
             }
             
@@ -861,24 +862,26 @@ private.deferred = {
             }
             else{
                 
-                //PREPEND PATH WITH CURRENT WORKING DIRECTORY OF PROCESS
                 var path = dep.url;
-/*
-                //REMOVE ANY RELATIVE PATH CHARACTERS 
-                //AS LONG AS PATH DOES NOT START WITH *
-                //WHICH INDICATES ABSOLUTE PATH
-                while (path.substring(0, 1) === "."
-                || path.substring(0, 1) === "/") {
-                    path = path.substring(1);
-                }
-                
-                var cwd = process.cwd();
-                path = cwd + '/' + path;
-*/
+
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){
                     var data = require(path);
                     private.deferred.load_script(deferred,data);
+                }
+                //DON'T GET CSS, JUST ADD NODE
+                else if(dep.type === 'css'){
+                    
+                    if(private.config.document !== null){
+                        var cheerio = require('cheerio');
+                        var $ = cheerio.load(private.config.document);
+                        var node = $('head').append('<link rel="stylesheet" href="'+dep.url+'" type="text/css" />');
+                        private.config.document = $.html();
+                        deferred.resolve(node);
+                    }
+                    else{
+                        return public.debug([dep.url,"Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies."]);
+                    }
                 }
                 else{
                     

@@ -36,13 +36,6 @@ public.registered_callbacks = {};
 
 
 /**
- * Debugging mode
- * @type Number
- */
-public.debug_mode = 1;
-
-
-/**
  * iterator for ids
  * @type integer
  */
@@ -52,6 +45,29 @@ public.i = 0;
 ////////////////////////////////////////
 //  PUBLIC METHODS
 ////////////////////////////////////////
+
+
+/**
+ * Stores document context for nodejs.
+ * 
+ * @type string
+ */
+public.config = function(obj){
+    
+    if(obj){
+        for(var i in obj){
+            if(typeof private.config[i] !== 'undefined'){
+                private.config[i] = obj[i];
+            }
+            else{
+                return public.debug("Property "+i+" is not configurable.")
+            }
+        }
+    }
+    
+    
+    return private.config;
+}
 
 
 public.export = function(obj){
@@ -285,14 +301,45 @@ public.naive_cloner = function(donors){
 public.debug = function(msg,force_debug_mode){
     if(msg instanceof Array){
         for(var i in msg){
-            console.error("ERROR: "+msg[i]);
+            console.error("ERROR-"+i+": "+msg[i]);
         }
     }
     else{
         console.error("ERROR: "+msg);
     }
-    if(public.debug_mode == 1 || force_debug_mode){
+    if(public.config.debug_mode == 1 || force_debug_mode){
         debugger;
     }
-    return false;
+    if(private.config.mode === 'browser'){
+        return false;
+    }
+    else{
+        process.exit();
+    }
 }
+
+
+////////////////////////////////////////
+//  PRIVATE VARIABLES
+////////////////////////////////////////
+
+
+/**
+ * Configuration values.
+ * 
+ * @type object
+ */
+private.config = {
+    document : null
+    ,debug_mode : 1
+    ,mode : (function(){
+        if(typeof process === 'object' && process + '' === '[object process]'){
+            // is node
+            return "node"
+        }
+        else{
+            // not node
+            return "browser"
+        }
+    }())
+};

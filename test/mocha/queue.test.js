@@ -9,67 +9,20 @@
 require('source-map-support').install({
   handleUncaughtExceptions: false
 });
-var chai = require('chai');
-var expect = chai.expect;
-var assert = require("assert");
+global.chai = require('chai');
+global.expect = chai.expect;
+global.assert = require("assert");
 
 //DEFINE TESTS
-var Test = {};
-
-Test.types = function(dependencies,values){
-    
-    for (var i in dependencies){
-
-        switch(dependencies[i].type){
-
-            case("json"):
-
-                var t = 0;
-                if(typeof values[i] === 'object'){
-                    t = 1;
-                }
-                expect(t).to.equal(1);
-                break;
-
-            case("css"):
-
-                var t = 0;
-                if(typeof values[i] === 'string'
-                && values[i].length > 1){
-                    t = 1;
-                }
-                expect(t).to.equal(1);               
-                break;
-
-            case("timer"): 
-
-                var t = 0;
-
-                //check time elapsed is greater than timeout
-                if(dependencies[i].timeout <= values[i].elapsed){
-                    t = 1; 
-                }
-                else{
-                    console.error("Did not wait for timer?!")
-                    console.log("Elapsed "+ values[i].elapsed+" ms");
-                    console.log("Required: "+dependencies[i].timeout+" ms");
-                    console.log(values[i]);
-                }
-
-                expect(t).to.equal(1);
-                break;
-                
-            default:
-        }
-    }
-}
+//DEFINE TESTS
+var Test = require('../test.types.js');
 
 var deps = require("../../demos/node.queue.js").dependencies;
 var q = Orgy.queue(deps,{
     id : "some-que-id"
 });
 
-describe('then function', function(done){
+describe('then function', function(){
     
     before(function(done){
 
@@ -97,7 +50,7 @@ describe('then function', function(done){
 });
 
 
-describe('done function', function(done){
+describe('done function', function(){
         
     before(function(done){
 

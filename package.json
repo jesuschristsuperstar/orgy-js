@@ -4,7 +4,9 @@
   "description": "Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable.",
   "author": "tecfu.com <help@tecfu.com> (http://github.com/tecfu)",
   "main": "dist/orgy.devel.js",
-  "dependencies": {},
+  "dependencies": {
+      "cheerio" : "~0.17"
+  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.0",
@@ -17,8 +19,6 @@
     "karma-mocha": "~0.1.7",
     "karma-chai": "~0.1.0",
     "karma-sinon": "~1.0.3",
-    "requirejs": "~2.1.14",
-    "karma-requirejs": "~0.2.2",
     "karma-chrome-launcher": "~0.1.4"
   },
   "scripts": {

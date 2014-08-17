@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.1.5 
-Built: 2014-08-16 
+Built: 2014-08-17 
 Author: tecfu.com  
 */
 
@@ -17,9 +17,20 @@ public.modules_loaded = 0;
 
 public.registered_callbacks = {};
 
-public.debug_mode = 1;
-
 public.i = 0;
+
+public.config = function(obj) {
+    if (obj) {
+        for (var i in obj) {
+            if (typeof private.config[i] !== "undefined") {
+                private.config[i] = obj[i];
+            } else {
+                return public.debug("Property " + i + " is not configurable.");
+            }
+        }
+    }
+    return private.config;
+};
 
 public.export = function(obj) {
     public.modules_exported.push(obj);
@@ -148,15 +159,31 @@ public.naive_cloner = function(donors) {
 public.debug = function(msg, force_debug_mode) {
     if (msg instanceof Array) {
         for (var i in msg) {
-            console.error("ERROR: " + msg[i]);
+            console.error("ERROR-" + i + ": " + msg[i]);
         }
     } else {
         console.error("ERROR: " + msg);
     }
-    if (public.debug_mode == 1 || force_debug_mode) {
+    if (public.config.debug_mode == 1 || force_debug_mode) {
         debugger;
     }
-    return false;
+    if (private.config.mode === "browser") {
+        return false;
+    } else {
+        process.exit();
+    }
+};
+
+private.config = {
+    document: null,
+    debug_mode: 1,
+    mode: function() {
+        if (typeof process === "object" && process + "" === "[object process]") {
+            return "node";
+        } else {
+            return "browser";
+        }
+    }()
 };
 
 public.deferred = function(options) {
@@ -577,11 +604,11 @@ private.deferred = {
                 node.onerror = function() {
                     deferred.reject("Failed to load path: " + dep.url);
                 };
-                (function(node, dep) {
+                (function(node) {
                     node.onload = node.onreadystatechange = function() {
                         private.deferred.load_script(deferred, node);
                     };
-                })(node, dep);
+                })(node);
                 this.head.appendChild(node);
                 break;
 
@@ -627,7 +654,6 @@ private.deferred = {
                     deferred.resolve(data);
                     break;
 
-                  case dep.type === "css" || dep.type === "link":
                   default:
                     deferred.resolve(data);
                 }
@@ -644,6 +670,16 @@ private.deferred = {
                 if (dep.type === "script") {
                     var data = require(path);
                     private.deferred.load_script(deferred, data);
+                } else if (dep.type === "css") {
+                    if (private.config.document !== null) {
+                        var cheerio = require("cheerio");
+                        var $ = cheerio.load(private.config.document);
+                        var node = $("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
+                        private.config.document = $.html();
+                        deferred.resolve(node);
+                    } else {
+                        return public.debug([ dep.url, "Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies." ]);
+                    }
                 } else {
                     var fs = require("fs");
                     (function(deferred, dep) {

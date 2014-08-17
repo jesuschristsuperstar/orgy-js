@@ -1,5 +1,9 @@
 Orgy = require("../dist/orgy.devel.js");
-    
+
+Orgy.config({
+    document : "<html><head></head></html>"
+})
+
 var basepath = __dirname;
 var dependencies = [
     {
@@ -36,6 +40,7 @@ q.then(function(value){
 q.done(function(value){
     console.log("done");
     console.log(value);
+    console.log(Orgy.config().document);
 });
 
 
