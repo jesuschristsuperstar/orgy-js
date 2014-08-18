@@ -307,14 +307,14 @@ public.debug = function(msg,force_debug_mode){
     else{
         console.error("ERROR: "+msg);
     }
-    if(public.config.debug_mode == 1 || force_debug_mode){
+    if(private.config.debug_mode == 1 || force_debug_mode){
         debugger;
     }
     if(private.config.mode === 'browser'){
         return false;
     }
     else{
-        process.exit();
+        //process.exit();
     }
 }
 

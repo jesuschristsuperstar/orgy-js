@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.5 
-Built: 2014-08-17 
+Version: 1.1.7 
+Built: 2014-08-18 
 Author: tecfu.com  
 */
 
@@ -164,14 +164,12 @@ public.debug = function(msg, force_debug_mode) {
     } else {
         console.error("ERROR: " + msg);
     }
-    if (public.config.debug_mode == 1 || force_debug_mode) {
+    if (private.config.debug_mode == 1 || force_debug_mode) {
         debugger;
     }
     if (private.config.mode === "browser") {
         return false;
-    } else {
-        process.exit();
-    }
+    } else {}
 };
 
 private.config = {
@@ -231,14 +229,13 @@ private.deferred = {
             if (!this.resolver_fired) {
                 this.resolver_fired = 1;
                 if (this.resolver) {
-                    this.resolver(this, value);
-                    return this;
+                    return private.deferred.hook_before_success.call(this, this.resolver, value);
                 }
             }
             var v, fn, l = this.then_q.length;
             for (var i = 0; i < l; i++) {
                 fn = this.then_q.splice(0, 1);
-                v = fn[0].call(this, v || this.value);
+                v = private.deferred.hook_before_success.call(this, fn[0], v || this.value);
                 this.execution_history.push(fn[0]);
                 if (typeof v !== "undefined" && v.then) {
                     this._state = 0;
@@ -293,7 +290,7 @@ private.deferred = {
                 break;
 
               case this.settled === 1 && this._state === 1 && !this.done_fired:
-                var r = fn.call(this, this.value);
+                var r = private.deferred.hook_before_success.call(this, fn, this.value);
                 if (typeof r !== "undefined") {
                     this.value = r;
                 }
@@ -319,9 +316,20 @@ private.deferred = {
             }
             if (this.settled === 1 && this._state === 1 && this.done_fn) {
                 this.done_fired = 1;
-                this.done_fn.call(this, this.value);
+                private.deferred.hook_before_success.call(this, this.done_fn, this.value);
             }
         }
+    },
+    hook_before_success: function(fn, arr) {
+        var r;
+        if (public.config().document !== null) {
+            var cheerio = require("cheerio"), $ = cheerio.load(public.config().document);
+            r = fn(arr, this);
+            private.config.document = $.html();
+        } else {
+            r = fn(arr, this);
+        }
+        return r;
     },
     _set_state: function(int) {
         this._state = int;

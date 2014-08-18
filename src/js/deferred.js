@@ -101,8 +101,7 @@ private.deferred = {
 
                 //FIRE THE RESOLVER IF SET
                 if(this.resolver){
-                    this.resolver(this,value);
-                    return this;
+                    return private.deferred.hook_before_success.call(this,this.resolver,value);
                 }
 
             }
@@ -116,8 +115,9 @@ private.deferred = {
                 //DONT WANT TO REPEAAT A CALL TO SAME fn
                 fn = this.then_q.splice(0,1);
 
-                //CALL fn WITH PRECEDING RESULT OR IF NONE EXISTS, RESOLVER VALUE
-                v = fn[0].call(this, v || this.value);
+                //CALL fn WITH PRECEDING RESULT OR IF NONE EXISTS, THE RESOLVER VALUE 
+                v = private.deferred.hook_before_success.call(this,fn[0],v || this.value);
+                //v = fn[0].call(this, v || this.value);
                 
                 //SAVE fn TO EXECUTION HISTORY
                 this.execution_history.push(fn[0]);
@@ -217,7 +217,7 @@ private.deferred = {
                     break;
 
                 case(this.settled === 1 && this._state === 1 && !this.done_fired):
-                    var r = fn.call(this,this.value);
+                    var r = private.deferred.hook_before_success.call(this,fn,this.value);
                     if(typeof r !== 'undefined'){
                         this.value = r;
                     }
@@ -252,7 +252,7 @@ private.deferred = {
             
             if(this.settled === 1 && this._state === 1 && this.done_fn){
                 this.done_fired = 1;
-                this.done_fn.call(this,this.value); 
+                private.deferred.hook_before_success.call(this,this.done_fn,this.value);
             }
         }
 
@@ -262,6 +262,31 @@ private.deferred = {
     ///////////////////////////////////////////////////
     //  METHODS
     ///////////////////////////////////////////////////
+    
+    
+    /**
+     * Methods to run before then(), done() 
+     * 
+     * @param {type} fn
+     * @returns {undefined}
+     */
+    ,hook_before_success : function(fn,arr){
+        
+        var r;
+        //IF RUNNING IN NODE AND DOCUMENT CONTEXT HAS BEEN SET, LOAD IT FOR CHEERIO
+        if(public.config().document !== null){
+            var cheerio = require('cheerio'),
+            $ = cheerio.load(public.config().document);
+            //EXECUTE 
+            r = fn(arr,this);
+            private.config.document = $.html();
+        }
+        else{
+            r = fn(arr,this);
+        }
+        
+        return r;
+    }
     
     
     /**

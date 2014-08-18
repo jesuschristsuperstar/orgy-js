@@ -45,7 +45,7 @@
     var q1 = Orgy.queue(deps,{
        id : "q1"
         //QUEUE RESOLUTION CAN BE HELD BACK BY A RESOLVER
-       ,resolver : function(deferred,result){
+       ,resolver : function(result,deferred){
 
             console.log("resolver called " + new Date());
 
