@@ -15,8 +15,9 @@ module.exports = function(grunt) {
     
     // Project configuration.
     grunt.initConfig({
+        
         pkg: grunt.file.readJSON('package.json'),
-
+        
         uglify: {
             all: {
                 options: {
@@ -44,9 +45,25 @@ module.exports = function(grunt) {
                     'dist/<%= pkg.name %>.devel.js': _src
                 }
             }
+        },
+        
+        karma: {
+            vm: {
+                configFile: 'karma.conf.js',
+                singleRun: true,
+                browsers: ['Chrome']
+            }
+            ,travis: {
+                configFile: 'karma.conf.js',
+                singleRun: true,
+                browsers: ['PhantomJS']
+            }
         }
     });
 
+    grunt.loadNpmTasks('grunt-karma');
+    grunt.registerTask('test', ['karma:vm']);
+    grunt.registerTask('test-travis', ['karma:travis']);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.registerTask('default', ['uglify']);
