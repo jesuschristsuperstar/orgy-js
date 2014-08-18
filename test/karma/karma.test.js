@@ -1,3 +1,7 @@
+Test.configure({
+    basepath : '/base/demos'
+});
+
 var q = Orgy.queue(Test.deps,{
    id : "q1" //GLOBAL ACCESSOR
 });

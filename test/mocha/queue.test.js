@@ -5,7 +5,6 @@
  * $ mocha --debug-brk 
  * 
  */
-console.log(process.cwd());
 require('source-map-support').install({
   handleUncaughtExceptions: false
 });
@@ -15,6 +14,10 @@ global.expect = chai.expect;
 global.assert = require("assert");
 
 var Test = require('../test.class.js');
+
+Test.configure({
+    basepath : './demos'
+});
 
 var q = Orgy.queue(Test.deps,{
     id : "some-que-id"

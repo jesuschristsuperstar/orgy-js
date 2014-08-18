@@ -8,14 +8,13 @@
         //not node
         Test = r;
     }
+    
 }(function(){
     
     var r = {};
     
-    r.deps = (function(){
+    r.deps = function(basepath){
         
-        var basepath = './demos';
-
         var deps = [
             {
                 type : "timer"
@@ -40,9 +39,9 @@
         ];
         
         return deps;
-    }());
+    };
     
-    r.configure = function(){
+    r.configure = function(options){
         
         if(typeof process === 'object' && process + '' === '[object process]'){
             
@@ -54,6 +53,8 @@
                 }())
             });
         }
+        
+        this.deps = this.deps(options.basepath || '');
     
         return this;
     };
@@ -157,5 +158,5 @@
         }
     };
     
-    return r.configure();
+    return r;
 }()));
