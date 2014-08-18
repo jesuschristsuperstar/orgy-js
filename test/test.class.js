@@ -12,24 +12,35 @@
     
     var r = {};
     
-    r.deps = [
-        {
-            url : "/var/www/orgy/demos/data/data1.json"
-            ,type : "json"
-        }
-        ,{
-            url : "/var/www/orgy/demos/data/data2.json"
-            ,type : "json"
-        }
-        ,{
-            url : "/var/www/orgy/demos/data/data3.json"
-            ,type : "json"
-        }
-        ,{
-            url : "/var/www/orgy/demos/data/sample.css"
-            ,type : "css"
-        }
-    ];
+    r.deps = (function(){
+        
+        var basepath = './demos';
+
+        var deps = [
+            {
+                type : "timer"
+                ,timeout : 1000
+            }
+            ,{
+                url : basepath + "/data/data1.json"
+                ,type : "json"
+            }
+            ,{
+                url : basepath + "/data/data2.json"
+                ,type : "json"
+            }
+            ,{
+                url : basepath + "/data/data3.json"
+                ,type : "json"
+            }
+            ,{
+                url : basepath + "/data/sample.css"
+                ,type : "css"
+            }
+        ];
+        
+        return deps;
+    }());
     
     r.configure = function(){
         
@@ -54,6 +65,8 @@
         describe('then function', function(){
     
                 before(function(done){
+                    
+                    this.timeout(5000);
 
                    //FIRES WHEN RESOLVED
                     q.then(function(r){

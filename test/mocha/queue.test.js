@@ -5,7 +5,7 @@
  * $ mocha --debug-brk 
  * 
  */
-
+console.log(process.cwd());
 require('source-map-support').install({
   handleUncaughtExceptions: false
 });

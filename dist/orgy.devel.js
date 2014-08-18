@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.8 
+Version: 1.1.9 
 Built: 2014-08-18 
 Author: tecfu.com  
 */
@@ -594,7 +594,10 @@ private.deferred = {
                     node.onload = node.onreadystatechange = function() {
                         deferred.resolve(node);
                     };
-                })(node);
+                    node.onerror = function() {
+                        deferred.reeject("Failed to load path: " + dep.url);
+                    };
+                })(node, dep);
                 this.head.appendChild(node);
                 break;
 
@@ -603,14 +606,14 @@ private.deferred = {
                 node.type = "text/javascript";
                 node.setAttribute("src", dep.url);
                 node.setAttribute("id", dep.id);
-                node.onerror = function() {
-                    deferred.reject("Failed to load path: " + dep.url);
-                };
-                (function(node) {
+                (function(node, dep) {
                     node.onload = node.onreadystatechange = function() {
                         private.deferred.load_script(deferred, node);
                     };
-                })(node);
+                    node.onerror = function() {
+                        deferred.reject("Failed to load path: " + dep.url);
+                    };
+                })(node, dep);
                 this.head.appendChild(node);
                 break;
 
@@ -684,7 +687,7 @@ private.deferred = {
                     (function(deferred, dep) {
                         fs.readFile(path, "utf8", function(err, data) {
                             if (err) {
-                                public.debug([ "File " + dep.url + " not found @ local path '" + path + "'", "CWD: " + cwd ]);
+                                public.debug([ "File " + dep.url + " not found @ local path '" + path + "'", "CWD: " + process.cwd() ]);
                                 process.exit();
                             }
                             process_result(deferred, data, dep);
