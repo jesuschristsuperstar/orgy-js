@@ -79,15 +79,18 @@ q.then(function(value){
 });
 
 q.then(function(value){
-    value.pop(); //'foo'
+    $("body").append("Appended value: "+value.pop()); //'foo'
     value.push('bar');
     return value;
 });
 
 q.done(function(value){ 
     //Done value is carried from last then .then() statement.
-    console.log('Done');
+    console.log("done");
     console.log(value);
+    
+    //GET MODIFIED DOM CONTENT 
+    console.log(Orgy.config().document.html());
 });
 ```
 

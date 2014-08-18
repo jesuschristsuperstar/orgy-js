@@ -36,10 +36,15 @@ var q = Orgy.queue(dependencies,{
     id : "q1"
 });
 
-q.then(function(value,def){
-    console.log("then");
-    console.log(value);
-    $("body").append("Appended value: "+value[1].value);
+q.then(function(value){
+    value.push('foo');
+    return value;
+});
+
+q.then(function(value){
+    $("body").append("Appended value: "+value.pop()); //'foo'
+    value.push('bar');
+    return value;
 });
 
 q.done(function(value){
