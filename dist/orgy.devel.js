@@ -585,22 +585,6 @@ private.deferred = {
         if (typeof process !== "object" || process + "" !== "[object process]") {
             this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
-              case dep.type === "css" || dep.type === "link":
-                var node = document.createElement("link");
-                node.setAttribute("href", dep.url);
-                node.setAttribute("type", "text/css");
-                node.setAttribute("rel", "stylesheet");
-                (function() {
-                    node.onload = node.onreadystatechange = function() {
-                        deferred.resolve(node);
-                    };
-                    node.onerror = function() {
-                        deferred.reeject("Failed to load path: " + dep.url);
-                    };
-                })(node, dep);
-                this.head.appendChild(node);
-                break;
-
               case dep.type === "script":
                 var node = document.createElement("script");
                 node.type = "text/javascript";
@@ -616,6 +600,26 @@ private.deferred = {
                 })(node, dep);
                 this.head.appendChild(node);
                 break;
+
+              case dep.type === "css" || dep.type === "link":
+                var node = document.createElement("link");
+                node.setAttribute("href", dep.url);
+                node.setAttribute("type", "text/css");
+                node.setAttribute("rel", "stylesheet");
+                if (node.onload) {
+                    (function() {
+                        node.onload = node.onreadystatechange = function() {
+                            deferred.resolve(node);
+                        };
+                        node.onerror = function() {
+                            deferred.reeject("Failed to load path: " + dep.url);
+                        };
+                    })(node, dep);
+                    this.head.appendChild(node);
+                    break;
+                } else {
+                    this.head.appendChild(node);
+                }
 
               case dep.type === "json":
               default:
@@ -639,7 +643,7 @@ private.deferred = {
                                     public.debug([ "Could not decode JSON", dep.url, r ]);
                                 }
                             }
-                            deferred.resolve(r);
+                            deferred.resolve(node || r);
                         } else {
                             deferred.reject("Error loading " + dep.url);
                         }

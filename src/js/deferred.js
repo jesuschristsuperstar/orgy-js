@@ -770,25 +770,6 @@ private.deferred = {
 
             switch(true){
 
-                case(dep.type==='css' || dep.type==='link'):
-
-                    var node = document.createElement("link");
-                    node.setAttribute("href",dep.url);
-                    node.setAttribute("type","text/css");
-                    node.setAttribute("rel","stylesheet");
-                    (function(){
-                        node.onload = node.onreadystatechange = function(){
-                           deferred.resolve(node);
-                       };
-                       
-                       node.onerror = function(){
-                           deferred.reeject("Failed to load path: " + dep.url);
-                       }
-                       
-                    }(node,dep));
-                    this.head.appendChild(node);
-                    break;
-
                 case(dep.type==='script'):
                     
                     var node = document.createElement("script");
@@ -808,6 +789,33 @@ private.deferred = {
                     //put scripts before <base> elements, after <meta>
                     this.head.appendChild(node);
                     break;
+                    
+                case(dep.type==='css' || dep.type==='link'):
+
+                    var node = document.createElement("link");
+                    node.setAttribute("href",dep.url);
+                    node.setAttribute("type","text/css");
+                    node.setAttribute("rel","stylesheet");
+                    
+                    if(node.onload){
+                        (function(){
+                            node.onload = node.onreadystatechange = function(){
+                               deferred.resolve(node);
+                           };
+
+                           node.onerror = function(){
+                               deferred.reeject("Failed to load path: " + dep.url);
+                           }
+
+                        }(node,dep));
+                        
+                        this.head.appendChild(node);
+                        break;
+                    }
+                    else{
+                        //ADD NODE BUT MAKE XHR REQUEST TO CHECK FILE RECEIVED
+                        this.head.appendChild(node);
+                    }
 
                 case(dep.type==='json'):
                 default:
@@ -836,7 +844,8 @@ private.deferred = {
 
                                     }
                                 }
-                                deferred.resolve(r);
+                                //WE WANT TO RESOLVE WITH DOM NODE FOR CSS FILES
+                                deferred.resolve(node || r);
                             }
                             else{
                                 deferred.reject("Error loading "+dep.url);

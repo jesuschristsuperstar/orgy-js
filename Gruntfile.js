@@ -51,7 +51,7 @@ module.exports = function(grunt) {
             dsk: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
-                browsers: ['Chrome',"Firefox","Opera"]
+                browsers: ['PhantomJS','Chrome',"Firefox","Opera"]
             }
             ,travis: {
                 configFile: 'karma.conf.js',
