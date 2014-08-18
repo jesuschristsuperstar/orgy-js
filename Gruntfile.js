@@ -48,10 +48,10 @@ module.exports = function(grunt) {
         },
         
         karma: {
-            vm: {
+            dsk: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
-                browsers: ['Chrome']
+                browsers: ['Chrome',"Firefox","Opera"]
             }
             ,travis: {
                 configFile: 'karma.conf.js',
@@ -72,10 +72,10 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
-    grunt.registerTask('test-vm', ['mochaTest:test','karma:vm']);
+    grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
     grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.registerTask('default', ['uglify','test-vm']);
+    grunt.registerTask('default', ['uglify','test-dsk']);
 
 };
