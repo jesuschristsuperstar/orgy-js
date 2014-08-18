@@ -56,16 +56,25 @@ module.exports = function(grunt) {
             ,travis: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
-                browsers: ['PhantomJS']
+                browsers: ['Chrome']
+            }
+        },
+        
+        mocha: {
+            test: {
+              src: ['test/mocha/*.js'],
             }
         }
     });
 
     grunt.loadNpmTasks('grunt-karma');
-    grunt.registerTask('test', ['karma:vm']);
-    grunt.registerTask('test-travis', ['karma:travis']);
+    grunt.registerTask('test-karma-vm', ['karma:vm']);
+    grunt.registerTask('test-karma-travis', ['karma:travis']);
+    
+    grunt.loadNpmTasks('grunt-mocha');
+    grunt.registerTask('test-mocha', ['mocha:test']);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.registerTask('default', ['uglify']);
+    grunt.registerTask('default', ['uglify','mocha:test','karma:vm']);
 
 };
