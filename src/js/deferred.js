@@ -889,7 +889,7 @@ private.deferred = {
             }
             else{
                 
-                var path = dep.url;
+                var path = (private.config.basepath !== null) ? private.config.basepath + dep.url : dep.url;
 
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){

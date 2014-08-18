@@ -108,31 +108,6 @@ public.define = function(id,data){
 
 
 /**
- * Exports the value of a resolved promise to module.exports if node,
- * window.modules[deferred.id] if browser.
- * 
- * @param {object} deferred
- * @returns void
- */
-public.export_module = function(deferred){
-    
-    deferred.then(function(){
-
-        if(typeof process === 'object' && process + '' === '[object process]'){
-            //DEFINE IN NODE
-            module.exports = deferred.value;
-        }
-        else{
-            //DEFINE IN BROWSER
-            modules[deferred.id] = deferred.value;
-        }
-        
-    });
-    
-}
-
-
-/**
  * Add/remove an upstream dependency to/from a queue. 
  * 
  * Can use a queue id, even for a queue that is yet to be created.
@@ -330,7 +305,9 @@ public.debug = function(msg,force_debug_mode){
  * @type object
  */
 private.config = {
-    document : null
+    
+    basepath : null
+    ,document : null
     ,debug_mode : 1
     ,mode : (function(){
         if(typeof process === 'object' && process + '' === '[object process]'){

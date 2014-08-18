@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.10 
+Version: 1.1.11 
 Built: 2014-08-18 
 Author: tecfu.com  
 */
@@ -47,16 +47,6 @@ public.define = function(id, data) {
     } else {
         public.debug("Can't define " + id + ". Already resolved.");
     }
-};
-
-public.export_module = function(deferred) {
-    deferred.then(function() {
-        if (typeof process === "object" && process + "" === "[object process]") {
-            module.exports = deferred.value;
-        } else {
-            modules[deferred.id] = deferred.value;
-        }
-    });
 };
 
 public.assign = function(tgt, arr, add) {
@@ -175,6 +165,7 @@ public.debug = function(msg, force_debug_mode) {
 };
 
 private.config = {
+    basepath: null,
     document: null,
     debug_mode: 1,
     mode: function() {
@@ -675,7 +666,7 @@ private.deferred = {
                     }
                 });
             } else {
-                var path = dep.url;
+                var path = private.config.basepath !== null ? private.config.basepath + dep.url : dep.url;
                 if (dep.type === "script") {
                     var data = require(path);
                     private.deferred.load_script(deferred, data);
