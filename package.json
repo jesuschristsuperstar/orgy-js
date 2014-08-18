@@ -18,7 +18,8 @@
     "karma-mocha": "~0.1.7",
     "karma-chai": "~0.1.0",
     "karma-sinon": "~1.0.3",
-    "karma-chrome-launcher": "~0.1.4"
+    "karma-chrome-launcher": "~0.1.4",
+    "cheerio" : "~0.17"
   },
   "scripts": {
     "test": "mocha test/mocha"
