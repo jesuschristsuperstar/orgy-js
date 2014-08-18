@@ -60,21 +60,22 @@ module.exports = function(grunt) {
             }
         },
         
-        mocha: {
+        mochaTest: {
             test: {
-              src: ['test/mocha/*.js'],
+              options: {
+                reporter: 'spec',
+              },
+              src: ['test/mocha/*.js']
             }
         }
     });
 
     grunt.loadNpmTasks('grunt-karma');
-    grunt.registerTask('test-karma-vm', ['karma:vm']);
-    grunt.registerTask('test-karma-travis', ['karma:travis']);
-    
-    grunt.loadNpmTasks('grunt-mocha');
-    grunt.registerTask('test-mocha', ['mocha:test']);
+    grunt.loadNpmTasks('grunt-mocha-test');
+    grunt.registerTask('test-vm', ['mochaTest:test','karma:vm']);
+    grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.registerTask('default', ['uglify','mocha:test','karma:vm']);
+    grunt.registerTask('default', ['uglify','test-vm']);
 
 };
