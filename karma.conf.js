@@ -16,6 +16,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'dist/orgy.devel.js',
+      'test/test.class.js',
       {pattern: 'demos/data/*', included: false},
       {pattern: 'test/karma/*.js', included: true}
     ],

@@ -314,7 +314,7 @@ public.debug = function(msg,force_debug_mode){
         return false;
     }
     else{
-        //process.exit();
+        process.exit();
     }
 }
 

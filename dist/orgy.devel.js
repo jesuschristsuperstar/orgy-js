@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.7 
+Version: 1.1.8 
 Built: 2014-08-18 
 Author: tecfu.com  
 */
@@ -169,7 +169,9 @@ public.debug = function(msg, force_debug_mode) {
     }
     if (private.config.mode === "browser") {
         return false;
-    } else {}
+    } else {
+        process.exit();
+    }
 };
 
 private.config = {
