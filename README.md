@@ -37,8 +37,12 @@ npm install orgy
 var Orgy = require("orgy");
 
 Orgy.config({
-    document : "<html><head></head></html>"
-})
+    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+    document : (function(){
+        var cheerio = require('cheerio');
+        return global.$ = cheerio.load("<html><head></head><body></body></html>");
+    }())
+});
 
 var q = Orgy.queue([
    {

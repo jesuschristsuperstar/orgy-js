@@ -272,20 +272,8 @@ private.deferred = {
      */
     ,hook_before_success : function(fn,arr){
         
-        var r;
-        //IF RUNNING IN NODE AND DOCUMENT CONTEXT HAS BEEN SET, LOAD IT FOR CHEERIO
-        if(public.config().document !== null){
-            var cheerio = require('cheerio'),
-            $ = cheerio.load(public.config().document);
-            //EXECUTE 
-            r = fn(arr,this);
-            private.config.document = $.html();
-        }
-        else{
-            r = fn(arr,this);
-        }
-        
-        return r;
+        return fn(arr,this);
+
     }
     
     
@@ -898,10 +886,7 @@ private.deferred = {
                 else if(dep.type === 'css'){
                     
                     if(private.config.document !== null){
-                        var cheerio = require('cheerio');
-                        var $ = cheerio.load(private.config.document);
-                        var node = $('head').append('<link rel="stylesheet" href="'+dep.url+'" type="text/css" />');
-                        private.config.document = $.html();
+                        var node = private.config.document('head').append('<link rel="stylesheet" href="'+dep.url+'" type="text/css" />');
                         deferred.resolve(node);
                     }
                     else{

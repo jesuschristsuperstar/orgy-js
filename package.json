@@ -5,7 +5,6 @@
   "author": "tecfu.com <help@tecfu.com> (http://github.com/tecfu)",
   "main": "dist/orgy.devel.js",
   "dependencies": {
-      "cheerio" : "~0.17"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

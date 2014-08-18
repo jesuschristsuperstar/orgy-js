@@ -321,15 +321,7 @@ private.deferred = {
         }
     },
     hook_before_success: function(fn, arr) {
-        var r;
-        if (public.config().document !== null) {
-            var cheerio = require("cheerio"), $ = cheerio.load(public.config().document);
-            r = fn(arr, this);
-            private.config.document = $.html();
-        } else {
-            r = fn(arr, this);
-        }
-        return r;
+        return fn(arr, this);
     },
     _set_state: function(int) {
         this._state = int;
@@ -680,10 +672,7 @@ private.deferred = {
                     private.deferred.load_script(deferred, data);
                 } else if (dep.type === "css") {
                     if (private.config.document !== null) {
-                        var cheerio = require("cheerio");
-                        var $ = cheerio.load(private.config.document);
-                        var node = $("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
-                        private.config.document = $.html();
+                        var node = private.config.document("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
                         deferred.resolve(node);
                     } else {
                         return public.debug([ dep.url, "Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies." ]);
