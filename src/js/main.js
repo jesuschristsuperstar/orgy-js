@@ -72,6 +72,7 @@ public.config = function(obj){
 
 public.export = function(obj){
     
+    obj.__has_ui = (obj.__has_ui === null) ? true : obj.__has_ui;
     public.modules_exported.push(obj);
     return obj;
 }

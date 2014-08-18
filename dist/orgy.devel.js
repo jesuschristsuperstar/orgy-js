@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.11 
+Version: 1.1.12 
 Built: 2014-08-18 
 Author: tecfu.com  
 */
@@ -33,6 +33,7 @@ public.config = function(obj) {
 };
 
 public.export = function(obj) {
+    obj.__has_ui = obj.__has_ui === null ? true : obj.__has_ui;
     public.modules_exported.push(obj);
     return obj;
 };
@@ -203,6 +204,7 @@ private.deferred = {
         _state: 0,
         _timeout_id: null,
         value: [],
+        __has_ui: null,
         error_q: [],
         then_q: [],
         done_fn: null,

@@ -54,6 +54,7 @@ private.deferred = {
         ,_state : 0
         ,_timeout_id : null
         ,value : []
+        ,__has_ui : null    //WHETHER IS UI MODULE
 
         ,error_q : []  
         ,then_q : []
