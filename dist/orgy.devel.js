@@ -33,7 +33,7 @@ public.config = function(obj) {
 };
 
 public.export = function(obj) {
-    obj.__has_ui = obj.__has_ui === null ? true : obj.__has_ui;
+    obj.__has_ui = typeof obj.__has_ui !== "undefined" ? false : obj.__has_ui;
     public.modules_exported.push(obj);
     return obj;
 };
@@ -204,7 +204,6 @@ private.deferred = {
         _state: 0,
         _timeout_id: null,
         value: [],
-        __has_ui: null,
         error_q: [],
         then_q: [],
         done_fn: null,
@@ -223,7 +222,7 @@ private.deferred = {
             this.value = value;
             if (!this.resolver_fired) {
                 this.resolver_fired = 1;
-                if (this.resolver) {
+                if (typeof this.resolver === "function") {
                     return private.deferred.hook_before_success.call(this, this.resolver, value);
                 }
             }
@@ -447,6 +446,7 @@ private.deferred = {
             prom = private.deferred._wrap_event(obj);
             break;
 
+          case obj.type === "deferred":
           case obj.type === "promise" || obj.then:
             switch (true) {
               case typeof obj.promise === "function":
@@ -556,20 +556,29 @@ private.deferred = {
     },
     load_script: function(deferred, data) {
         if (public.modules_exported.length > public.modules_loaded) {
+            public.modules_loaded++;
             var m = public.modules_exported[public.modules_exported.length - 1];
             if (m.__dependencies instanceof Array) {
                 m.__id = deferred.id;
                 public.queue(m.__dependencies || [], {
                     id: m.__id,
                     resolver: function() {
-                        m.__resolver.call(m, deferred, deferred.value);
-                    }
+                        debugger;
+                        if (typeof m.__resolver === "function") {
+                            return function() {
+                                m.__resolver.call(m, m, deferred);
+                            };
+                        } else {
+                            return null;
+                        }
+                    }()
                 });
             } else {
+                debugger;
                 deferred.resolve(m);
             }
-            public.modules_loaded++;
         } else {
+            debugger;
             deferred.resolve(data);
         }
     },
@@ -583,14 +592,15 @@ private.deferred = {
                 node.type = "text/javascript";
                 node.setAttribute("src", dep.url);
                 node.setAttribute("id", dep.id);
-                (function(node, dep) {
+                (function(node, dep, deferred) {
+                    node, dep, deferred;
                     node.onload = node.onreadystatechange = function() {
                         private.deferred.load_script(deferred, node);
                     };
                     node.onerror = function() {
                         deferred.reject("Failed to load path: " + dep.url);
                     };
-                })(node, dep);
+                })(node, dep, deferred);
                 this.head.appendChild(node);
                 break;
 
@@ -600,14 +610,14 @@ private.deferred = {
                 node.setAttribute("type", "text/css");
                 node.setAttribute("rel", "stylesheet");
                 if (node.onload) {
-                    (function() {
+                    (function(node, dep, deferred) {
                         node.onload = node.onreadystatechange = function() {
                             deferred.resolve(node);
                         };
                         node.onerror = function() {
                             deferred.reeject("Failed to load path: " + dep.url);
                         };
-                    })(node, dep);
+                    })(node, dep, deferred);
                     this.head.appendChild(node);
                     break;
                 } else {
@@ -625,23 +635,25 @@ private.deferred = {
                 if (typeof dep.return_packet !== "undefined") {
                     req.setRequestHeader("return-packet", dep.return_packet);
                 }
-                req.onreadystatechange = function() {
-                    if (req.readyState === 4) {
-                        if (req.status === 200) {
-                            r = req.responseText;
-                            if (dep.type === "json") {
-                                try {
-                                    r = JSON.parse(r);
-                                } catch (e) {
-                                    public.debug([ "Could not decode JSON", dep.url, r ]);
+                (function(dep, deferred) {
+                    req.onreadystatechange = function() {
+                        if (req.readyState === 4) {
+                            if (req.status === 200) {
+                                r = req.responseText;
+                                if (dep.type === "json") {
+                                    try {
+                                        r = JSON.parse(r);
+                                    } catch (e) {
+                                        public.debug([ "Could not decode JSON", dep.url, r ]);
+                                    }
                                 }
+                                deferred.resolve(node || r);
+                            } else {
+                                deferred.reject("Error loading " + dep.url);
                             }
-                            deferred.resolve(node || r);
-                        } else {
-                            deferred.reject("Error loading " + dep.url);
                         }
-                    }
-                };
+                    };
+                })(dep, deferred);
                 req.send(null);
             }
         } else {

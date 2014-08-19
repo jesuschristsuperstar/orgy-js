@@ -54,7 +54,6 @@ private.deferred = {
         ,_state : 0
         ,_timeout_id : null
         ,value : []
-        ,__has_ui : null    //WHETHER IS UI MODULE
 
         ,error_q : []  
         ,then_q : []
@@ -101,7 +100,7 @@ private.deferred = {
                 this.resolver_fired = 1;
 
                 //FIRE THE RESOLVER IF SET
-                if(this.resolver){
+                if(typeof this.resolver === 'function'){
                     return private.deferred.hook_before_success.call(this,this.resolver,value);
                 }
 
@@ -544,6 +543,7 @@ private.deferred = {
                 break;
 
             //ALREADY A PROMISE
+            case(obj.type === 'deferred'):
             case(obj.type === 'promise' || obj.then):   
 
                 switch(true){
@@ -713,6 +713,9 @@ private.deferred = {
 
         //CHECK IF LAST SCRIPT LOADED RETURNED A MODULE
         if(public.modules_exported.length > public.modules_loaded){
+    
+            //INCREMENT MODULES LOADED
+            public.modules_loaded ++;
             
             //GET LAST MODULE EXPORTED
             var m = public.modules_exported[public.modules_exported.length-1];
@@ -725,21 +728,27 @@ private.deferred = {
                 
                 public.queue(m.__dependencies || [],{
                     id : m.__id
-                    ,resolver : function(){
-                        m.__resolver.call(m,deferred,deferred.value);
-                    }
+                    ,resolver : (function(){
+debugger;
+                        if(typeof m.__resolver === 'function'){
+                            return function(){
+                                m.__resolver.call(m,m,deferred);
+                            }
+                        }
+                        else{
+                            return null;
+                        }
+                    }())
                 });
             }
             else{
+debugger;
                 //ELSE RESOLVE NOW
                 deferred.resolve(m)
             }
-
-            //INCREMENT MODULES LOADED
-            public.modules_loaded ++;
         }
         else{
-            
+debugger;    
             deferred.resolve(data);
         }
         
@@ -772,20 +781,22 @@ private.deferred = {
             switch(true){
 
                 case(dep.type==='script'):
-                    
+
                     var node = document.createElement("script");
                     node.type = 'text/javascript';
                     node.setAttribute("src",dep.url);
                     node.setAttribute("id",dep.id);
                     
-                    (function(node,dep){
+                    (function(node,dep,deferred){
+                        node,dep,deferred;
                         node.onload = node.onreadystatechange = function(){
+
                             private.deferred.load_script(deferred,node);
                         };
                         node.onerror = function(){
                             deferred.reject("Failed to load path: " + dep.url);
                         };
-                    }(node,dep))
+                    }(node,dep,deferred))
                     
                     //put scripts before <base> elements, after <meta>
                     this.head.appendChild(node);
@@ -799,7 +810,7 @@ private.deferred = {
                     node.setAttribute("rel","stylesheet");
                     
                     if(node.onload){
-                        (function(){
+                        (function(node,dep,deferred){
                             node.onload = node.onreadystatechange = function(){
                                deferred.resolve(node);
                            };
@@ -808,7 +819,7 @@ private.deferred = {
                                deferred.reeject("Failed to load path: " + dep.url);
                            }
 
-                        }(node,dep));
+                        }(node,dep,deferred));
                         
                         this.head.appendChild(node);
                         break;
@@ -832,27 +843,30 @@ private.deferred = {
                         req.setRequestHeader('return-packet', dep.return_packet);
                     }
 
-                    req.onreadystatechange = function() {
-                        if (req.readyState === 4) {
-                            if(req.status === 200){
-                                r = req.responseText;
-                                if(dep.type === 'json'){
-                                    try{
-                                        r = JSON.parse(r);
-                                    }
-                                    catch(e){
-                                        public.debug(["Could not decode JSON",dep.url,r]);
+                    (function(dep,deferred){
+                        req.onreadystatechange = function() {
+                            if (req.readyState === 4) {
+                                if(req.status === 200){
+                                    r = req.responseText;
+                                    if(dep.type === 'json'){
+                                        try{
+                                            r = JSON.parse(r);
+                                        }
+                                        catch(e){
+                                            public.debug(["Could not decode JSON",dep.url,r]);
 
+                                        }
                                     }
+                                    //WE WANT TO RESOLVE WITH DOM NODE FOR CSS FILES
+                                    deferred.resolve(node || r);
                                 }
-                                //WE WANT TO RESOLVE WITH DOM NODE FOR CSS FILES
-                                deferred.resolve(node || r);
+                                else{
+                                    deferred.reject("Error loading "+dep.url);
+                                }
                             }
-                            else{
-                                deferred.reject("Error loading "+dep.url);
-                            }
-                        }
-                    };
+                        };
+                    }(dep,deferred));
+
                     req.send(null);
             }
         }
@@ -876,8 +890,7 @@ private.deferred = {
                         deferred.resolve(data);
                         
                 }
-            }
-            
+            }     
             
             if(dep.remote){
                 var request = require('request');
