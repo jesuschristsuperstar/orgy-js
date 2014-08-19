@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.1.12 
-Built: 2014-08-18 
+Built: 2014-08-19 
 Author: tecfu.com  
 */
 
@@ -497,9 +497,6 @@ private.deferred = {
         var def = public.deferred({
             id: obj.id
         });
-        var resolver = function() {
-            private.deferred.tpl.resolve.call(def, 1);
-        };
         if (typeof document !== "undefined" && typeof window !== "undefined") {
             if (typeof $ !== "function") {
                 var msg = "window and document based events depend on jQuery";
@@ -509,15 +506,21 @@ private.deferred = {
             } else {
                 switch (true) {
                   case obj.id === "ready" || obj.id === "DOMContentLoaded":
-                    $(document).ready(resolver);
+                    $(document).ready(function() {
+                        def.resolve(1);
+                    });
                     break;
 
                   case obj.id === "load":
-                    $(window).load(resolver);
+                    $(window).load(function() {
+                        def.resolve(1);
+                    });
                     break;
 
                   default:
-                    $(document).on(obj.id, "body", resolver);
+                    $(document).on(obj.id, "body", function() {
+                        def.resolve(1);
+                    });
                 }
             }
         }

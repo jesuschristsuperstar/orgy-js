@@ -622,10 +622,6 @@ private.deferred = {
         var def = public.deferred({
             id : obj.id
         });
-        
-        var resolver = function(){
-            private.deferred.tpl.resolve.call(def,1);
-        };
 
         //BROWSER
         if(typeof document !== 'undefined' && typeof window !== 'undefined'){
@@ -640,13 +636,19 @@ private.deferred = {
                 //For now, depend on jquery for IE8 DOMContentLoaded polyfill
                 switch(true){
                     case(obj.id === 'ready' || obj.id === 'DOMContentLoaded'):
-                        $(document).ready(resolver);
+                        $(document).ready(function(){
+                            def.resolve(1);
+                        });
                         break;
                     case(obj.id === 'load'):
-                        $(window).load(resolver);
+                        $(window).load(function(){
+                            def.resolve(1);
+                        });
                         break;
                     default:
-                        $(document).on(obj.id,"body",resolver);
+                        $(document).on(obj.id,"body",function(){
+                            def.resolve(1);
+                        });
                 }
             }
         }
