@@ -13,7 +13,7 @@
     
     var r = {};
     
-    r.deps = function(basepath){
+    r.deps = function(){
         
         var deps = [
             {
@@ -21,24 +21,24 @@
                 ,timeout : 1000
             }
             ,{
-                url : basepath + "/data/data1.json"
+                url : "/data/data1.json"
                 ,type : "json"
             }
             ,{
-                url : basepath + "/data/data2.json"
+                url : "/data/data2.json"
                 ,type : "json"
             }
             ,{
-                url : basepath + "/data/data3.json"
+                url : "/data/data3.json"
                 ,type : "json"
             }
             ,{
-                url : basepath + "/data/sample.css"
+                url : "/data/sample.css"
                 ,type : "css"
             }
             ,{
                 type : "script"
-                ,url : basepath + "data/test-module.js"
+                ,url : "/data/test-module.js"
             }
         ];
         
@@ -57,8 +57,6 @@
                 }())
             });
         }
-        
-        this.deps = this.deps(options.basepath || '');
     
         return this;
     };

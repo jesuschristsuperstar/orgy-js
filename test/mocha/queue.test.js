@@ -15,8 +15,8 @@ global.assert = require("assert");
 
 var Test = require('../test.class.js');
 
-Test.configure({
-    basepath : './demos'
+Orgy.configure({
+    basepath : './demos/data'
 });
 
 var q = Orgy.queue(Test.deps,{

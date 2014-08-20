@@ -6,33 +6,36 @@ Orgy.config({
         var cheerio = require('cheerio');
         return global.$ = cheerio.load("<html><head></head><body></body></html>");
     }())
+    ,basepath : __dirname
 });
 
-var basepath = __dirname;
-var dependencies = [
-    {
-        type : "timer"
-        ,timeout : 1000
-    }
-    ,{
-        url : basepath + "/data/data1.json"
-        ,type : "json"
-    }
-    ,{
-        url : basepath + "/data/data2.json"
-        ,type : "json"
-    }
-    ,{
-        url : basepath + "/data/data3.json"
-        ,type : "json"
-    }
-    ,{
-        url : basepath + "/data/sample.css"
-        ,type : "css"
-    }
-];
-
-var q = Orgy.queue(dependencies,{
+var q = Orgy.queue(
+    [
+        {
+            type : "timer"
+            ,timeout : 1000
+        }
+        ,{
+            url : "/data/data1.json"
+            ,type : "json"
+        }
+        ,{
+            url : "/data/data2.json"
+            ,type : "json"
+        }
+        ,{
+            url : "/data/data3.json"
+            ,type : "json"
+        }
+        ,{
+            url : "/data/sample.css"
+            ,type : "css"
+        }
+        ,{
+            type : "script"
+            ,url : "/data/test-module.js"
+        }
+    ],{
     id : "q1"
 });
 
