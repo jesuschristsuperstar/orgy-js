@@ -36,6 +36,10 @@
                 url : basepath + "/data/sample.css"
                 ,type : "css"
             }
+            ,{
+                type : "script"
+                ,url : basepath + "data/test-module.js"
+            }
         ];
         
         return deps;
