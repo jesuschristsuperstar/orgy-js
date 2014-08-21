@@ -1,10 +1,12 @@
 (function(r){
     
     if(typeof process === 'object' && process + '' === '[object process]'){
+        
         // is node
         module.exports = r;
     }
     else{
+        
         //not node
         Test = r;
     }
@@ -13,7 +15,7 @@
     
     var r = {};
     
-    r.deps = function(){
+    r.deps = (function(){
         
         var deps = [
             {
@@ -21,45 +23,29 @@
                 ,timeout : 1000
             }
             ,{
-                url : "/data/data1.json"
+                url : "*/data/data1.json"
                 ,type : "json"
             }
             ,{
-                url : "/data/data2.json"
+                url : "*/data/data2.json"
                 ,type : "json"
             }
             ,{
-                url : "/data/data3.json"
+                url : "*/data/data3.json"
                 ,type : "json"
             }
             ,{
-                url : "/data/sample.css"
+                url : "*/data/sample.css"
                 ,type : "css"
             }
             ,{
                 type : "script"
-                ,url : "/data/test-module.js"
+                ,url : "*/data/test-module.js"
             }
         ];
         
         return deps;
-    };
-    
-    r.configure = function(options){
-        
-        if(typeof process === 'object' && process + '' === '[object process]'){
-            
-            Orgy.config({
-                //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
-                document : (function(){
-                    var cheerio = require('cheerio');
-                    return global.$ = cheerio.load("<html><head></head><body></body></html>");
-                }())
-            });
-        }
-    
-        return this;
-    };
+    }());
     
     r.describe = function(q,deps){
         

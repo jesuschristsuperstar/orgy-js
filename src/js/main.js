@@ -60,7 +60,7 @@ public.config = function(obj){
                 private.config[i] = obj[i];
             }
             else{
-                return public.debug("Property "+i+" is not configurable.");
+                return public.debug("Property '"+i+"' is not configurable.");
             }
         }
     }
@@ -308,7 +308,7 @@ public.debug = function(msg,force_debug_mode){
  */
 private.config = {
     
-    basepath : null
+    autopath : null
     ,document : null
     ,debug_mode : 1
     ,mode : (function(){

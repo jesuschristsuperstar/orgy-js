@@ -772,9 +772,25 @@ debugger;
      */
     ,attach_xhr : function(deferred,dep){
 
-        //DEFAULT ALL TO RESOLVE-ON-LOAD
-        dep.rol = (typeof dep.rol !== 'undefined') ? dep.rol : 1;
-
+        //GET AUTOPATH
+        if(dep.url[0] === "*"){
+                
+            var autopath = Orgy.config().autopath;
+            
+            if(typeof autopath !== 'string'){
+                public.debug([
+                        "config.autopath must be set to a string."
+                    ]
+                    ,[
+                        "When a dependency url begins with *, it is replaced by the config property 'autopath'."
+                ]);
+            }
+            else{
+                dep.url = dep.url.replace(/\*/,autopath);
+            }
+        }
+        
+        
         //BROWSER
         if(typeof process !== 'object' || process + '' !== '[object process]'){
             
@@ -905,11 +921,9 @@ debugger;
             }
             else{
                 
-                var path = (private.config.basepath !== null) ? private.config.basepath + dep.url : dep.url;
-
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){
-                    var data = require(path);
+                    var data = require(dep.url);
                     private.deferred.load_script(deferred,data);
                 }
                 //DON'T GET CSS, JUST ADD NODE
@@ -929,10 +943,10 @@ debugger;
 
                     (function(deferred,dep){
                         
-                        fs.readFile(path, 'utf8', function (err, data) {
+                        fs.readFile(dep.url, 'utf8', function (err, data) {
 
                             if (err){
-                                public.debug(["File " + dep.url + " not found @ local path '" + path +"'","CWD: "+process.cwd()]);
+                                public.debug(["File " + dep.url + " not found @ local dep.url '" + dep.url +"'","CWD: "+process.cwd()]);
                                 process.exit();
                             }
 

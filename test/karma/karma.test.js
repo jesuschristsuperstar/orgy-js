@@ -1,5 +1,5 @@
-Test.configure({
-    basepath : '/base/demos'
+Orgy.config({
+    autopath : '/base/demos'
 });
 
 var q = Orgy.queue(Test.deps,{

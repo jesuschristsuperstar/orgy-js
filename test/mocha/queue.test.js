@@ -15,8 +15,15 @@ global.assert = require("assert");
 
 var Test = require('../test.class.js');
 
-Orgy.configure({
-    basepath : './demos/data'
+Orgy.config({
+    
+    autopath : process.cwd() + "/demos"
+    
+    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+    ,document : (function(){
+        var cheerio = require('cheerio');
+        return global.$ = cheerio.load("<html><head></head><body></body></html>");
+    }())
 });
 
 var q = Orgy.queue(Test.deps,{

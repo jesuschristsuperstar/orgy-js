@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.1.12 
-Built: 2014-08-19 
+Built: 2014-08-20 
 Author: tecfu.com  
 */
 
@@ -25,7 +25,7 @@ public.config = function(obj) {
             if (typeof private.config[i] !== "undefined") {
                 private.config[i] = obj[i];
             } else {
-                return public.debug("Property " + i + " is not configurable.");
+                return public.debug("Property '" + i + "' is not configurable.");
             }
         }
     }
@@ -166,7 +166,7 @@ public.debug = function(msg, force_debug_mode) {
 };
 
 private.config = {
-    basepath: null,
+    autopath: null,
     document: null,
     debug_mode: 1,
     mode: function() {
@@ -586,7 +586,14 @@ private.deferred = {
         }
     },
     attach_xhr: function(deferred, dep) {
-        dep.rol = typeof dep.rol !== "undefined" ? dep.rol : 1;
+        if (dep.url[0] === "*") {
+            var autopath = Orgy.config().autopath;
+            if (typeof autopath !== "string") {
+                public.debug([ "config.autopath must be set to a string." ], [ "When a dependency url begins with *, it is replaced by the config property 'autopath'." ]);
+            } else {
+                dep.url = dep.url.replace(/\*/, autopath);
+            }
+        }
         if (typeof process !== "object" || process + "" !== "[object process]") {
             this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
@@ -683,9 +690,8 @@ private.deferred = {
                     }
                 });
             } else {
-                var path = private.config.basepath !== null ? private.config.basepath + dep.url : dep.url;
                 if (dep.type === "script") {
-                    var data = require(path);
+                    var data = require(dep.url);
                     private.deferred.load_script(deferred, data);
                 } else if (dep.type === "css") {
                     if (private.config.document !== null) {
@@ -697,9 +703,9 @@ private.deferred = {
                 } else {
                     var fs = require("fs");
                     (function(deferred, dep) {
-                        fs.readFile(path, "utf8", function(err, data) {
+                        fs.readFile(dep.url, "utf8", function(err, data) {
                             if (err) {
-                                public.debug([ "File " + dep.url + " not found @ local path '" + path + "'", "CWD: " + process.cwd() ]);
+                                public.debug([ "File " + dep.url + " not found @ local dep.url '" + dep.url + "'", "CWD: " + process.cwd() ]);
                                 process.exit();
                             }
                             process_result(deferred, data, dep);
