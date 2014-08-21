@@ -18,7 +18,11 @@
         ///////////////////////////////////////////////////
         __dependencies : [
             {
-                url : "*/data/test-module-2.js"
+                url : "*/data/test-module-2a.js"
+                ,type : "script"
+            }
+            ,{
+                url : "*/data/test-module-2b.js"
                 ,type : "script"
             }
         ]

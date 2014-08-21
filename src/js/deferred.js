@@ -805,7 +805,7 @@ debugger;
                     node.setAttribute("id",dep.id);
                     
                     (function(node,dep,deferred){
-                        node,dep,deferred;
+
                         node.onload = node.onreadystatechange = function(){
 
                             private.deferred.load_script(deferred,node);
