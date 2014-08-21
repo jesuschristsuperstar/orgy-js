@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.1.12 
-Built: 2014-08-20 
+Built: 2014-08-21 
 Author: tecfu.com  
 */
 
@@ -166,7 +166,7 @@ public.debug = function(msg, force_debug_mode) {
 };
 
 private.config = {
-    autopath: null,
+    autopath: "",
     document: null,
     debug_mode: 1,
     mode: function() {
@@ -566,7 +566,6 @@ private.deferred = {
                 public.queue(m.__dependencies || [], {
                     id: m.__id,
                     resolver: function() {
-                        debugger;
                         if (typeof m.__resolver === "function") {
                             return function() {
                                 m.__resolver.call(m, m, deferred);

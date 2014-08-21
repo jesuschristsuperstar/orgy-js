@@ -308,7 +308,7 @@ public.debug = function(msg,force_debug_mode){
  */
 private.config = {
     
-    autopath : null
+    autopath : ''
     ,document : null
     ,debug_mode : 1
     ,mode : (function(){

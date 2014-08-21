@@ -731,7 +731,6 @@ private.deferred = {
                 public.queue(m.__dependencies || [],{
                     id : m.__id
                     ,resolver : (function(){
-debugger;
                         if(typeof m.__resolver === 'function'){
                             return function(){
                                 m.__resolver.call(m,m,deferred);
