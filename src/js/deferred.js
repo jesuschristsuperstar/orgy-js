@@ -42,6 +42,7 @@ private.deferred = {
         ,settled : 0 
         ,id : null
         ,done_fired : 0
+        ,is_orgy_module : 0
 
         /**
          * STATE CODES:
@@ -711,51 +712,6 @@ private.deferred = {
     }
     
     
-    ,load_script : function(deferred,data){
-
-        //CHECK IF LAST SCRIPT LOADED RETURNED A MODULE
-        if(public.modules_exported.length > public.modules_loaded){
-    
-            //INCREMENT MODULES LOADED
-            public.modules_loaded ++;
-            
-            //GET LAST MODULE EXPORTED
-            var m = public.modules_exported[public.modules_exported.length-1];
-
-            //IF RESOLVER EXISTS, LOAD ONCE RESOLVED
-            if(m.__dependencies instanceof Array){
-                
-                //AUTO SET ID PROPERTY ON MODULE
-                m.__id = deferred.id;
-                
-                public.queue(m.__dependencies || [],{
-                    id : m.__id
-                    ,resolver : (function(){
-                        if(typeof m.__resolver === 'function'){
-                            return function(){
-                                m.__resolver.call(m,m,deferred);
-                            }
-                        }
-                        else{
-                            return null;
-                        }
-                    }())
-                });
-            }
-            else{
-debugger;
-                //ELSE RESOLVE NOW
-                deferred.resolve(m)
-            }
-        }
-        else{
-debugger;    
-            deferred.resolve(data);
-        }
-        
-    }
-    
-    
     /**
      *    
      * 
@@ -807,8 +763,11 @@ debugger;
                     (function(node,dep,deferred){
 
                         node.onload = node.onreadystatechange = function(){
-
-                            private.deferred.load_script(deferred,node);
+                            //Do not autoresolve modules, which are
+                            //self-resolved via Orgy.export
+                            if(deferred._was_defined === 0){
+                                deferred.resolve((typeof node.value !== 'undefined') ? node.value : node)
+                            }
                         };
                         node.onerror = function(){
                             deferred.reject("Failed to load path: " + dep.url);
@@ -894,10 +853,6 @@ debugger;
 
                 switch(true){
 
-                    case(dep.type==='script'):
-                        private.deferred.load_script(deferred,data);
-                        break;
-
                     case(dep.type === 'json'):
                         data = JSON.parse(data);
                         deferred.resolve(data);
@@ -923,7 +878,7 @@ debugger;
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){
                     var data = require(dep.url);
-                    private.deferred.load_script(deferred,data);
+                    deferred.resolve(data);
                 }
                 //DON'T GET CSS, JUST ADD NODE
                 else if(dep.type === 'css'){

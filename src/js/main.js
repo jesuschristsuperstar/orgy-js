@@ -70,12 +70,41 @@ public.config = function(obj){
 }
 
 
-public.export = function(obj){
+public.export = function(s){
     
+    //IF RESOLVER EXISTS, LOAD ONCE RESOLVED
+    if(typeof s === 'object' && s.__dependencies instanceof Array){
+
+        //PREVENTS FROM CALLER DOCUMENT'S ONLOAD EVENT RESOLVING 
+        s._was_defined = 1;
+
+        //AUTO SET ID PROPERTY ON MODULE
+        s.__id = deferred.id;
+
+        public.queue(s.__dependencies,{
+            id : s.__id
+            ,resolver : (function(){
+                if(typeof s.__resolver === 'function'){
+                    return function(){
+                        s.__resolver.call(s,s,deferred);
+                    }
+                }
+                else{
+                    return null;
+                }
+            }())
+        });
+    }
+    else{
+
+        //ELSE RESOLVE NOW
+        deferred.resolve(s)
+    }
+
+/*    
     obj.__has_ui = (typeof obj.__has_ui !== 'undefined') ? false : obj.__has_ui;
-    public.modules_exported.push(obj);
-    
-    return obj;
+*/
+    return s;
 }
 
 

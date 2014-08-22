@@ -8,6 +8,7 @@
         module.exports = (Orgy.export(obj) || obj);
     }
     else{
+debugger;
         Orgy.export(obj);
     }
 }(function(){
