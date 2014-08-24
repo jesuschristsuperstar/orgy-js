@@ -70,71 +70,58 @@ public.config = function(obj){
 }
 
 
-public.export = function(s){
-    
-    //IF RESOLVER EXISTS, LOAD ONCE RESOLVED
-    if(typeof s === 'object' && s.__dependencies instanceof Array){
-
-        //PREVENTS FROM CALLER DOCUMENT'S ONLOAD EVENT RESOLVING 
-        s._was_defined = 1;
-
-        //AUTO SET ID PROPERTY ON MODULE
-        s.__id = deferred.id;
-
-        public.queue(s.__dependencies,{
-            id : s.__id
-            ,resolver : (function(){
-                if(typeof s.__resolver === 'function'){
-                    return function(){
-                        s.__resolver.call(s,s,deferred);
-                    }
-                }
-                else{
-                    return null;
-                }
-            }())
-        });
-    }
-    else{
-
-        //ELSE RESOLVE NOW
-        deferred.resolve(s)
-    }
-
-/*    
-    obj.__has_ui = (typeof obj.__has_ui !== 'undefined') ? false : obj.__has_ui;
-*/
-    return s;
-}
-
-
 /**
 * Creates a new promise from a value and an id and automatically resolves it.
+* 
+*     obj.__has_ui = (typeof obj.__has_ui !== 'undefined') ? false : obj.__has_ui;
 * 
 * @param {string} id
 * @param {mixed} data
 * @returns {object} resolved promise
 */
 public.define = function(id,data){
+    
+    var def;
 
-   //ALLOW OVERWRITING OF UNSETTLED PROMISES
-   //GOOD FOR WHEN A FILE IS NOT RESOLVED-ON-LOAD 
-   if(!public.list[id] || public.list[id].settled !== 1){
-       
-       //GET DEFERRED
-       var def = public.deferred({
+    //MAKE SURE NOT TRYING TO RESOLVE EXISTING DEF
+    if(public.list[id] && public.list[id].settled === 1){
+        return public.debug("Can't define " + id + ". Already resolved.");
+    }
+    
+    //ORGY STYLE MODULE HANDLING
+    if(typeof data === 'object' && data.__dependencies instanceof Array){
+
+        //CHECK IF LOADED FROM PENDING REMOTE REQUEST
+        if(public.list[id]){
+            //PREVENTS FROM CALLER FILE'S ONLOAD EVENT FROM RESOLVING 
+            public.list[id]._was_defined = 1;
+        }
+
+        public.queue(data.__dependencies,{
+            id : id
+            ,resolver : (typeof data.__resolver === 'function')
+            ? data.__resolver.bind(data) : null
+        });
+    }
+    else{
+
+        //CREATE/GET DEFERRED
+        var def = public.deferred({
            id : id
-       });
+        });
 
-       //SETTLE 
-       def.resolve(data);
+        //SETTLE 
+        def.resolve(data);
        
-       return def;
-   }
-   else{
-       public.debug("Can't define "+id + ". Already resolved.");
-   }
-
+    }
+    
+    
+    if(typeof process === 'object' && process + '' === '[object process]'){
+        module.exports = def;
+    }
+    else{
+        return def;
+    }
 };
 
 

@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.13 
-Built: 2014-08-21 
+Version: 1.1.14 
+Built: 2014-08-23 
 Author: tecfu.com  
 */
 
@@ -32,21 +32,29 @@ public.config = function(obj) {
     return private.config;
 };
 
-public.export = function(obj) {
-    obj.__has_ui = typeof obj.__has_ui !== "undefined" ? false : obj.__has_ui;
-    public.modules_exported.push(obj);
-    return obj;
-};
-
 public.define = function(id, data) {
-    if (!public.list[id] || public.list[id].settled !== 1) {
+    var def;
+    if (public.list[id] && public.list[id].settled === 1) {
+        return public.debug("Can't define " + id + ". Already resolved.");
+    }
+    if (typeof data === "object" && data.__dependencies instanceof Array) {
+        if (public.list[id]) {
+            public.list[id]._was_defined = 1;
+        }
+        public.queue(data.__dependencies, {
+            id: id,
+            resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
+        });
+    } else {
         var def = public.deferred({
             id: id
         });
         def.resolve(data);
-        return def;
+    }
+    if (typeof process === "object" && process + "" === "[object process]") {
+        module.exports = def;
     } else {
-        public.debug("Can't define " + id + ". Already resolved.");
+        return def;
     }
 };
 
@@ -201,6 +209,7 @@ private.deferred = {
         settled: 0,
         id: null,
         done_fired: 0,
+        is_orgy_module: 0,
         _state: 0,
         _timeout_id: null,
         value: [],
@@ -557,33 +566,6 @@ private.deferred = {
         deferred = private.deferred.attach_xhr(deferred, dep);
         return deferred;
     },
-    load_script: function(deferred, data) {
-        if (public.modules_exported.length > public.modules_loaded) {
-            public.modules_loaded++;
-            var m = public.modules_exported[public.modules_exported.length - 1];
-            if (m.__dependencies instanceof Array) {
-                m.__id = deferred.id;
-                public.queue(m.__dependencies || [], {
-                    id: m.__id,
-                    resolver: function() {
-                        if (typeof m.__resolver === "function") {
-                            return function() {
-                                m.__resolver.call(m, m, deferred);
-                            };
-                        } else {
-                            return null;
-                        }
-                    }()
-                });
-            } else {
-                debugger;
-                deferred.resolve(m);
-            }
-        } else {
-            debugger;
-            deferred.resolve(data);
-        }
-    },
     attach_xhr: function(deferred, dep) {
         if (dep.url[0] === "*") {
             var autopath = Orgy.config().autopath;
@@ -602,9 +584,10 @@ private.deferred = {
                 node.setAttribute("src", dep.url);
                 node.setAttribute("id", dep.id);
                 (function(node, dep, deferred) {
-                    node, dep, deferred;
                     node.onload = node.onreadystatechange = function() {
-                        private.deferred.load_script(deferred, node);
+                        if (deferred._was_defined === 0) {
+                            deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
+                        }
                     };
                     node.onerror = function() {
                         deferred.reject("Failed to load path: " + dep.url);
@@ -668,10 +651,6 @@ private.deferred = {
         } else {
             function process_result(deferred, data, dep) {
                 switch (true) {
-                  case dep.type === "script":
-                    private.deferred.load_script(deferred, data);
-                    break;
-
                   case dep.type === "json":
                     data = JSON.parse(data);
                     deferred.resolve(data);
@@ -691,7 +670,7 @@ private.deferred = {
             } else {
                 if (dep.type === "script") {
                     var data = require(dep.url);
-                    private.deferred.load_script(deferred, data);
+                    deferred.resolve(data);
                 } else if (dep.type === "css") {
                     if (private.config.document !== null) {
                         var node = private.config.document("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
