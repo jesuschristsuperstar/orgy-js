@@ -1,7 +1,4 @@
-/**
- * Interface to display customer account transactions.
- * 
- * */
+
 (function(obj){
     
     Orgy.define(obj.__id,obj);
@@ -47,18 +44,19 @@
         id = index.modules[index.last];
         index.last ++;
     }
+    else if(typeof process === 'object' && process + '' === '[object process]'){
+console.log("-------1");
+        //ID FROM NODEJS FILE PATH
+        id = __filename.split(".").slice(0,-1);
+    }
     else{
-        
-        if(typeof process === 'object' && process + '' === '[object process]'){
-            //ID FROM NODEJS FILE PATH
-            id = __filename.split(".").slice(0,-1);
-        }
-        else{
-            //ID FROM BROWSER URL
-            id = document.currentScript.src.split("/").pop().split(".").slice(0,-1)[0];
-        }
-   
+console.log("-------2");
+        //ID FROM BROWSER URL
+        //id = document.currentScript.src.split("/").pop().split(".").slice(0,-1)[0];
+        id = printStackTrace().pop().split("/").pop().split(".")[0];
+console.log(id); 
     }
     
+
     return id;
 }())));
