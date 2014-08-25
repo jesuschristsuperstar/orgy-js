@@ -205,7 +205,7 @@ private.deferred = {
         settled: 0,
         id: null,
         done_fired: 0,
-        is_orgy_module: 0,
+        _is_orgy_module: 0,
         _state: 0,
         _timeout_id: null,
         value: [],
