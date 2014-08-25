@@ -90,10 +90,10 @@ public.define = function(id,data){
 
     
     //ORGY STYLE MODULE HANDLING
-    if(typeof data === 'object' && data.__dependencies instanceof Array){
+    if(typeof data === 'object' && data.__id){
 
         def = (function(def){
-            return public.queue(data.__dependencies
+            return public.queue(data.__dependencies || []
             ,{
                 id : id
                 ,resolver : (typeof data.__resolver === 'function')
