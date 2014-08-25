@@ -552,7 +552,7 @@ private.deferred = {
         var required = [ "id", "url" ];
         for (var i in required) {
             if (!dep[required[i]]) {
-                return public.debug([ "File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream." ]);
+                return public.debug([ "File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream.", dep ]);
             }
         }
         if (public.list[dep.id]) {

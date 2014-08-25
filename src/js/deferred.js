@@ -692,6 +692,7 @@ private.deferred = {
                 return public.debug([
                     "File requests converted to promises require: " + required[i]
                     ,"Make sure you weren't expecting dependency to already have been resolved upstream."
+                    ,dep
                 ]
                 );
             }
