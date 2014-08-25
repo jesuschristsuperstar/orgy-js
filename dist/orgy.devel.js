@@ -37,9 +37,9 @@ public.define = function(id, data) {
     if (public.list[id] && public.list[id].settled === 1) {
         return public.debug("Can't define " + id + ". Already resolved.", true);
     }
-    if (typeof data === "object" && data.__dependencies instanceof Array) {
+    if (typeof data === "object" && data.__id) {
         def = function(def) {
-            return public.queue(data.__dependencies, {
+            return public.queue(data.__dependencies || [], {
                 id: id,
                 resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
             });
