@@ -88,18 +88,18 @@ public.define = function(id,data){
         return public.debug("Can't define " + id + ". Already resolved.",true);
     }
 
+    data.__dependencies = (typeof data.__dependencies === 'function') 
+        ? data.__dependencies.call(data) 
+        : data.__dependencies;
     
-    //ORGY STYLE MODULE HANDLING
-    if(typeof data === 'object' && data.__id){
+    //ORGY MODULE HANDLING
+    if(typeof data === 'object' && typeof data.__id === 'string'){
 
-        def = (function(def){
-            return public.queue(data.__dependencies || []
-            ,{
-                id : id
-                ,resolver : (typeof data.__resolver === 'function')
-                ? data.__resolver.bind(data) : null
-            });
-        }(def));
+        def = public.queue(data.__dependencies || [],{
+            id : id
+            ,resolver : (typeof data.__resolver === 'function')
+            ? data.__resolver.bind(data) : null
+        });
         
         def._is_orgy_module = 1;
     }

@@ -37,13 +37,12 @@ public.define = function(id, data) {
     if (public.list[id] && public.list[id].settled === 1) {
         return public.debug("Can't define " + id + ". Already resolved.", true);
     }
-    if (typeof data === "object" && data.__id) {
-        def = function(def) {
-            return public.queue(data.__dependencies || [], {
-                id: id,
-                resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
-            });
-        }(def);
+    data.__dependencies = typeof data.__dependencies === "function" ? data.__dependencies.call(data) : data.__dependencies;
+    if (typeof data === "object" && typeof data.__id === "string") {
+        def = public.queue(data.__dependencies || [], {
+            id: id,
+            resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
+        });
         def._is_orgy_module = 1;
     } else {
         def = public.deferred({
