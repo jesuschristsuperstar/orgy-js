@@ -136,14 +136,9 @@ private.queue = {
                 
                 switch(true){
 
-                    //CHECK IF ID OF EXISTING PROMISE
-                    case(typeof arr[a] === 'string'):
-                        if(!public.list[arr[a]]){
-                            return public.debug(arr[a]+"' does not exist so cannot be added to a queue.");
-                        }
-                        else{
-                            arr[a] = public.list[arr[a]];
-                        }
+                    //CHECK IF EXISTING PROMISE
+                    case(typeof public.list[arr[a]['id']] === 'object'):
+                        arr[a] = public.list[arr[a]['id']];
                         break;
 
                     //IF NOT, ATTEMPT TO CONVERT IT TO A PROMISE

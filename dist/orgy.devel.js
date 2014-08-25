@@ -41,6 +41,7 @@ public.define = function(id, data) {
     if (typeof data === "object" && typeof data.__id === "string") {
         def = public.queue(data.__dependencies || [], {
             id: id,
+            __ui: typeof data.__ui !== "undefined" ? data.__ui : 1,
             _is_orgy_module: 1,
             resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
         });
@@ -211,7 +212,6 @@ private.deferred = {
         id: null,
         done_fired: 0,
         _is_orgy_module: 0,
-        __ui: 1,
         _state: 0,
         _timeout_id: null,
         value: [],
@@ -465,6 +465,13 @@ private.deferred = {
           case obj.type === "deferred":
           case obj.type === "promise" || obj.then:
             switch (true) {
+              case typeof obj.id === "string":
+                console.warn("Promise '" + obj.id + "': did not exist. Auto creating new deferred.");
+                prom = public.deferred({
+                    id: obj.id
+                });
+                break;
+
               case typeof obj.promise === "function":
                 if (obj.scope) {
                     prom = obj.promise.call(obj.scope);
@@ -475,18 +482,6 @@ private.deferred = {
 
               case obj.then:
                 prom = obj;
-                break;
-
-              case typeof obj.id === "string":
-                if (public.list[obj.id]) {
-                    prom = public.list[obj.id];
-                } else {
-                    console.warn("Promise '" + obj.id + "': did not exist. Auto creating new deferred.");
-                    prom = public.deferred({
-                        id: obj.id
-                    });
-                }
-                ;
                 break;
 
               default:            }
@@ -557,7 +552,7 @@ private.deferred = {
         var required = [ "id", "url" ];
         for (var i in required) {
             if (!dep[required[i]]) {
-                return public.debug("File requests converted to promises require: " + required[i]);
+                return public.debug([ "File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream." ]);
             }
         }
         if (public.list[dep.id]) {
@@ -751,12 +746,8 @@ private.queue = {
             }
             for (var a in arr) {
                 switch (true) {
-                  case typeof arr[a] === "string":
-                    if (!public.list[arr[a]]) {
-                        return public.debug(arr[a] + "' does not exist so cannot be added to a queue.");
-                    } else {
-                        arr[a] = public.list[arr[a]];
-                    }
+                  case typeof public.list[arr[a]["id"]] === "object":
+                    arr[a] = public.list[arr[a]["id"]];
                     break;
 
                   case typeof arr[a] === "object" && typeof arr[a].then !== "function":

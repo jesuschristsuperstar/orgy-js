@@ -557,6 +557,14 @@ private.deferred = {
 
                 switch(true){
                     
+                    //OBJECT IS A REFERENCE TO A PROMISE
+                    case(typeof obj.id === 'string'):
+                        console.warn("Promise '"+obj.id +"': did not exist. Auto creating new deferred.");
+                        prom = public.deferred({
+                            id : obj.id
+                        });
+                        break;
+                    
                     //OBJECT PROPERTY .promise EXPECTED TO RETURN A PROMISE
                     case(typeof obj.promise === 'function'):
                         if(obj.scope){
@@ -570,21 +578,6 @@ private.deferred = {
                     //OBJECT IS A PROMISE
                     case(obj.then):
                         prom = obj;
-                        break;
-                    
-                    //OBJECT IS A REFERENCE TO A PROMISE
-                    case(typeof obj.id === 'string'):
-                        //GET EXISTING
-                        if(public.list[obj.id]){
-                            prom = public.list[obj.id];
-                        }
-                        //CREATE DEFERRED
-                        else{
-                            console.warn("Promise '"+obj.id +"': did not exist. Auto creating new deferred.");
-                            prom = public.deferred({
-                                id : obj.id
-                            });
-                        };
                         break;
                         
                     default:
@@ -696,7 +689,11 @@ private.deferred = {
         var required = ["id","url"];
         for(var i in required){
             if(!dep[required[i]]){
-                return public.debug("File requests converted to promises require: " + required[i]);
+                return public.debug([
+                    "File requests converted to promises require: " + required[i]
+                    ,"Make sure you weren't expecting dependency to already have been resolved upstream."
+                ]
+                );
             }
         }
 
