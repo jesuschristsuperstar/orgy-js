@@ -765,7 +765,8 @@ private.deferred = {
                         node.onload = node.onreadystatechange = function(){
                             //Do not autoresolve modules, which are
                             //self-resolved via Orgy.export
-                            if(deferred._was_defined === 0){
+                            if(!deferred._is_orgy_module){
+debugger;
                                 deferred.resolve((typeof node.value !== 'undefined') ? node.value : node)
                             }
                         };
@@ -878,7 +879,10 @@ private.deferred = {
                 //DON'T GET SCRIPTS AS TEXT
                 if(dep.type === 'script'){
                     var data = require(dep.url);
-                    deferred.resolve(data);
+                    
+                    if(!deferred._is_orgy_module){
+                        deferred.resolve(data);
+                    }
                 }
                 //DON'T GET CSS, JUST ADD NODE
                 else if(dep.type === 'css'){

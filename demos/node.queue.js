@@ -6,7 +6,7 @@ Orgy.config({
         var cheerio = require('cheerio');
         return global.$ = cheerio.load("<html><head></head><body></body></html>");
     }())
-    ,basepath : __dirname
+    ,autopath : __dirname
 });
 
 var q = Orgy.queue(
@@ -16,24 +16,24 @@ var q = Orgy.queue(
             ,timeout : 1000
         }
         ,{
-            url : "/data/data1.json"
+            url : "*/data/data1.json"
             ,type : "json"
         }
         ,{
-            url : "/data/data2.json"
+            url : "*/data/data2.json"
             ,type : "json"
         }
         ,{
-            url : "/data/data3.json"
+            url : "*/data/data3.json"
             ,type : "json"
         }
         ,{
-            url : "/data/sample.css"
+            url : "*/data/sample.css"
             ,type : "css"
         }
         ,{
             type : "script"
-            ,url : "/data/test-module.js"
+            ,url : "*/data/test-module.js"
         }
     ],{
     id : "q1"
@@ -57,14 +57,3 @@ q.done(function(value){
     //GET MODIFIED DOM CONTENT 
     console.log(Orgy.config().document.html());
 });
-
-
-
-
-
-
-
-
-/** IGNORE UNIT TESTING INFO **/
-exports.dependencies = dependencies;
-/** END IGNORE UNIT TESTING INFO **/

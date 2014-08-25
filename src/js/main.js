@@ -85,28 +85,28 @@ public.define = function(id,data){
 
     //MAKE SURE NOT TRYING TO RESOLVE EXISTING DEF
     if(public.list[id] && public.list[id].settled === 1){
-        return public.debug("Can't define " + id + ". Already resolved.");
+        return public.debug("Can't define " + id + ". Already resolved.",true);
     }
+
     
     //ORGY STYLE MODULE HANDLING
     if(typeof data === 'object' && data.__dependencies instanceof Array){
 
-        //CHECK IF LOADED FROM PENDING REMOTE REQUEST
-        if(public.list[id]){
-            //PREVENTS FROM CALLER FILE'S ONLOAD EVENT FROM RESOLVING 
-            public.list[id]._was_defined = 1;
-        }
-
-        public.queue(data.__dependencies,{
-            id : id
-            ,resolver : (typeof data.__resolver === 'function')
-            ? data.__resolver.bind(data) : null
-        });
+        def = (function(def){
+            return public.queue(data.__dependencies
+            ,{
+                id : id
+                ,resolver : (typeof data.__resolver === 'function')
+                ? data.__resolver.bind(data) : null
+            });
+        }(def));
+        
+        def._is_orgy_module = 1;
     }
     else{
 
         //CREATE/GET DEFERRED
-        var def = public.deferred({
+        def = public.deferred({
            id : id
         });
 
@@ -115,13 +115,7 @@ public.define = function(id,data){
        
     }
     
-    
-    if(typeof process === 'object' && process + '' === '[object process]'){
-        module.exports = def;
-    }
-    else{
-        return def;
-    }
+    return def;
 };
 
 

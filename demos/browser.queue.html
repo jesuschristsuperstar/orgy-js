@@ -6,7 +6,6 @@
     document.currentScript polyfill 
     used by anonymous, self-naming module test-module.js
     --> 
-    <script src="../js/stacktrace.js"></script>
     <script src="../dist/orgy.devel.js"></script>
     
 <script>
@@ -17,19 +16,11 @@
 
     var q = Orgy.queue([
         {
-            timeout : 2500
-            ,type : "timer"
-        }
-        ,{
             url : "data/data1.json"
             ,type : "json"
         }
         ,{
             url : "data/data2.json"
-            ,type : "json"
-        }
-        ,{
-            url : "data/data3.json"
             ,type : "json"
         }
         ,{
@@ -40,8 +31,15 @@
             type : "script"
             ,url : "data/test-module.js"
         }
+        /*
+        ,{
+            timeout : 2500
+            ,type : "timer"
+        }
+        */
+        
     ],{
-       id : "q1" //GLOBAL ACCESSOR
+       id : "q1" //ID MUST BE SET TO MAKE ACCESSIBLE GLOBALLY
     });
 
 

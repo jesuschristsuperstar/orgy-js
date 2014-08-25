@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.1.14 
-Built: 2014-08-24 
+Built: 2014-08-25 
 Author: tecfu.com  
 */
 
@@ -35,27 +35,23 @@ public.config = function(obj) {
 public.define = function(id, data) {
     var def;
     if (public.list[id] && public.list[id].settled === 1) {
-        return public.debug("Can't define " + id + ". Already resolved.");
+        return public.debug("Can't define " + id + ". Already resolved.", true);
     }
     if (typeof data === "object" && data.__dependencies instanceof Array) {
-        if (public.list[id]) {
-            public.list[id]._was_defined = 1;
-        }
-        public.queue(data.__dependencies, {
-            id: id,
-            resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
-        });
+        def = function(def) {
+            return public.queue(data.__dependencies, {
+                id: id,
+                resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
+            });
+        }(def);
+        def._is_orgy_module = 1;
     } else {
-        var def = public.deferred({
+        def = public.deferred({
             id: id
         });
         def.resolve(data);
     }
-    if (typeof process === "object" && process + "" === "[object process]") {
-        module.exports = def;
-    } else {
-        return def;
-    }
+    return def;
 };
 
 public.assign = function(tgt, arr, add) {
@@ -585,7 +581,8 @@ private.deferred = {
                 node.setAttribute("id", dep.id);
                 (function(node, dep, deferred) {
                     node.onload = node.onreadystatechange = function() {
-                        if (deferred._was_defined === 0) {
+                        if (!deferred._is_orgy_module) {
+                            debugger;
                             deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
                         }
                     };
@@ -670,7 +667,9 @@ private.deferred = {
             } else {
                 if (dep.type === "script") {
                     var data = require(dep.url);
-                    deferred.resolve(data);
+                    if (!deferred._is_orgy_module) {
+                        deferred.resolve(data);
+                    }
                 } else if (dep.type === "css") {
                     if (private.config.document !== null) {
                         var node = private.config.document("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
