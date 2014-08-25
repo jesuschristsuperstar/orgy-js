@@ -94,14 +94,13 @@ public.define = function(id,data){
     
     //ORGY MODULE HANDLING
     if(typeof data === 'object' && typeof data.__id === 'string'){
-
+        
         def = public.queue(data.__dependencies || [],{
             id : id
+            ,_is_orgy_module : 1
             ,resolver : (typeof data.__resolver === 'function')
             ? data.__resolver.bind(data) : null
         });
-        
-        def._is_orgy_module = 1;
     }
     else{
 
@@ -175,8 +174,16 @@ public.assign = function(tgt,arr,add){
 };
 
 
-public.register_callback = function(name,fn){
-    public.registered_callbacks[name] = fn;
+public.register_callback = function(obj){
+    
+    var req = ['id','fn'];
+    for(var i in req){
+        if(typeof obj[req[i]] === 'undefined'){
+            return public.debug("registered callbacks require property: "+req[i]);
+        }
+    }
+    
+    public.registered_callbacks[obj.id] = obj;
 };
 
     

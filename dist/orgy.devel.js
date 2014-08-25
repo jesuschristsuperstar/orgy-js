@@ -41,9 +41,9 @@ public.define = function(id, data) {
     if (typeof data === "object" && typeof data.__id === "string") {
         def = public.queue(data.__dependencies || [], {
             id: id,
+            _is_orgy_module: 1,
             resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
         });
-        def._is_orgy_module = 1;
     } else {
         def = public.deferred({
             id: id
@@ -85,8 +85,14 @@ public.assign = function(tgt, arr, add) {
     return q;
 };
 
-public.register_callback = function(name, fn) {
-    public.registered_callbacks[name] = fn;
+public.register_callback = function(obj) {
+    var req = [ "id", "fn" ];
+    for (var i in req) {
+        if (typeof obj[req[i]] === "undefined") {
+            return public.debug("registered callbacks require property: " + req[i]);
+        }
+    }
+    public.registered_callbacks[obj.id] = obj;
 };
 
 public.array_to_function = function(target) {
@@ -252,8 +258,13 @@ private.deferred = {
                 }
             }
             for (var i in public.registered_callbacks) {
-                console.log("Orgy.js executing registered callback '" + i + "' on " + this.id);
-                public.registered_callbacks[i].call(this);
+                if (typeof public.registered_callbacks[i].filter === "function" && public.registered_callbacks[i].filter.call(this)) {
+                    continue;
+                }
+                if (public.config().debug_mode) {
+                    console.log("Orgy.js executing registered callback '" + i + "' on " + this.id);
+                }
+                public.registered_callbacks[i].fn.call(this);
             }
             if (this._timeout_id) {
                 clearTimeout(this._timeout_id);

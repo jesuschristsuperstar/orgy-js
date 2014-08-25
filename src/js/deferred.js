@@ -159,8 +159,18 @@ private.deferred = {
 
             //EXECUTE ANY GLOBALLY REGISTERED CALLBACKS
             for (var i in public.registered_callbacks){
-                console.log("Orgy.js executing registered callback '"+i+"' on " + this.id);
-                public.registered_callbacks[i].call(this);
+      
+                //SKIP IF FILTER RETURNS TRUE
+                if(typeof public.registered_callbacks[i].filter === 'function'
+                        && public.registered_callbacks[i].filter.call(this)){
+                    continue;
+                }
+                
+                if(public.config().debug_mode){
+                    console.log("Orgy.js executing registered callback '"+i+"' on " + this.id);
+                }
+                
+                public.registered_callbacks[i].fn.call(this);
             }
            
             //REMOVE AUTO TIMEOUT TIMER
