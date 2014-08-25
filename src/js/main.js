@@ -97,6 +97,7 @@ public.define = function(id,data){
         
         def = public.queue(data.__dependencies || [],{
             id : id
+            ,__ui : (typeof data.__ui !== 'undefined') ? data.__ui : 1
             ,_is_orgy_module : 1
             ,resolver : (typeof data.__resolver === 'function')
             ? data.__resolver.bind(data) : null

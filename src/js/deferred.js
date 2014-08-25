@@ -43,7 +43,7 @@ private.deferred = {
         ,id : null
         ,done_fired : 0
         ,_is_orgy_module : 0
-
+        
         /**
          * STATE CODES:
          * ------------------
@@ -159,7 +159,7 @@ private.deferred = {
 
             //EXECUTE ANY GLOBALLY REGISTERED CALLBACKS
             for (var i in public.registered_callbacks){
-      
+
                 //SKIP IF FILTER RETURNS TRUE
                 if(typeof public.registered_callbacks[i].filter === 'function'
                         && public.registered_callbacks[i].filter.call(this)){
