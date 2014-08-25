@@ -466,8 +466,6 @@ private.deferred = {
         }
       
         var r1;
-
-//debugger;
         
         for(var i in obj[propName]){
 
@@ -585,10 +583,7 @@ private.deferred = {
 
                 //MAKE SURE IS PROMISE
                 if(typeof prom !== 'object' || !prom.then){
-                    console.error("Dependency labeled as a promise did not return a promise.");
-                    console.error(obj);
-                    debugger;
-                    return false;
+                    return public.debug("Dependency labeled as a promise did not return a promise.",obj);
                 }
                 break;
 
@@ -629,8 +624,6 @@ private.deferred = {
             
             if(typeof $ !== 'function'){
                 var msg = 'window and document based events depend on jQuery';
-                console.error(msg);
-                debugger;
                 def.reject(msg);
             }
             else{
@@ -766,7 +759,6 @@ private.deferred = {
                             //Do not autoresolve modules, which are
                             //self-resolved via Orgy.export
                             if(!deferred._is_orgy_module){
-debugger;
                                 deferred.resolve((typeof node.value !== 'undefined') ? node.value : node)
                             }
                         };

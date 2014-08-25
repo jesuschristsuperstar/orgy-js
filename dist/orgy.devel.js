@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.1.14 
+Version: 1.2.0 
 Built: 2014-08-25 
 Author: tecfu.com  
 */
@@ -480,10 +480,7 @@ private.deferred = {
 
               default:            }
             if (typeof prom !== "object" || !prom.then) {
-                console.error("Dependency labeled as a promise did not return a promise.");
-                console.error(obj);
-                debugger;
-                return false;
+                return public.debug("Dependency labeled as a promise did not return a promise.", obj);
             }
             break;
 
@@ -505,8 +502,6 @@ private.deferred = {
         if (typeof document !== "undefined" && typeof window !== "undefined") {
             if (typeof $ !== "function") {
                 var msg = "window and document based events depend on jQuery";
-                console.error(msg);
-                debugger;
                 def.reject(msg);
             } else {
                 switch (true) {
@@ -582,7 +577,6 @@ private.deferred = {
                 (function(node, dep, deferred) {
                     node.onload = node.onreadystatechange = function() {
                         if (!deferred._is_orgy_module) {
-                            debugger;
                             deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
                         }
                     };
