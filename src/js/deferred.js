@@ -493,7 +493,7 @@ private.deferred = {
                             +". Offending value: "+r1
                         ,(function(){
                             breadcrumb.push(r1);
-                            return breadcrumb.reverse().join(" [depends on]=> ");
+                            return breadcrumb.join(" [depends on]=> ");
                         })()
                     ]);
                 }

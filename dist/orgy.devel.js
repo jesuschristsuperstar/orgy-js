@@ -427,7 +427,7 @@ private.deferred = {
                 if (breadcrumb.indexOf(r1) !== -1) {
                     return public.debug([ "Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, function() {
                         breadcrumb.push(r1);
-                        return breadcrumb.reverse().join(" [depends on]=> ");
+                        return breadcrumb.join(" [depends on]=> ");
                     }() ]);
                 }
                 breadcrumb.push(r1);
