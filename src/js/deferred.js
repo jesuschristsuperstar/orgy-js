@@ -29,7 +29,7 @@ private.deferred = {
             ,options
         ]);
 
-        //YOU NOW HAVE A DEFERRED OBJECT THAT IS INACTIVE ON THE WAITLIST
+        //YOU NOW HAVE A DEFERRED OBJECT THAT IS INACTIVE ON THE OrgyLIST
         return _o;
     }
     
@@ -124,17 +124,17 @@ private.deferred = {
                 this.execution_history.push(fn[0]);
 
                 //IF fn RETURNED AN UNSETTLED PROMISE
-                //WAIT FOR IT TO RESOLVE BEFORE PROCEEDING
+                //Orgy FOR IT TO RESOLVE BEFORE PROCEEDING
                 //AND ADD THE RESULT TO THE END OF VALUE ARRAY
                 if(typeof v !== 'undefined' && v.then){
                     
-                    //SET THE STATE BACK TO WAITING
+                    //SET THE STATE BACK TO OrgyING
                     this._state = 0;
                     
                     //ADD IT TO QUEUE'S UPSTREAM
                     this.add([v]);
                     
-                    //END RESOLUTION ATTEMPT AND WAIT FOR v TO RESOLVE
+                    //END RESOLUTION ATTEMPT AND Orgy FOR v TO RESOLVE
                     return;
                 }
                 //IF V RETURNED A VALUE MAKE IT THE NEW QUEUE VALUE

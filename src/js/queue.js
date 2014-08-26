@@ -66,7 +66,7 @@ private.queue = {
             ,options
         ]);
 
-        //YOU NOW HAVE A QUEUE OBJECT THAT IS INACTIVE ON THE WAITLIST
+        //YOU NOW HAVE A QUEUE OBJECT THAT IS INACTIVE ON THE OrgyLIST
         return _o;
     }    
     
@@ -199,7 +199,7 @@ private.queue = {
 
 
         /**
-         * Resets an existing,settled queue back to waiting state.
+         * Resets an existing,settled queue back to Orgying state.
          * Clears out the downstream.
          * Fails if not settled.
          * 

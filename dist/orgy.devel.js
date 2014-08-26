@@ -2,7 +2,7 @@
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.2.0 
 Built: 2014-08-26 
-Author: tecfu.com  
+Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
 var public = {};

@@ -21,7 +21,7 @@ module.exports = function(grunt) {
         uglify: {
             all: {
                 options: {
-                    banner: '/** \n<%= pkg.name %>: A queue and deferred library that is so very hot right now. \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> \nAuthor: tecfu.com  \n*/\n'
+                    banner: '/** \n<%= pkg.name %>: A queue and deferred library that is so very hot right now. \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> \nAuthor: <%= pkg.author %>  \n*/\n'
                     ,mangle : true
                     ,compress : true
                     ,drop_debugger : false
@@ -32,7 +32,7 @@ module.exports = function(grunt) {
             }
             ,devel: {
                 options: {
-                    banner: '/** \n<%= pkg.name %>: A queue and deferred library that is so very hot right now. \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> \nAuthor: tecfu.com  \n*/\n'
+                    banner: '/** \n<%= pkg.name %>: A queue and deferred library that is so very hot right now. \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> \nAuthor: <%= pkg.author %>  \n*/\n'
                     ,sourceMap : true
                     ,sourceMapIncludeSources : true
                     /*MANGLED VARIABLES WILL NOT MAP CORRECTLY TO SOURCE MAP*/
