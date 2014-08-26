@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.2.0 
-Built: 2014-08-25 
+Built: 2014-08-26 
 Author: tecfu.com  
 */
 
@@ -425,7 +425,10 @@ private.deferred = {
             r1 = fn(obj[propName][i]);
             if (r1 !== false) {
                 if (breadcrumb.indexOf(r1) !== -1) {
-                    return public.debug([ "Circular condition in recursive search of obj property '" + propName + "'. Offending value: " + r1, breadcrumb ]);
+                    return public.debug([ "Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, function() {
+                        breadcrumb.push(r1);
+                        return breadcrumb.reverse().join(" [depends on]=> ");
+                    }() ]);
                 }
                 breadcrumb.push(r1);
                 if (obj[propName][i][propName]) {
