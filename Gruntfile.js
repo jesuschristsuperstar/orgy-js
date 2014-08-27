@@ -25,6 +25,7 @@ module.exports = function(grunt) {
                     ,mangle : true
                     ,compress : true
                     ,drop_debugger : false
+                    ,wrap : true
                 }
                 ,files: {
                     'dist/<%= pkg.name %>.min.js': _src
@@ -40,6 +41,7 @@ module.exports = function(grunt) {
                     ,compress : false
                     ,beautify: true
                     ,drop_debugger : false
+                    ,wrap : true
                 },
                 files: {
                     'dist/<%= pkg.name %>.devel.js': _src
