@@ -457,7 +457,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     obj.id = obj.id.join(".");
                 }
             } else {
-                return public.debug([ "Dependency type '" + obj.type + "' requires id, but id undefined.", obj ]);
+                return public.debug([ "Dependencies without a 'url' property require 'id' property be set.", "'" + obj.type + "' id undefined.", obj ]);
             }
         }
         if (obj.type !== "timer") {

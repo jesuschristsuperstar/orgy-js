@@ -575,6 +575,7 @@ private.deferred.convert_to_promise = function(obj){
 
     //IF ALREADY EXISTS, RETURN EXISTING
     if(!obj.id){
+
         if(obj.type === 'timer'){
             obj.id = "timer-" + obj.timeout + "-"+public.i++;
         }
@@ -588,7 +589,11 @@ private.deferred.convert_to_promise = function(obj){
             }
         }
         else{
-            return public.debug(["Dependency type '"+obj.type+"' requires id, but id undefined.",obj]);
+            return public.debug([
+                "Dependencies without a 'url' property require 'id' property be set."
+                ,"'"+obj.type+"' id undefined."
+                ,obj
+            ]);
         }
     }
 
