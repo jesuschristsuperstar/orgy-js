@@ -702,6 +702,87 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return deferred;
     };
+    public.queue = {};
+    private.queue = {};
+    private.queue.tpl = {
+        model: "queue",
+        resolver_fired: 0,
+        halt_resolution: 0,
+        upstream: {},
+        dependencies: [],
+        add: function(arr) {
+            try {
+                if (arr.length === 0) return this.upstream;
+            } catch (err) {
+                public.debug(err);
+            }
+            if (this._state !== 0) {
+                return public.debug("Cannot add list to queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
+            }
+            for (var a in arr) {
+                switch (true) {
+                  case typeof public.list[arr[a]["id"]] === "object":
+                    arr[a] = public.list[arr[a]["id"]];
+                    break;
+
+                  case typeof arr[a] === "object" && typeof arr[a].then !== "function":
+                    arr[a] = private.deferred.convert_to_promise(arr[a]);
+                    break;
+
+                  case typeof arr[a].then === "function":
+                    break;
+
+                  default:
+                    console.error("Object could not be converted to promise.");
+                    console.error(arr[a]);
+                    debugger;
+                    continue;
+                }
+                for (var b in this.downstream) {
+                    if (b === arr[a].id) {
+                        return public.debug("Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream.");
+                    }
+                }
+                this.upstream[arr[a].id] = arr[a];
+                arr[a].downstream[this.id] = this;
+                this.dependencies.push(arr[a]);
+            }
+            return this.upstream;
+        },
+        remove: function(arr) {
+            if (this._state !== 0) {
+                console.error("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
+                return false;
+            }
+            for (var a in arr) {
+                if (this.upstream[arr[a].id]) {
+                    delete this.upstream[arr[a].id];
+                    delete arr[a].downstream[this.id];
+                }
+            }
+        },
+        reset: function(options) {
+            if (this.settled !== 1 || this._state !== 1) {
+                public.debug("Can only reset a queue settled without errors.");
+            }
+            options = options || {};
+            this.settled = 0;
+            this._state = 0;
+            this.resolver_fired = 0;
+            this.done_fired = 0;
+            if (this._timeout_id) {
+                clearTimeout(this._timeout_id);
+            }
+            this.downstream = {};
+            this.dependencies = [];
+            private.deferred.auto_timeout.call(this, options.timeout);
+            return this;
+        },
+        check_self: function() {
+            private.queue.receive_signal(this, this.id);
+            return this._state;
+        }
+    };
     public.queue = function(deps, options) {
         var _o;
         if (!(deps instanceof Array)) {
@@ -730,140 +811,59 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return _o;
     };
-    private.queue = {
-        factory: function(options) {
-            var _o = public.naive_cloner([ private.deferred.tpl, private.queue.tpl, options ]);
-            return _o;
-        },
-        tpl: {
-            model: "queue",
-            resolver_fired: 0,
-            halt_resolution: 0,
-            upstream: {},
-            dependencies: [],
-            add: function(arr) {
-                try {
-                    if (arr.length === 0) return this.upstream;
-                } catch (err) {
-                    public.debug(err);
-                }
-                if (this._state !== 0) {
-                    return public.debug("Cannot add list to queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
-                }
-                for (var a in arr) {
-                    switch (true) {
-                      case typeof public.list[arr[a]["id"]] === "object":
-                        arr[a] = public.list[arr[a]["id"]];
-                        break;
-
-                      case typeof arr[a] === "object" && typeof arr[a].then !== "function":
-                        arr[a] = private.deferred.convert_to_promise(arr[a]);
-                        break;
-
-                      case typeof arr[a].then === "function":
-                        break;
-
-                      default:
-                        console.error("Object could not be converted to promise.");
-                        console.error(arr[a]);
-                        debugger;
-                        continue;
-                    }
-                    for (var b in this.downstream) {
-                        if (b === arr[a].id) {
-                            return public.debug("Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream.");
-                        }
-                    }
-                    this.upstream[arr[a].id] = arr[a];
-                    arr[a].downstream[this.id] = this;
-                    this.dependencies.push(arr[a]);
-                }
-                return this.upstream;
-            },
-            remove: function(arr) {
-                if (this._state !== 0) {
-                    console.error("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
-                    return false;
-                }
-                for (var a in arr) {
-                    if (this.upstream[arr[a].id]) {
-                        delete this.upstream[arr[a].id];
-                        delete arr[a].downstream[this.id];
-                    }
-                }
-            },
-            reset: function(options) {
-                if (this.settled !== 1 || this._state !== 1) {
-                    public.debug("Can only reset a queue settled without errors.");
-                }
-                options = options || {};
-                this.settled = 0;
-                this._state = 0;
-                this.resolver_fired = 0;
-                this.done_fired = 0;
-                if (this._timeout_id) {
-                    clearTimeout(this._timeout_id);
-                }
-                this.downstream = {};
-                this.dependencies = [];
-                private.deferred.auto_timeout.call(this, options.timeout);
-                return this;
-            },
-            check_self: function() {
-                private.queue.receive_signal(this, this.id);
-                return this._state;
+    private.queue.factory = function(options) {
+        var _o = public.naive_cloner([ private.deferred.tpl, private.queue.tpl, options ]);
+        return _o;
+    };
+    private.queue.activate = function(o, options, deps) {
+        o = private.deferred.activate(o);
+        private.queue.tpl.add.call(o, deps);
+        private.queue.receive_signal(o, o.id);
+        if (o.assign) {
+            for (var a in o.assign) {
+                public.assign(o.assign[a], [ o ], true);
             }
-        },
-        activate: function(o, options, deps) {
-            o = private.deferred.activate(o);
-            private.queue.tpl.add.call(o, deps);
-            private.queue.receive_signal(o, o.id);
-            if (o.assign) {
-                for (var a in o.assign) {
-                    public.assign(o.assign[a], [ o ], true);
-                }
-            }
-            return o;
-        },
-        receive_signal: function(target, from_id) {
-            if (target.halt_resolution === 1) return;
-            if (from_id !== target.id && !target.upstream[from_id]) {
-                console.error(from_id + " can't signal " + target.id + " because not in upstream.");
-                debugger;
-                return;
-            } else {
-                var status = 1;
-                for (var i in target.upstream) {
-                    if (target.upstream[i]._state !== 1) {
-                        status = target.upstream[i]._state;
-                        break;
-                    }
-                }
-            }
-            if (status === 1) {
-                var values = [];
-                for (var i in target.dependencies) {
-                    values.push(target.dependencies[i].value);
-                }
-                private.deferred.tpl.resolve.call(target, values);
-            }
-            if (status === 2) {
-                var err = [ target.id + " dependency '" + target.upstream[i].id + "' was rejected.", target.upstream[i].arguments ];
-                private.deferred.tpl.reject.apply(target, err);
-            }
-        },
-        upgrade: function(obj, options, deps) {
-            if (obj.settled !== 0 || obj.model !== "promise" && obj.model !== "deferred") {
-                return public.debug("Can only upgrade unsettled promise or deferred into a queue.");
-            }
-            var _o = public.naive_cloner([ private.queue.tpl, options ]);
-            for (var i in _o) {
-                obj[i] = _o[i];
-            }
-            delete _o;
-            obj = private.queue.activate(obj, options, deps);
-            return obj;
         }
+        return o;
+    };
+    private.queue.receive_signal = function(target, from_id) {
+        if (target.halt_resolution === 1) return;
+        if (from_id !== target.id && !target.upstream[from_id]) {
+            console.error(from_id + " can't signal " + target.id + " because not in upstream.");
+            debugger;
+            return;
+        } else {
+            var status = 1;
+            for (var i in target.upstream) {
+                if (target.upstream[i]._state !== 1) {
+                    status = target.upstream[i]._state;
+                    break;
+                }
+            }
+        }
+        if (status === 1) {
+            var values = [];
+            for (var i in target.dependencies) {
+                values.push(target.dependencies[i].value);
+            }
+            private.deferred.tpl.resolve.call(target, values);
+        }
+        if (status === 2) {
+            var err = [ target.id + " dependency '" + target.upstream[i].id + "' was rejected.", target.upstream[i].arguments ];
+            private.deferred.tpl.reject.apply(target, err);
+        }
+    };
+    private.queue.upgrade = function(obj, options, deps) {
+        if (obj.settled !== 0 || obj.model !== "promise" && obj.model !== "deferred") {
+            return public.debug("Can only upgrade unsettled promise or deferred into a queue.");
+        }
+        var _o = public.naive_cloner([ private.queue.tpl, options ]);
+        for (var i in _o) {
+            obj[i] = _o[i];
+        }
+        delete _o;
+        obj = private.queue.activate(obj, options, deps);
+        return obj;
     };
     public.cast = function(obj) {
         var required = [ "then", "error", "id" ];
