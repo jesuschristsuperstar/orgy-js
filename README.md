@@ -3,7 +3,7 @@ Orgy
 
 [![Build Status](https://travis-ci.org/tecfu/orgy.svg?branch=master)](https://travis-ci.org/tecfu/orgy) [![Dependency Status](https://david-dm.org/tecfu/orgy.png)](https://david-dm.org/tecfu/orgy) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
 
-Promise / Deferred / Queue library and file loader that yields to no spec.  
+Deferred / Queue library and file loader that yields to no spec.  
 
 ## Features:
 - Works both with nodejs and with browsers. 
