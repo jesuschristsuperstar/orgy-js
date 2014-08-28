@@ -1,6 +1,6 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.3.0 
+Version: 1.4.0 
 Built: 2014-08-28 
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
@@ -14,6 +14,18 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     public.modules_loaded = 0;
     public.registered_callbacks = {};
     public.i = 0;
+    private.config = {
+        autopath: "",
+        document: null,
+        debug_mode: 1,
+        mode: function() {
+            if (typeof process === "object" && process + "" === "[object process]") {
+                return "node";
+            } else {
+                return "browser";
+            }
+        }()
+    };
     public.config = function(obj) {
         if (obj) {
             for (var i in obj) {
@@ -163,17 +175,150 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             process.exit();
         }
     };
-    private.config = {
-        autopath: "",
-        document: null,
-        debug_mode: 1,
-        mode: function() {
-            if (typeof process === "object" && process + "" === "[object process]") {
-                return "node";
-            } else {
-                return "browser";
+    public.deferred = {};
+    private.deferred = {};
+    private.deferred.tpl = {
+        model: "deferred",
+        settled: 0,
+        id: null,
+        done_fired: 0,
+        _is_orgy_module: 0,
+        _state: 0,
+        _timeout_id: null,
+        value: [],
+        error_q: [],
+        then_q: [],
+        done_fn: null,
+        reject_q: [],
+        downstream: {},
+        execution_history: [],
+        overwritable: 0,
+        timeout: 5e3,
+        remote: 1,
+        list: 1,
+        resolve: function(value) {
+            if (this.settled !== 0) {
+                public.debug(this.id + " can't resolve. Only unsettled promise objects resolvable.");
             }
-        }()
+            this._state = -1;
+            this.value = value;
+            if (!this.resolver_fired) {
+                this.resolver_fired = 1;
+                if (typeof this.resolver === "function") {
+                    return private.deferred.hook_before_success.call(this, this.resolver, value);
+                }
+            }
+            var v, fn, l = this.then_q.length;
+            for (var i = 0; i < l; i++) {
+                fn = this.then_q.splice(0, 1);
+                v = private.deferred.hook_before_success.call(this, fn[0], v || this.value);
+                this.execution_history.push(fn[0]);
+                if (typeof v !== "undefined") {
+                    if (v.then) {
+                        this._state = 0;
+                        this.add([ v ]);
+                        return;
+                    } else {
+                        if (v instanceof Array) {
+                            var thenables = [];
+                            for (var i in v) {
+                                if (v[i].then) {
+                                    thenables.push(v[i]);
+                                }
+                            }
+                            if (thenables.length > 0) {
+                                this._state = 0;
+                                this.add(thenables, true);
+                                this.value = v;
+                                return;
+                            } else {
+                                this.value = v;
+                            }
+                        } else {
+                            this.value = v;
+                        }
+                    }
+                }
+            }
+            if (this.set) {
+                if (this.set instanceof Array) {
+                    var tgt = public.array_to_function(this.set);
+                    tgt.parent[tgt.args] = this.value;
+                } else if (typeof this.set === "function") {
+                    this.set(this.value);
+                }
+            }
+            for (var i in public.registered_callbacks) {
+                if (typeof public.registered_callbacks[i].filter === "function" && public.registered_callbacks[i].filter.call(this)) {
+                    continue;
+                }
+                if (public.config().debug_mode) {
+                    console.log("Orgy.js executing registered callback '" + i + "' on " + this.id);
+                }
+                public.registered_callbacks[i].fn.call(this);
+            }
+            if (this._timeout_id) {
+                clearTimeout(this._timeout_id);
+            }
+            private.deferred._set_state.call(this, 1);
+            this.done();
+            return this;
+        },
+        reject: function(err) {
+            if (!(err instanceof Array)) {
+                err = [ err ];
+            }
+            err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
+            public.debug(err);
+            if (this._timeout_id) {
+                clearTimeout(this._timeout_id);
+            }
+            this.catch_params = err;
+            private.deferred._set_state.call(this, 2);
+            for (var i in this.reject_q) {
+                this.value.push(this.reject_q[i].apply(this, arguments));
+            }
+            return this;
+        },
+        then: function(fn, rejector) {
+            switch (true) {
+              case this._state === 2:
+                break;
+
+              case this.done_fired === 1:
+                public.debug(this.id + " can't attach .then() after .done() has fired.");
+                break;
+
+              case this.settled === 1 && this._state === 1 && !this.done_fired:
+                var r = private.deferred.hook_before_success.call(this, fn, this.value);
+                if (typeof r !== "undefined") {
+                    this.value = r;
+                }
+                break;
+
+              default:
+                this.then_q.push(fn);
+                if (typeof rejector === "function") {
+                    this.reject_q.push(rejector);
+                }
+                break;
+            }
+            return this;
+        },
+        done: function(fn) {
+            if (this.done_fn === null) {
+                if (fn) {
+                    this.done_fn = fn;
+                }
+            } else if (fn) {
+                public.debug("done() can only be called once.");
+                return;
+            }
+            if (this.settled === 1 && this._state === 1 && this.done_fn) {
+                this.done_fired = 1;
+                private.deferred.hook_before_success.call(this, this.done_fn, this.value);
+            }
+        }
     };
     public.deferred = function(options) {
         if (!options || typeof options.id !== "string") {
@@ -187,520 +332,375 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return _o;
     };
-    private.deferred = {
-        factory: function(options) {
-            var _o = public.naive_cloner([ private.deferred.tpl, options ]);
-            return _o;
-        },
-        tpl: {
-            model: "deferred",
-            settled: 0,
-            id: null,
-            done_fired: 0,
-            _is_orgy_module: 0,
-            _state: 0,
-            _timeout_id: null,
-            value: [],
-            error_q: [],
-            then_q: [],
-            done_fn: null,
-            reject_q: [],
-            downstream: {},
-            execution_history: [],
-            overwritable: 0,
-            timeout: 5e3,
-            remote: 1,
-            list: 1,
-            resolve: function(value) {
-                if (this.settled !== 0) {
-                    public.debug(this.id + " can't resolve. Only unsettled promise objects resolvable.");
+    private.deferred.factory = function(options) {
+        var _o = public.naive_cloner([ private.deferred.tpl, options ]);
+        return _o;
+    };
+    private.deferred.hook_before_success = function(fn, arr) {
+        return fn(arr, this);
+    };
+    private.deferred._set_state = function(int) {
+        this._state = int;
+        if (int === 1 || int === 2) {
+            this.settled = 1;
+        }
+        private.deferred._signal_downstream.call(this, this);
+    };
+    private.deferred._get_state = function() {
+        return this._state;
+    };
+    private.deferred.activate = function(obj) {
+        if (!obj.id) {
+            obj.id = private.deferred._make_id(obj.model);
+            obj.autonamed = true;
+        }
+        if (public.list[obj.id] && !public.list[obj.id].overwritable) {
+            public.debug("Tried to overwrite " + obj.id + " without overwrite permissions.");
+            return public.list[obj.id];
+        } else {
+            public.list[obj.id] = obj;
+        }
+        private.deferred.auto_timeout.call(obj);
+        return obj;
+    };
+    private.deferred.auto_timeout = function(timeout) {
+        this.timeout = typeof timeout === "undefined" ? this.timeout : timeout;
+        if (!this.type || this.type !== "timer") {
+            if (this._timeout_id) {
+                clearTimeout(this._timeout_id);
+            }
+            if (typeof this.timeout === "undefined") {
+                public.debug(this.id + " Auto timeout this.timeout cannot be undefined.");
+            } else if (this.timeout === -1) {
+                return false;
+            }
+            var scope = this;
+            this._timeout_id = setTimeout(function() {
+                private.deferred.auto_timeout_cb.call(scope);
+            }, this.timeout);
+        } else {}
+        return true;
+    };
+    private.deferred.auto_timeout_cb = function() {
+        if (this._state !== 1) {
+            var msgs = [];
+            var scope = this;
+            var fn = function(obj) {
+                if (obj._state !== 1) {
+                    return obj.id;
+                } else {
+                    return false;
                 }
-                this._state = -1;
-                this.value = value;
-                if (!this.resolver_fired) {
-                    this.resolver_fired = 1;
-                    if (typeof this.resolver === "function") {
-                        return private.deferred.hook_before_success.call(this, this.resolver, value);
-                    }
+            };
+            var r = private.deferred.search_obj_recursively(this, "upstream", fn);
+            msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
+            msgs.push("Cause:");
+            msgs.push(r);
+            return private.deferred.tpl.reject.call(this, msgs);
+        }
+    };
+    private.deferred.error = function(cb) {
+        if (this._state === 2) {
+            cb();
+        } else {
+            this.error_q.push(cb);
+        }
+        return this;
+    };
+    private.deferred._make_id = function(model) {
+        return "anonymous-" + model + "-" + public.i++;
+    };
+    private.deferred._signal_downstream = function(target) {
+        for (var i in target.downstream) {
+            if (target.downstream[i].settled === 1) {
+                public.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
+            }
+        }
+        for (var i in target.downstream) {
+            if (target.downstream[i].settled !== 1) {
+                private.queue.receive_signal(target.downstream[i], target.id);
+            }
+        }
+    };
+    private.deferred.search_obj_recursively = function(obj, propName, fn, breadcrumb) {
+        if (typeof breadcrumb === "undefined") {
+            breadcrumb = [ obj.id ];
+        }
+        var r1;
+        for (var i in obj[propName]) {
+            r1 = fn(obj[propName][i]);
+            if (r1 !== false) {
+                if (breadcrumb.indexOf(r1) !== -1) {
+                    return public.debug([ "Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, function() {
+                        breadcrumb.push(r1);
+                        return breadcrumb.join(" [depends on]=> ");
+                    }() ]);
                 }
-                var v, fn, l = this.then_q.length;
-                for (var i = 0; i < l; i++) {
-                    fn = this.then_q.splice(0, 1);
-                    v = private.deferred.hook_before_success.call(this, fn[0], v || this.value);
-                    this.execution_history.push(fn[0]);
-                    if (typeof v !== "undefined") {
-                        if (v.then) {
-                            this._state = 0;
-                            this.add([ v ]);
-                            return;
-                        } else {
-                            if (v instanceof Array) {
-                                var thenables = [];
-                                for (var i in v) {
-                                    if (v[i].then) {
-                                        thenables.push(v[i]);
-                                    }
-                                }
-                                if (thenables.length > 0) {
-                                    this._state = 0;
-                                    this.add(thenables, true);
-                                    this.value = v;
-                                    return;
-                                } else {
-                                    this.value = v;
-                                }
-                            } else {
-                                this.value = v;
-                            }
-                        }
-                    }
+                breadcrumb.push(r1);
+                if (obj[propName][i][propName]) {
+                    return private.deferred.search_obj_recursively(obj[propName][i], propName, fn, breadcrumb);
                 }
-                if (this.set) {
-                    if (this.set instanceof Array) {
-                        var tgt = public.array_to_function(this.set);
-                        tgt.parent[tgt.args] = this.value;
-                    } else if (typeof this.set === "function") {
-                        this.set(this.value);
-                    }
+                break;
+            }
+        }
+        return breadcrumb;
+    };
+    private.deferred.convert_to_promise = function(obj) {
+        if (!obj.id) {
+            if (obj.type === "timer") {
+                obj.id = "timer-" + obj.timeout + "-" + public.i++;
+            } else if (typeof obj.url === "string") {
+                obj.id = obj.url.split("/").pop();
+                if (obj.id.search(".js") !== -1) {
+                    obj.id = obj.id.split(".");
+                    obj.id.pop();
+                    obj.id = obj.id.join(".");
                 }
-                for (var i in public.registered_callbacks) {
-                    if (typeof public.registered_callbacks[i].filter === "function" && public.registered_callbacks[i].filter.call(this)) {
-                        continue;
-                    }
-                    if (public.config().debug_mode) {
-                        console.log("Orgy.js executing registered callback '" + i + "' on " + this.id);
-                    }
-                    public.registered_callbacks[i].fn.call(this);
+            } else {
+                return public.debug([ "Dependency type '" + obj.type + "' requires id, but id undefined.", obj ]);
+            }
+        }
+        if (obj.type !== "timer") {
+            if (typeof public.list[obj.id] !== "undefined") {
+                return public.list[obj.id];
+            }
+        }
+        var prom;
+        switch (true) {
+          case obj.type === "event":
+            prom = private.deferred._wrap_event(obj);
+            break;
+
+          case obj.type === "deferred":
+          case obj.type === "promise" || obj.then:
+            switch (true) {
+              case typeof obj.id === "string":
+                console.warn("Promise '" + obj.id + "': did not exist. Auto creating new deferred.");
+                prom = public.deferred({
+                    id: obj.id
+                });
+                break;
+
+              case typeof obj.promise === "function":
+                if (obj.scope) {
+                    prom = obj.promise.call(obj.scope);
+                } else {
+                    prom = obj.promise();
                 }
-                if (this._timeout_id) {
-                    clearTimeout(this._timeout_id);
-                }
-                private.deferred._set_state.call(this, 1);
-                this.done();
-                return this;
-            },
-            reject: function(err) {
-                if (!(err instanceof Array)) {
-                    err = [ err ];
-                }
-                err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
-                public.debug(err);
-                if (this._timeout_id) {
-                    clearTimeout(this._timeout_id);
-                }
-                this.catch_params = err;
-                private.deferred._set_state.call(this, 2);
-                for (var i in this.reject_q) {
-                    this.value.push(this.reject_q[i].apply(this, arguments));
-                }
-                return this;
-            },
-            then: function(fn, rejector) {
+                break;
+
+              case obj.then:
+                prom = obj;
+                break;
+
+              default:            }
+            if (typeof prom !== "object" || !prom.then) {
+                return public.debug("Dependency labeled as a promise did not return a promise.", obj);
+            }
+            break;
+
+          case obj.type === "timer":
+            prom = private.deferred._wrap_timer(obj);
+            break;
+
+          default:
+            obj.type = obj.type || "default";
+            prom = private.deferred._wrap_xhr(obj);
+        }
+        public.list[obj.id] = prom;
+        return prom;
+    };
+    private.deferred._wrap_event = function(obj) {
+        var def = public.deferred({
+            id: obj.id
+        });
+        if (typeof document !== "undefined" && typeof window !== "undefined") {
+            if (typeof $ !== "function") {
+                var msg = "window and document based events depend on jQuery";
+                def.reject(msg);
+            } else {
                 switch (true) {
-                  case this._state === 2:
+                  case obj.id === "ready" || obj.id === "DOMContentLoaded":
+                    $(document).ready(function() {
+                        def.resolve(1);
+                    });
                     break;
 
-                  case this.done_fired === 1:
-                    public.debug(this.id + " can't attach .then() after .done() has fired.");
-                    break;
-
-                  case this.settled === 1 && this._state === 1 && !this.done_fired:
-                    var r = private.deferred.hook_before_success.call(this, fn, this.value);
-                    if (typeof r !== "undefined") {
-                        this.value = r;
-                    }
+                  case obj.id === "load":
+                    $(window).load(function() {
+                        def.resolve(1);
+                    });
                     break;
 
                   default:
-                    this.then_q.push(fn);
-                    if (typeof rejector === "function") {
-                        this.reject_q.push(rejector);
-                    }
-                    break;
-                }
-                return this;
-            },
-            done: function(fn) {
-                if (this.done_fn === null) {
-                    if (fn) {
-                        this.done_fn = fn;
-                    }
-                } else if (fn) {
-                    public.debug("done() can only be called once.");
-                    return;
-                }
-                if (this.settled === 1 && this._state === 1 && this.done_fn) {
-                    this.done_fired = 1;
-                    private.deferred.hook_before_success.call(this, this.done_fn, this.value);
+                    $(document).on(obj.id, "body", function() {
+                        def.resolve(1);
+                    });
                 }
             }
-        },
-        hook_before_success: function(fn, arr) {
-            return fn(arr, this);
-        },
-        _set_state: function(int) {
-            this._state = int;
-            if (int === 1 || int === 2) {
-                this.settled = 1;
+        }
+        return def;
+    };
+    private.deferred._wrap_timer = function(obj) {
+        var prom = public.deferred(obj);
+        (function(prom) {
+            var _start = new Date().getTime();
+            setTimeout(function() {
+                var _end = new Date().getTime();
+                prom.resolve({
+                    start: _start,
+                    end: _end,
+                    elapsed: _end - _start,
+                    timeout: obj.timeout
+                });
+            }, obj.timeout);
+        })(prom);
+        return prom;
+    };
+    private.deferred._wrap_xhr = function(dep) {
+        var required = [ "id", "url" ];
+        for (var i in required) {
+            if (!dep[required[i]]) {
+                return public.debug([ "File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream.", dep ]);
             }
-            private.deferred._signal_downstream.call(this, this);
-        },
-        _get_state: function() {
-            return this._state;
-        },
-        activate: function(obj) {
-            if (!obj.id) {
-                obj.id = private.deferred._make_id(obj.model);
-                obj.autonamed = true;
-            }
-            if (public.list[obj.id] && !public.list[obj.id].overwritable) {
-                public.debug("Tried to overwrite " + obj.id + " without overwrite permissions.");
-                return public.list[obj.id];
+        }
+        if (public.list[dep.id]) {
+            return public.list[dep.id];
+        }
+        var deferred;
+        deferred = public.deferred(dep);
+        deferred = private.deferred.attach_xhr(deferred, dep);
+        return deferred;
+    };
+    private.deferred.attach_xhr = function(deferred, dep) {
+        if (dep.url[0] === "*") {
+            var autopath = Orgy.config().autopath;
+            if (typeof autopath !== "string") {
+                public.debug([ "config.autopath must be set to a string." ], [ "When a dependency url begins with *, it is replaced by the config property 'autopath'." ]);
             } else {
-                public.list[obj.id] = obj;
+                dep.url = dep.url.replace(/\*/, autopath);
             }
-            private.deferred.auto_timeout.call(obj);
-            return obj;
-        },
-        auto_timeout: function(timeout) {
-            this.timeout = typeof timeout === "undefined" ? this.timeout : timeout;
-            if (!this.type || this.type !== "timer") {
-                if (this._timeout_id) {
-                    clearTimeout(this._timeout_id);
-                }
-                if (typeof this.timeout === "undefined") {
-                    public.debug(this.id + " Auto timeout this.timeout cannot be undefined.");
-                } else if (this.timeout === -1) {
-                    return false;
-                }
-                var scope = this;
-                this._timeout_id = setTimeout(function() {
-                    private.deferred.auto_timeout_cb.call(scope);
-                }, this.timeout);
-            } else {}
-            return true;
-        },
-        auto_timeout_cb: function() {
-            if (this._state !== 1) {
-                var msgs = [];
-                var scope = this;
-                var fn = function(obj) {
-                    if (obj._state !== 1) {
-                        return obj.id;
-                    } else {
-                        return false;
-                    }
-                };
-                var r = private.deferred.search_obj_recursively(this, "upstream", fn);
-                msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
-                msgs.push("Cause:");
-                msgs.push(r);
-                return private.deferred.tpl.reject.call(this, msgs);
-            }
-        },
-        error: function(cb) {
-            if (this._state === 2) {
-                cb();
-            } else {
-                this.error_q.push(cb);
-            }
-            return this;
-        },
-        _make_id: function(model) {
-            return "anonymous-" + model + "-" + public.i++;
-        },
-        _signal_downstream: function(target) {
-            for (var i in target.downstream) {
-                if (target.downstream[i].settled === 1) {
-                    public.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
-                }
-            }
-            for (var i in target.downstream) {
-                if (target.downstream[i].settled !== 1) {
-                    private.queue.receive_signal(target.downstream[i], target.id);
-                }
-            }
-        },
-        search_obj_recursively: function(obj, propName, fn, breadcrumb) {
-            if (typeof breadcrumb === "undefined") {
-                breadcrumb = [ obj.id ];
-            }
-            var r1;
-            for (var i in obj[propName]) {
-                r1 = fn(obj[propName][i]);
-                if (r1 !== false) {
-                    if (breadcrumb.indexOf(r1) !== -1) {
-                        return public.debug([ "Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, function() {
-                            breadcrumb.push(r1);
-                            return breadcrumb.join(" [depends on]=> ");
-                        }() ]);
-                    }
-                    breadcrumb.push(r1);
-                    if (obj[propName][i][propName]) {
-                        return private.deferred.search_obj_recursively(obj[propName][i], propName, fn, breadcrumb);
-                    }
-                    break;
-                }
-            }
-            return breadcrumb;
-        },
-        convert_to_promise: function(obj) {
-            if (!obj.id) {
-                if (obj.type === "timer") {
-                    obj.id = "timer-" + obj.timeout + "-" + public.i++;
-                } else if (typeof obj.url === "string") {
-                    obj.id = obj.url.split("/").pop();
-                    if (obj.id.search(".js") !== -1) {
-                        obj.id = obj.id.split(".");
-                        obj.id.pop();
-                        obj.id = obj.id.join(".");
-                    }
-                } else {
-                    return public.debug([ "Dependency type '" + obj.type + "' requires id, but id undefined.", obj ]);
-                }
-            }
-            if (obj.type !== "timer") {
-                if (typeof public.list[obj.id] !== "undefined") {
-                    return public.list[obj.id];
-                }
-            }
-            var prom;
+        }
+        if (typeof process !== "object" || process + "" !== "[object process]") {
+            this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
-              case obj.type === "event":
-                prom = private.deferred._wrap_event(obj);
+              case dep.type === "script":
+                var node = document.createElement("script");
+                node.type = "text/javascript";
+                node.setAttribute("src", dep.url);
+                node.setAttribute("id", dep.id);
+                (function(node, dep, deferred) {
+                    node.onload = node.onreadystatechange = function() {
+                        if (!deferred._is_orgy_module) {
+                            deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
+                        }
+                    };
+                    node.onerror = function() {
+                        deferred.reject("Failed to load path: " + dep.url);
+                    };
+                })(node, dep, deferred);
+                this.head.appendChild(node);
                 break;
 
-              case obj.type === "deferred":
-              case obj.type === "promise" || obj.then:
-                switch (true) {
-                  case typeof obj.id === "string":
-                    console.warn("Promise '" + obj.id + "': did not exist. Auto creating new deferred.");
-                    prom = public.deferred({
-                        id: obj.id
-                    });
-                    break;
-
-                  case typeof obj.promise === "function":
-                    if (obj.scope) {
-                        prom = obj.promise.call(obj.scope);
-                    } else {
-                        prom = obj.promise();
-                    }
-                    break;
-
-                  case obj.then:
-                    prom = obj;
-                    break;
-
-                  default:                }
-                if (typeof prom !== "object" || !prom.then) {
-                    return public.debug("Dependency labeled as a promise did not return a promise.", obj);
-                }
-                break;
-
-              case obj.type === "timer":
-                prom = private.deferred._wrap_timer(obj);
-                break;
-
-              default:
-                obj.type = obj.type || "default";
-                prom = private.deferred._wrap_xhr(obj);
-            }
-            public.list[obj.id] = prom;
-            return prom;
-        },
-        _wrap_event: function(obj) {
-            var def = public.deferred({
-                id: obj.id
-            });
-            if (typeof document !== "undefined" && typeof window !== "undefined") {
-                if (typeof $ !== "function") {
-                    var msg = "window and document based events depend on jQuery";
-                    def.reject(msg);
-                } else {
-                    switch (true) {
-                      case obj.id === "ready" || obj.id === "DOMContentLoaded":
-                        $(document).ready(function() {
-                            def.resolve(1);
-                        });
-                        break;
-
-                      case obj.id === "load":
-                        $(window).load(function() {
-                            def.resolve(1);
-                        });
-                        break;
-
-                      default:
-                        $(document).on(obj.id, "body", function() {
-                            def.resolve(1);
-                        });
-                    }
-                }
-            }
-            return def;
-        },
-        _wrap_timer: function(obj) {
-            var prom = public.deferred(obj);
-            (function(prom) {
-                var _start = new Date().getTime();
-                setTimeout(function() {
-                    var _end = new Date().getTime();
-                    prom.resolve({
-                        start: _start,
-                        end: _end,
-                        elapsed: _end - _start,
-                        timeout: obj.timeout
-                    });
-                }, obj.timeout);
-            })(prom);
-            return prom;
-        },
-        _wrap_xhr: function(dep) {
-            var required = [ "id", "url" ];
-            for (var i in required) {
-                if (!dep[required[i]]) {
-                    return public.debug([ "File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream.", dep ]);
-                }
-            }
-            if (public.list[dep.id]) {
-                return public.list[dep.id];
-            }
-            var deferred;
-            deferred = public.deferred(dep);
-            deferred = private.deferred.attach_xhr(deferred, dep);
-            return deferred;
-        },
-        attach_xhr: function(deferred, dep) {
-            if (dep.url[0] === "*") {
-                var autopath = Orgy.config().autopath;
-                if (typeof autopath !== "string") {
-                    public.debug([ "config.autopath must be set to a string." ], [ "When a dependency url begins with *, it is replaced by the config property 'autopath'." ]);
-                } else {
-                    dep.url = dep.url.replace(/\*/, autopath);
-                }
-            }
-            if (typeof process !== "object" || process + "" !== "[object process]") {
-                this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
-                switch (true) {
-                  case dep.type === "script":
-                    var node = document.createElement("script");
-                    node.type = "text/javascript";
-                    node.setAttribute("src", dep.url);
-                    node.setAttribute("id", dep.id);
+              case dep.type === "css" || dep.type === "link":
+                var node = document.createElement("link");
+                node.setAttribute("href", dep.url);
+                node.setAttribute("type", "text/css");
+                node.setAttribute("rel", "stylesheet");
+                if (node.onload) {
                     (function(node, dep, deferred) {
                         node.onload = node.onreadystatechange = function() {
-                            if (!deferred._is_orgy_module) {
-                                deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
-                            }
+                            deferred.resolve(node);
                         };
                         node.onerror = function() {
-                            deferred.reject("Failed to load path: " + dep.url);
+                            deferred.reeject("Failed to load path: " + dep.url);
                         };
                     })(node, dep, deferred);
                     this.head.appendChild(node);
                     break;
-
-                  case dep.type === "css" || dep.type === "link":
-                    var node = document.createElement("link");
-                    node.setAttribute("href", dep.url);
-                    node.setAttribute("type", "text/css");
-                    node.setAttribute("rel", "stylesheet");
-                    if (node.onload) {
-                        (function(node, dep, deferred) {
-                            node.onload = node.onreadystatechange = function() {
-                                deferred.resolve(node);
-                            };
-                            node.onerror = function() {
-                                deferred.reeject("Failed to load path: " + dep.url);
-                            };
-                        })(node, dep, deferred);
-                        this.head.appendChild(node);
-                        break;
-                    } else {
-                        this.head.appendChild(node);
-                    }
-
-                  case dep.type === "json":
-                  default:
-                    var r;
-                    var req = new XMLHttpRequest();
-                    req.open("GET", dep.url, true);
-                    if (typeof dep.show_messages !== "undefined") {
-                        req.setRequestHeader("show-messages", dep.show_messages);
-                    }
-                    if (typeof dep.return_packet !== "undefined") {
-                        req.setRequestHeader("return-packet", dep.return_packet);
-                    }
-                    (function(dep, deferred) {
-                        req.onreadystatechange = function() {
-                            if (req.readyState === 4) {
-                                if (req.status === 200) {
-                                    r = req.responseText;
-                                    if (dep.type === "json") {
-                                        try {
-                                            r = JSON.parse(r);
-                                        } catch (e) {
-                                            public.debug([ "Could not decode JSON", dep.url, r ]);
-                                        }
-                                    }
-                                    deferred.resolve(node || r);
-                                } else {
-                                    deferred.reject("Error loading " + dep.url);
-                                }
-                            }
-                        };
-                    })(dep, deferred);
-                    req.send(null);
-                }
-            } else {
-                function process_result(deferred, data, dep) {
-                    switch (true) {
-                      case dep.type === "json":
-                        data = JSON.parse(data);
-                        deferred.resolve(data);
-                        break;
-
-                      default:
-                        deferred.resolve(data);
-                    }
-                }
-                if (dep.remote) {
-                    var request = require("request");
-                    request.get(dep.url, function(error, response, body) {
-                        if (!error && response.statusCode == 200) {
-                            process_result(deferred, body, dep);
-                        }
-                    });
                 } else {
-                    if (dep.type === "script") {
-                        var data = require(dep.url);
-                        if (!deferred._is_orgy_module) {
-                            deferred.resolve(data);
-                        }
-                    } else if (dep.type === "css") {
-                        if (private.config.document !== null) {
-                            var node = private.config.document("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
-                            deferred.resolve(node);
-                        } else {
-                            return public.debug([ dep.url, "Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies." ]);
-                        }
-                    } else {
-                        var fs = require("fs");
-                        (function(deferred, dep) {
-                            fs.readFile(dep.url, "utf8", function(err, data) {
-                                if (err) {
-                                    public.debug([ "File " + dep.url + " not found @ local dep.url '" + dep.url + "'", "CWD: " + process.cwd() ]);
-                                    process.exit();
+                    this.head.appendChild(node);
+                }
+
+              case dep.type === "json":
+              default:
+                var r;
+                var req = new XMLHttpRequest();
+                req.open("GET", dep.url, true);
+                if (typeof dep.show_messages !== "undefined") {
+                    req.setRequestHeader("show-messages", dep.show_messages);
+                }
+                if (typeof dep.return_packet !== "undefined") {
+                    req.setRequestHeader("return-packet", dep.return_packet);
+                }
+                (function(dep, deferred) {
+                    req.onreadystatechange = function() {
+                        if (req.readyState === 4) {
+                            if (req.status === 200) {
+                                r = req.responseText;
+                                if (dep.type === "json") {
+                                    try {
+                                        r = JSON.parse(r);
+                                    } catch (e) {
+                                        public.debug([ "Could not decode JSON", dep.url, r ]);
+                                    }
                                 }
-                                process_result(deferred, data, dep);
-                            });
-                        })(deferred, dep);
-                    }
+                                deferred.resolve(node || r);
+                            } else {
+                                deferred.reject("Error loading " + dep.url);
+                            }
+                        }
+                    };
+                })(dep, deferred);
+                req.send(null);
+            }
+        } else {
+            function process_result(deferred, data, dep) {
+                switch (true) {
+                  case dep.type === "json":
+                    data = JSON.parse(data);
+                    deferred.resolve(data);
+                    break;
+
+                  default:
+                    deferred.resolve(data);
                 }
             }
-            return deferred;
+            if (dep.remote) {
+                var request = require("request");
+                request.get(dep.url, function(error, response, body) {
+                    if (!error && response.statusCode == 200) {
+                        process_result(deferred, body, dep);
+                    }
+                });
+            } else {
+                if (dep.type === "script") {
+                    var data = require(dep.url);
+                    if (!deferred._is_orgy_module) {
+                        deferred.resolve(data);
+                    }
+                } else if (dep.type === "css") {
+                    if (private.config.document !== null) {
+                        var node = private.config.document("head").append('<link rel="stylesheet" href="' + dep.url + '" type="text/css" />');
+                        deferred.resolve(node);
+                    } else {
+                        return public.debug([ dep.url, "Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies." ]);
+                    }
+                } else {
+                    var fs = require("fs");
+                    (function(deferred, dep) {
+                        fs.readFile(dep.url, "utf8", function(err, data) {
+                            if (err) {
+                                public.debug([ "File " + dep.url + " not found @ local dep.url '" + dep.url + "'", "CWD: " + process.cwd() ]);
+                                process.exit();
+                            }
+                            process_result(deferred, data, dep);
+                        });
+                    })(deferred, dep);
+                }
+            }
         }
+        return deferred;
     };
     public.queue = function(deps, options) {
         var _o;

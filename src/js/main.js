@@ -43,12 +43,40 @@ public.i = 0;
 
 
 ////////////////////////////////////////
+//  PRIVATE VARIABLES
+////////////////////////////////////////
+
+
+/**
+ * Configuration values.
+ * 
+ * @type object
+ */
+private.config = {
+    
+    autopath : ''
+    ,document : null
+    ,debug_mode : 1
+    ,mode : (function(){
+        if(typeof process === 'object' && process + '' === '[object process]'){
+            // is node
+            return "node"
+        }
+        else{
+            // not node
+            return "browser"
+        }
+    }())
+};
+
+
+////////////////////////////////////////
 //  PUBLIC METHODS
 ////////////////////////////////////////
 
 
 /**
- * Stores document context for nodejs.
+ * Configuration setter.
  * 
  * @type string
  */
@@ -312,31 +340,3 @@ public.debug = function(msg,force_debug_mode){
         process.exit();
     }
 }
-
-
-////////////////////////////////////////
-//  PRIVATE VARIABLES
-////////////////////////////////////////
-
-
-/**
- * Configuration values.
- * 
- * @type object
- */
-private.config = {
-    
-    autopath : ''
-    ,document : null
-    ,debug_mode : 1
-    ,mode : (function(){
-        if(typeof process === 'object' && process + '' === '[object process]'){
-            // is node
-            return "node"
-        }
-        else{
-            // not node
-            return "browser"
-        }
-    }())
-};

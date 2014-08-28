@@ -1,3 +1,8 @@
+////////////////////////////////////////
+//  PUBLIC METHODS
+////////////////////////////////////////
+
+
 public.cast = function(obj){
             
     var required = ["then","error","id"];
