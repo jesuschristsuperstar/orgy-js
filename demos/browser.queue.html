@@ -49,20 +49,20 @@
     then() or done() statements.
     */
 
-    q.then(function(value){
-        value.push('foo');
-        return value;
+    q.then(function(r){
+        r.push('foo');
+        return r;
     });
 
-    q.then(function(value){
-        value.pop(); //'foo'
-        value.push('bar');
-        return value;
+    q.then(function(r){
+        r.pop(); //'foo'
+        r.push('bar');
+        return r;
     });
 
-    q.done(function(value){ 
-        //Done value is carried from last then .then() statement.
-        console.log(value);
+    q.done(function(r){ 
+        //Done r is carried from last then .then() statement.
+        console.log(r);
     });
 </script>
 </head>

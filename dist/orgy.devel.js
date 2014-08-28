@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.3.0 
-Built: 2014-08-27 
+Built: 2014-08-28 
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -228,12 +228,31 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     fn = this.then_q.splice(0, 1);
                     v = private.deferred.hook_before_success.call(this, fn[0], v || this.value);
                     this.execution_history.push(fn[0]);
-                    if (typeof v !== "undefined" && v.then) {
-                        this._state = 0;
-                        this.add([ v ]);
-                        return;
-                    } else if (typeof v !== "undefined") {
-                        this.value = v;
+                    if (typeof v !== "undefined") {
+                        if (v.then) {
+                            this._state = 0;
+                            this.add([ v ]);
+                            return;
+                        } else {
+                            if (v instanceof Array) {
+                                var thenables = [];
+                                for (var i in v) {
+                                    if (v[i].then) {
+                                        thenables.push(v[i]);
+                                    }
+                                }
+                                if (thenables.length > 0) {
+                                    this._state = 0;
+                                    this.add(thenables, true);
+                                    this.value = v;
+                                    return;
+                                } else {
+                                    this.value = v;
+                                }
+                            } else {
+                                this.value = v;
+                            }
+                        }
                     }
                 }
                 if (this.set) {

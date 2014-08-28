@@ -55,6 +55,7 @@
     
                 before(function(done){
                     
+                    //EXTEND TEST TIMEOUT TO 5 SECONDS
                     this.timeout(5000);
 
                    //FIRES WHEN RESOLVED
@@ -74,10 +75,13 @@
 
                 });
 
-                it('check dependency results', function() {
+                it('validate dependency types', function() {
                     scope.validate_values(deps,q.value);
                 });
 
+                it('make sure execution chain was stalled for unresolved thenables', function() {
+                    
+                });
         });
 
 
@@ -102,7 +106,7 @@
 
             });
 
-            it('check dependency results', function() {
+            it('validate dependency types', function() {
                 scope.validate_values(deps,q.value);
             });
 

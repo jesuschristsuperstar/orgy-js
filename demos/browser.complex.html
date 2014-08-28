@@ -6,90 +6,72 @@
     
 <script>
 
-    //SET TIMER
-    console.log("begin " + new Date());
-
-
-    //CAST $.ajax
-    var options = {
-        url : "data/data1.json"
-        ,dataType : "json"
-    };
-    var castable1 = $.ajax(options);
-
-
-    //SET ID
-    castable1.id = options.url;
-    var c1 = Orgy.cast(castable1);
-
-
-    //SET DEPENDENCIES
-    var deps = [
-       {
+    //STEPS
+    console.time("d1-resolver");    //SHOULD BE ~ +2000ms
+    console.time("d2-resolver");    //SHOULD BE ~ +3000ms
+    
+    console.time("q1-resolver");    //SHOULD BE ~ +1000ms
+    console.time('q1-then-1');      //SHOULD BE ~ +2000ms
+    console.time('q1-then-2');      //SHOULD BE ~ +3000ms
+    console.time("q1-done");        //SHOULD BE ~ +3000ms
+    
+    
+    //CREATE QUEUE
+    var q1 = Orgy.queue([{
            comment : "Document ready."
            ,id : "DOMContentLoaded"
            ,type : "event"
        },
        {
            type : "timer"
-           ,timeout : 2000
-       },
-        {
-           type : "json"
-           ,url : "data/data2.json"
-       }
-    ];
-
-
-    //CREATE QUEUE
-    var q1 = Orgy.queue(deps,{
-       id : "q1"
-        //QUEUE RESOLUTION CAN BE HELD BACK BY A RESOLVER
-       ,resolver : function(result,deferred){
-
-            console.log("resolver called " + new Date());
-
-           var r = {
-               value : 1
-           };
-           console.info(result); //ARRAY OF DEPENDENCY RETURN VALUES
-           deferred.resolve(r);
-       }
+           ,timeout : 1000
+       }],{
+            id : "q1"
+             //QUEUE RESOLUTION CAN BE HELD BACK BY A RESOLVER
+            ,resolver : function(r,deferred){
+                console.timeEnd("q1-resolver");
+                deferred.resolve(r);
+        }
     });
 
 
     //CALLBACK TO RUN WHEN QUEUE RESOLVED
-    q1.done(function(value){
-        console.log("done " + new Date());
+    q1.done(function(r){
+        console.timeEnd("q1-done");
+        console.log(r);
     });
 
 
-    //ADD CASTED OBJECT c1 AS A DEPENDENCY TO QUEUE
-    q1.add([c1]);
-
-
-    //CREATE A DEFERRED
+    //CREATE DEFERREDS TO DEMONSTRATE CHAIN PAUSE-ON-RETURN-DEFERRED
     var d1 = Orgy.deferred({
-        id : "throttler"
+        id : "simul-throttler1"
     });
     setTimeout(function(){
-        console.log("d1 resolving " + new Date());
-        d1.resolve("august");
-    },4000);
+        console.timeEnd("d1-resolver");
+        d1.resolve(Date.now());     
+    },2000);
 
-
-    // YOU CAN PASS RETURN VALUES ALONG THEN CHAIN
-    // WHEN YOU PASS A DEFERRED, THEN CHAiN PAUSED UNTIL DEFERRED RESOLVED
-    q1.then(function(value){
-        console.log("then 1 " + new Date());
-        return d1;
+    q1.then(function(r){
+        console.timeEnd('q1-then-1');
+        r.push(d1);
+        return r;
     });
 
 
-    //WILL FIRE AFTER d1 RESOLVED
-    q1.then(function(value){
-        //value = d1
-        console.log("then 2 " + new Date());
+    var d2 = Orgy.deferred({
+        id : "simul-throttler2"
+    });
+    setTimeout(function(){
+        console.timeEnd("d2-resolver");
+        d2.resolve(Date.now());
+    },3000);
+    
+
+
+    q1.then(function(r){
+        console.timeEnd('q1-then-2');
+        r.push(d2);
+        return r;
     });
 
 </script>

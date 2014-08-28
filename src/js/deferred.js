@@ -92,7 +92,7 @@ private.deferred = {
             this._state = -1; 
 
             //SET VALUE
-            this.value  = value;
+            this.value = value;
 
             //RUN RESOLVER BEFORE PROCEEDING
             //EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
@@ -123,23 +123,58 @@ private.deferred = {
                 //SAVE fn TO EXECUTION HISTORY
                 this.execution_history.push(fn[0]);
 
-                //IF fn RETURNED AN UNSETTLED PROMISE
-                //Orgy FOR IT TO RESOLVE BEFORE PROCEEDING
-                //AND ADD THE RESULT TO THE END OF VALUE ARRAY
-                if(typeof v !== 'undefined' && v.then){
+                //Pause execution chain if callback returned 
+                //array of thenables
+                if(typeof v !== 'undefined'){
                     
-                    //SET THE STATE BACK TO OrgyING
-                    this._state = 0;
+                    //CHECK IF V IS THENABLE
+                    if(v.then){
+                        
+                        //SET QUEUE STATE BACK TO WAITING
+                        this._state = 0;
+
+                        //ADD THENABLE TO QUEUE'S UPSTREAM
+                        this.add([v]);
+
+                        //END RESOLUTION ATTEMPT AND Orgy FOR v TO RESOLVE
+                        return;
+                    }
+                    else{
+                        
+                        //IF RETURNED ARRAY, CHECK FOR THENABLES
+                        if(v instanceof Array){
+                            
+                            var thenables = [];
+                            
+                            for(var i in v){
+                                if(v[i].then){
+                                    thenables.push(v[i]);
+                                }
+                            }
+                            
+                            //IF THENABLE FOUND, ADD IN TO DEPS AND BAIL
+                            if(thenables.length > 0){
+                                
+                                //SET QUEUE STATE BACK TO WAITING
+                                this._state = 0;
+                                
+                                this.add(thenables,true);
+                                
+                                this.value = v;
+                                
+                                return;
+                            }
+                            else{
+                                this.value = v;
+                            }
+                            
+                        }
+                        else{
+                            //IF V RETURNED A VALUE, PUSH TO EXISTING QUEUE VALUE
+                            this.value = v;
+                        }
+                    }
                     
-                    //ADD IT TO QUEUE'S UPSTREAM
-                    this.add([v]);
-                    
-                    //END RESOLUTION ATTEMPT AND Orgy FOR v TO RESOLVE
-                    return;
-                }
-                //IF V RETURNED A VALUE MAKE IT THE NEW QUEUE VALUE
-                else if(typeof v !== 'undefined'){
-                    this.value = v;
                 }
             }
                         
