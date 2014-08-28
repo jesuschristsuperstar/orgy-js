@@ -3,10 +3,17 @@ Orgy
 
 [![Build Status](https://travis-ci.org/tecfu/orgy.svg?branch=master)](https://travis-ci.org/tecfu/orgy) [![Dependency Status](https://david-dm.org/tecfu/orgy.png)](https://david-dm.org/tecfu/orgy) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
 
-Deferred / Queue library and file loader that yields to no spec.  
+Deferred / Queue library that yields to no spec.  
 
 ## Features:
 - Works both with nodejs and with browsers. 
+- Handles a variety of dependency types and automatically converts them into promises.
+    - javascript files
+    - css files
+    - DOMContentLoaded, window.load
+    - timers
+    - all other file types handled as text
+
 - Creates deferreds or queues.
 - Queues can be held back from settling after their dependencies have resolved by a resolver method. 
 - When then() is passed a return value that value is passed down the execution chain.
