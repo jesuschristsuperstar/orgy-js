@@ -88,8 +88,11 @@ private.dererred.tpl.list = 1;
  */
 private.dererred.tpl.resolve = function(value){
 
-    if(this.settled !== 0){
-        public.debug(this.id + " can't resolve. Only unsettled Orgy objects resolvable.");
+    if(this.settled === 1){
+        public.debug([
+            this.id + " can't resolve."
+            ,"Only unsettled Orgy objects resolvable."
+        ]);
     }
 
     //SET STATE TO SETTLEMENT IN PROGRESS
@@ -141,7 +144,7 @@ private.dererred.tpl.reject = function(err){
     this.catch_params = err;
 
     //SET STATE TO REJECTED
-    private.deferred.set_state.call(this,2);
+    private.deferred.set_state(this,2);
 
     //EXECUTE REJECTION QUEUE
     for(var i in this.reject_q){

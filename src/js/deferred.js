@@ -92,7 +92,7 @@ private.deferred.settle = function(def){
     
     
     //Set state to resolved
-    private.deferred.set_state.call(def,1);
+    private.deferred.set_state(def,1);
     
     
     //Run any globally set callbacks
@@ -205,25 +205,35 @@ private.deferred.run_train = function(obj){
 
 
 /**
+ * Sets the state of an Orgy object.
  * 
- * @param {type} int
+ * @param {object} def
+ * @param {number} int
  * @returns {void}
  */
-private.deferred.set_state = function(int){
+private.deferred.set_state = function(def,int){
 
-    this.state = int;
+    def.state = int;
 
     //IF RESOLVED OR REJECTED, SETTLE
     if(int === 1 || int === 2){
-        this.settled = 1;
+        def.settled = 1;
     }
 
-    private.deferred._signal_downstream.call(this,this);
+    if(int === 1 || int === 2){
+        private.deferred.signal_downstream(def);
+    }
 };
     
-    
-private.deferred._get_state = function(){
-    return this.state;
+   
+/**
+ * Gets the state of an Orgy object
+ * 
+ * @param {object} def
+ * @returns {number} 
+ */
+private.deferred.get_state = function(def){
+    return def.state;
 };
 
 
@@ -231,7 +241,7 @@ private.deferred.activate = function(obj){
 
     //SET ID
     if(!obj.id){
-        obj.id = private.deferred._make_id(obj.model);
+        obj.id = private.deferred.make_id(obj.model);
         obj.autonamed = true;
     }
 
@@ -260,7 +270,8 @@ private.deferred.activate = function(obj){
  */
 private.deferred.auto_timeout = function(timeout){
 
-    this.timeout = (typeof timeout === 'undefined') ? this.timeout : timeout;
+    this.timeout = (typeof timeout === 'undefined') 
+    ? this.timeout : timeout;
 
     //AUTO REJECT ON timeout
     if(!this.type || this.type !== 'timer'){
@@ -286,6 +297,7 @@ private.deferred.auto_timeout = function(timeout){
     else{
         //@todo WHEN A TIMER, ADD DURATION TO ALL UPSTREAM AND LATERAL?
     }
+    
     return true;
 };
 
@@ -313,11 +325,13 @@ private.deferred.auto_timeout_cb = function(){
         };
 
         /**
-         * Run over a gi_qven object property recursively, applying callback until 
+         * Run over a gi_qven object property recursively, 
+         * applying callback until 
          * callback returns a non-false value.
          */
         var r = private.deferred.search_obj_recursively(this,'upstream',fn);
-        msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
+        msgs.push(scope.id + ": rejected by auto timeout after " 
+                + this.timeout + "ms");
         msgs.push("Cause:");
         msgs.push(r);
         return private.deferred.tpl.reject.call(this,msgs);
@@ -340,7 +354,7 @@ private.deferred.error = function(cb){
 };
 
 
-private.deferred._make_id = function(model){
+private.deferred.make_id = function(model){
     return "anonymous-" + model + "-" + (public.i++);
 };
 
@@ -356,7 +370,7 @@ private.deferred._make_id = function(model){
  * @param {object} target deferred/queue
  * @returns {void}
  */
-private.deferred._signal_downstream = function(target){
+private.deferred.signal_downstream = function(target){
 
     //MAKE SURE ALL DOWNSTREAM IS UNSETTLED
     for(var i in target.downstream){
