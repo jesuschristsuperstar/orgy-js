@@ -69,6 +69,7 @@ private.deferred.settle = function(def){
     
     
     //SET RETURN VALUE TO A GIVEN OBJECT PROPERTY
+/*
     if(def.set){
         //ARRAY IS TRANSORMED INTO A PATH TO POINT TO
         if(def.set instanceof Array){
@@ -81,46 +82,31 @@ private.deferred.settle = function(def){
             def.set(def.value);
         }
     }
-
-
-    //Run settlement queue
-    private.deferred.run_train({
-        deferred : def
-        ,train : def.settlement_q
-        ,value : def.value
-    });
-    
+*/
     
     //Set state to resolved
     private.deferred.set_state(def,1);
     
     
-    //Run any globally set callbacks
-    private.deferred.run_train({
-        deferred : def
-        ,train : public.registered_callbacks
-        ,value : def.value
-        ,onBeforeEach : function(r,def,i){
-            
-            //SKIP IF FILTER RETURNS TRUE
-            if(this.filter === 'function' && this.filter.call(def)){
-                return;
-            }
-
-            if(public.config().debug_mode){
-                console.log("Orgy.js executing registered callback '"+i+"' on " + def.id);
-            }
-        }
+    //Add done as a callback to then chain completion.
+    def.callbacks.then.hooks.onComplete.push(function(){
+        //Run done queue
+        private.deferred.run_train(
+            def
+            ,def.callbacks.done
+            ,def.value
+            ,{pause_on_deferred : false}
+        );
     });
     
     
-    //Run then queue and done
-    private.deferred.run_train({
-        deferred : def
-        ,train : def.then_q
-        ,value : def.value
-        ,onAfter : def.done
-    });
+    //Run then queue
+    private.deferred.run_train(
+        def
+        ,def.callbacks.then
+        ,def.value
+        ,{pause_on_deferred : false}
+    );
     
     
     return def;
@@ -139,8 +125,6 @@ private.deferred.settle = function(def){
  *      train       {array}
  *      hooks       {object}    
  *          onBefore        {array}
- *          onBeforeEach    {array}
- *          onAfterEach     {array}
  *          onComplete      {array}
  * @param {mixed} param /param to pass to first callback
  * @param {object} options
@@ -160,36 +144,23 @@ private.deferred.run_train = function(def,obj,param,options){
                                     ,{pause_on_deferred : false});
     }
     
-    for(var i in obj.train){
-        
-        //onBeforeEach event
-        if(obj.hooks && obj.hooks.onBeforeEach.length > 0){
-            private.deferred.run_trainl(def
-                                    ,obj.hooks.onBeforeEach
-                                    ,r
-                                    ,{pause_on_deferred : false});
-        }
+    while(obj.train){
     
-        r = obj.train[i].call(obj.deferred
+        r = obj.train[0].call(obj.deferred
                                 ,obj.deferred.value
                                 ,obj.deferred
                                 ,r);
+        
+        //remove executed portion of train
+        var last = obj.train.shift();
+        def.execution_history.push(last);
         
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
         if(r.then 
            && r.settled !== 1
            && options.pause_on_deferred){
-            
-            //splice off executed portion of train
-            var execArr = obj.train.splice(0,i);
-            
-            //track it
-            def.execution_history.concat(execArr);
 
-            //splice off unexecuted portion of arr
-            obj.train = obj.train.splice(i,obj.train.length);
-        
             //execute rest of train when thenable settles
             (function(def,obj,param,options){
                 private.deferred.run_train(def,obj,param,options);

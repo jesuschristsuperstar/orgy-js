@@ -42,7 +42,6 @@ private.deferred.tpl.value = [];
 
 private.deferred.tpl.callback_states = {
     resolve : 0
-    ,settle : 0
     ,then : 0
     ,done : 0
     ,reject : 0
@@ -67,8 +66,6 @@ private.dererred.tpl.callbacks = (function(){
             train : []
             ,hooks : {
                 onBefore : []
-                ,onBeforeEach : []
-                //,onAfterEach  : []    @todo fn returning unsettled def will never hit
                 ,onComplete : []
             }
         };
@@ -125,32 +122,41 @@ private.dererred.tpl.resolve = function(value){
     }
 
     //SET STATE TO SETTLEMENT IN PROGRESS
-    this.state = -1; 
+    private.deferred.set_state(this,-1);
 
     //SET VALUE
     this.value = value;
 
     //RUN RESOLVER BEFORE PROCEEDING
     //EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
-    if(!this.resolver_fired){
-
-        this.resolver_fired = 1;
-
-        //If a resolver exists, execute it and 
-        //expect it to call back to this point
-        if(typeof this.resolver === 'function'){
-            return this.resolver(value,this);
-        }
-        else{
-            //settle
-            return private.deferred.settle(this);
-        }
-
+    if(!this.resolver_fired && typeof this.resolver === 'function'){
+            
+        //Add resolver to resolve train
+        this.callbacks.resolve.train.push(function(){
+            this.resolver(value,this);
+        });
     }
     else{
-        //settle
-        return private.deferred.settle(this);
+        
+        //Add settle to resolve train
+        this.callbacks.resolve.train.push(function(){
+            private.deferred.settle(this);
+        });
     }
+    
+    this.resolver_fired = 1;
+    
+    //Run resolve [standard respect for any hooks]
+    private.deferred.run_train(
+        this
+        ,this.callbacks.resolve
+        ,this.value
+        ,{pause_on_deferred : false}
+    );
+
+    //resolver is expected to call resolve again
+    //and that will get us past this point
+    return deferred;
 };
 
 
