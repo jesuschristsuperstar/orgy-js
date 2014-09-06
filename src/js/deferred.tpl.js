@@ -40,16 +40,45 @@ private.deferred.tpl.timeout_id = null;
 
 private.deferred.tpl.value = [];
 
-private.dererred.tpl.callbacks = {
-    then : []
-    ,done : []
-    ,reject : []
-    ,settle : []
+private.deferred.tpl.callback_states = {
+    resolve : 0
+    ,settle : 0
+    ,then : 0
+    ,done : 0
+    ,reject : 0
 };
+
+/**
+ * Self executing function to initialize callback event
+ * list.
+ * 
+ * Returns an object with the same propertyNames as 
+ * private.deferred.tpl.callback_states: adding boilerplate
+ * properties for each
+ * 
+ * @returns {object}
+ */
+private.dererred.tpl.callbacks = (function(){
+    
+    var o;
+    
+    for(var i in private.deferred.tpl.callback_states){
+        o[i] = {
+            train : []
+            ,hooks : {
+                onBefore : []
+                ,onBeforeEach : []
+                //,onAfterEach  : []    @todo fn returning unsettled def will never hit
+                ,onComplete : []
+            }
+        };
+    }
+    
+    return o;
+});
     
 //PROMISE HAS OBSERVERS BUT DOES NOT OBSERVE OTHERS
 private.dererred.tpl.downstream = {};
-
 
 private.dererred.tpl.execution_history = [];
 
@@ -81,7 +110,7 @@ private.dererred.tpl.list = 1;
 
 
 /**
- * desolves a deferred.
+ * Resolves a deferred.
  * 
  * @param {mixed} value
  * @returns {void}
@@ -91,7 +120,7 @@ private.dererred.tpl.resolve = function(value){
     if(this.settled === 1){
         public.debug([
             this.id + " can't resolve."
-            ,"Only unsettled Orgy objects resolvable."
+            ,"Only unsettled deferreds are resolvable."
         ]);
     }
 
@@ -205,15 +234,5 @@ private.dererred.tpl.done = function(fn){
     if(this.settled === 1 && this.state === 1 && this.done_fn){
         this.done_fired = 1;
         this.done_fn.call(this,this.value,this);
-    }
-};
-
-private.dererred.tpl.onSettle = function(fn){
-
-    if(this.settled !== 1){
-        this.settlement_q.push(fn);
-    }
-    else{
-        public.debug("Can't add settlement callback. Already settled.");
     }
 };

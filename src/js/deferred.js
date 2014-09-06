@@ -128,78 +128,84 @@ private.deferred.settle = function(def){
    
    
 /**
- * Runs a chain of train after a deferred has resolved.
+ * Runs an array of functions sequentially as a partial function.
+ * Each function's argument is the result of its predecessor function.
  * 
- * Chain is paused when a callback returns an unresolved
- * deferred.
+ * By default, execution chain is paused when any function 
+ * returns an unresolved deferred. (pause_on_deferred) [OPTIONAL]
  * 
- * @param {object} obj
- *      deferred        {object}    Required.
- *      train           {array}     Required.
- *      value           {mixed}     Required.
- *      onBefore        {function}
- *      onBeforeEach    {function}
- *      onAfterEach     {function}
- *      onComplete      {function}
- *
+ * @param {object} def  /deferred object
+ * @param {object} obj  /itinerary
+ *      train       {array}
+ *      hooks       {object}    
+ *          onBefore        {array}
+ *          onBeforeEach    {array}
+ *          onAfterEach     {array}
+ *          onComplete      {array}
+ * @param {mixed} param /param to pass to first callback
+ * @param {object} options
+ *      pause_on_deferred   {boolean}
+ *      
  * @returns {void}
  */
-private.deferred.run_train = function(obj){
+private.deferred.run_train = function(def,obj,param,options){
     
-    var r = obj.r || null;
-    var def = obj.deferred;
+    var r = param || null;
     
     //onBefore event
-    if(obj.onBefore === 'function'){
-        obj.onBefore.call(def,def.value,def);
+    if(obj.hooks && obj.hooks.onBefore.length > 0){
+        private.deferred.run_trainl(def
+                                    ,obj.hooks.onBefore
+                                    ,param
+                                    ,{pause_on_deferred : false});
     }
     
     for(var i in obj.train){
         
         //onBeforeEach event
-        if(obj.onBeforeEach === 'function'){
-            obj.onBeforeEach.call(def,def.value,def,i);
+        if(obj.hooks && obj.hooks.onBeforeEach.length > 0){
+            private.deferred.run_trainl(def
+                                    ,obj.hooks.onBeforeEach
+                                    ,r
+                                    ,{pause_on_deferred : false});
         }
     
         r = obj.train[i].call(obj.deferred
                                 ,obj.deferred.value
                                 ,obj.deferred
-                                ,obj.value);
-        
-        //onAfterEach event
-        if(obj.onAfterEach === 'function'){
-            obj.onAfterEach.call(def,def.value,def,i);
-        }
+                                ,r);
         
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
-        if(r.then && r.settled !== 1){
+        if(r.then 
+           && r.settled !== 1
+           && options.pause_on_deferred){
             
-            //splice off executed portion of arr
-            var execArr = def.arr.splice(0,i);
+            //splice off executed portion of train
+            var execArr = obj.train.splice(0,i);
             
             //track it
             def.execution_history.concat(execArr);
 
             //splice off unexecuted portion of arr
-            obj.train = def.arr.splice(i,obj.train.length);
+            obj.train = obj.train.splice(i,obj.train.length);
         
-            //execute when thenable settles
-            (function(o){
-                
-                r.onSettle(function(){
-                    private.deferred.run_train(o);
-                });
-
-            })(obj);
+            //execute rest of train when thenable settles
+            (function(def,obj,param,options){
+                private.deferred.run_train(def,obj,param,options);
+            })(def,obj,param,options);
             
             return;
         }
+     
     }
     
     //onComplete event
-    if(obj.onComplete === 'function'){
-        obj.onComplete.call(def,def.value,def);
+    if(obj.hooks && obj.hooks.onComplete.length > 0){
+        private.deferred.run_trainl(def
+                                    ,obj.hooks.onComplete
+                                    ,r
+                                    ,{pause_on_deferred : false});
     }
 };
 
