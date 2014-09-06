@@ -89,7 +89,7 @@ private.deferred.settle = function(def){
     
     
     //Add done as a callback to then chain completion.
-    def.callbacks.then.hooks.onComplete.push(function(){
+    def.callbacks.then.hooks.onComplete.train.push(function(){
         
         //Run done queue
         private.deferred.run_train(
@@ -116,7 +116,12 @@ private.deferred.settle = function(def){
     return def;
 };
    
-   
+
+private.deferred.make_train = function(fn){
+    
+};
+
+
 /**
  * Runs an array of functions sequentially as a partial function.
  * Each function's argument is the result of its predecessor function.
@@ -142,17 +147,17 @@ private.deferred.run_train = function(def,obj,param,options){
     
     //onBefore event
     if(obj.hooks && obj.hooks.onBefore.length > 0){
-        private.deferred.run_trainl(def
+        private.deferred.run_train(def
                                     ,obj.hooks.onBefore
                                     ,param
                                     ,{pause_on_deferred : false});
     }
     
-    while(obj.train){
+    while(obj.train.length > 0){
     
-        r = obj.train[0].call(obj.deferred
-                                ,obj.deferred.value
-                                ,obj.deferred
+        r = obj.train[0].call(def
+                                ,def.value
+                                ,def
                                 ,r);
         
         //remove executed portion of train
@@ -161,7 +166,7 @@ private.deferred.run_train = function(def,obj,param,options){
         
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
-        if(r.then 
+        if(r && r.then 
            && r.settled !== 1
            && options.pause_on_deferred){
 
@@ -177,10 +182,10 @@ private.deferred.run_train = function(def,obj,param,options){
     
     //onComplete event
     if(obj.hooks && obj.hooks.onComplete.length > 0){
-        private.deferred.run_trainl(def
-                                    ,obj.hooks.onComplete
-                                    ,r
-                                    ,{pause_on_deferred : false});
+        private.deferred.run_train(def
+                                ,obj.hooks.onComplete
+                                ,r
+                                ,{pause_on_deferred : false});
     }
 };
 

@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.4.1 
-Built: 2014-09-06 07:46:36
+Built: 2014-09-06 09:05:24
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -198,28 +198,30 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             clearTimeout(def.timeout_id);
         }
         private.deferred.set_state(def, 1);
-        def.callbacks.then.hooks.onComplete.push(function() {
+        def.callbacks.then.hooks.onComplete.train.push(function() {
             private.deferred.run_train(def, def.callbacks.done, def.value, {
                 pause_on_deferred: false
             });
+            def.done_fired = 1;
         });
         private.deferred.run_train(def, def.callbacks.then, def.value, {
             pause_on_deferred: false
         });
         return def;
     };
+    private.deferred.make_train = function(fn) {};
     private.deferred.run_train = function(def, obj, param, options) {
         var r = param || null;
         if (obj.hooks && obj.hooks.onBefore.length > 0) {
-            private.deferred.run_trainl(def, obj.hooks.onBefore, param, {
+            private.deferred.run_train(def, obj.hooks.onBefore, param, {
                 pause_on_deferred: false
             });
         }
-        while (obj.train) {
-            r = obj.train[0].call(obj.deferred, obj.deferred.value, obj.deferred, r);
+        while (obj.train.length > 0) {
+            r = obj.train[0].call(def, def.value, def, r);
             var last = obj.train.shift();
             def.execution_history.push(last);
-            if (r.then && r.settled !== 1 && options.pause_on_deferred) {
+            if (r && r.then && r.settled !== 1 && options.pause_on_deferred) {
                 (function(def, obj, param, options) {
                     private.deferred.run_train(def, obj, param, options);
                 })(def, obj, param, options);
@@ -227,7 +229,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             }
         }
         if (obj.hooks && obj.hooks.onComplete.length > 0) {
-            private.deferred.run_trainl(def, obj.hooks.onComplete, r, {
+            private.deferred.run_train(def, obj.hooks.onComplete, r, {
                 pause_on_deferred: false
             });
         }
@@ -612,47 +614,52 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         done: 0,
         reject: 0
     };
-    private.dererred.tpl.callbacks = function() {
-        var o;
+    private.deferred.tpl.callbacks = function() {
+        var o = {};
         for (var i in private.deferred.tpl.callback_states) {
             o[i] = {
                 train: [],
                 hooks: {
-                    onBefore: [],
-                    onComplete: []
+                    onBefore: {
+                        train: []
+                    },
+                    onComplete: {
+                        train: []
+                    }
                 }
             };
         }
         return o;
-    };
-    private.dererred.tpl.downstream = {};
-    private.dererred.tpl.execution_history = [];
-    private.dererred.tpl.overwritable = 0;
-    private.dererred.tpl.timeout = 5e3;
-    private.dererred.tpl.remote = 1;
-    private.dererred.tpl.list = 1;
-    private.dererred.tpl.resolve = function(value) {
+    }();
+    private.deferred.tpl.downstream = {};
+    private.deferred.tpl.execution_history = [];
+    private.deferred.tpl.overwritable = 0;
+    private.deferred.tpl.timeout = 5e3;
+    private.deferred.tpl.remote = 1;
+    private.deferred.tpl.list = 1;
+    private.deferred.tpl.resolve = function(value) {
         if (this.settled === 1) {
             public.debug([ this.id + " can't resolve.", "Only unsettled deferreds are resolvable." ]);
         }
         private.deferred.set_state(this, -1);
         this.value = value;
         if (!this.resolver_fired && typeof this.resolver === "function") {
+            this.resolver_fired = 1;
             this.callbacks.resolve.train.push(function() {
                 this.resolver(value, this);
             });
         } else {
-            this.callbacks.resolve.train.push(function() {
+            this.resolver_fired = 1;
+            this.callbacks.resolve.hooks.onComplete.train.push(function() {
                 private.deferred.settle(this);
             });
         }
-        this.resolver_fired = 1;
         private.deferred.run_train(this, this.callbacks.resolve, this.value, {
             pause_on_deferred: false
         });
-        return deferred;
+        return this;
     };
-    private.dererred.tpl.reject = function(err) {
+    private.deferred.tpl.reject = function(err) {
         if (!(err instanceof Array)) {
             err = [ err ];
         }
@@ -661,50 +668,39 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (this.timeout_id) {
             clearTimeout(this.timeout_id);
         }
-        this.catch_params = err;
         private.deferred.set_state(this, 2);
-        for (var i in this.reject_q) {
-            this.value.push(this.reject_q[i].apply(this, arguments));
-        }
+        private.deferred.run_train(this, this.callbacks.reject, err, {
+            pause_on_deferred: false
+        });
         return this;
     };
-    private.dererred.tpl.then = function(fn, rejector) {
+    private.deferred.tpl.then = function(fn, rejector) {
         switch (true) {
           case this.state === 2:
             break;
 
           case this.done_fired === 1:
-            public.debug(this.id + " can't attach .then() after .done() has fired.");
+            public.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
             break;
 
           case this.settled === 1 && this.state === 1 && !this.done_fired:
-            var r = fn.call(this, this.value, this);
-            if (typeof r !== "undefined") {
-                this.value = r;
-            }
-            break;
-
           default:
-            this.then_q.push(fn);
+            this.callbacks.then.train.push(fn);
             if (typeof rejector === "function") {
-                this.reject_q.push(rejector);
+                this.callbacks.reject.train.push(rejector);
             }
             break;
         }
         return this;
     };
-    private.dererred.tpl.done = function(fn) {
-        if (this.done_fn === null) {
+    private.deferred.tpl.done = function(fn) {
+        if (this.callbacks.done.train.length === 0 && this.done_fired === 0) {
             if (fn) {
-                this.done_fn = fn;
+                this.callbacks.done.train.push(fn);
             }
         } else if (fn) {
             public.debug("done() can only be called once.");
             return;
-        }
-        if (this.settled === 1 && this.state === 1 && this.done_fn) {
-            this.done_fired = 1;
-            this.done_fn.call(this, this.value, this);
         }
     };
     public.queue = {};

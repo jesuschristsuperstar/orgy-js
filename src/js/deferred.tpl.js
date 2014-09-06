@@ -57,33 +57,37 @@ private.deferred.tpl.callback_states = {
  * 
  * @returns {object}
  */
-private.dererred.tpl.callbacks = (function(){
+private.deferred.tpl.callbacks = (function(){
     
-    var o;
+    var o = {};
     
     for(var i in private.deferred.tpl.callback_states){
         o[i] = {
             train : []
             ,hooks : {
-                onBefore : []
-                ,onComplete : []
+                onBefore : {
+                    train : []
+                }
+                ,onComplete : {
+                    train : []
+                }
             }
         };
     }
     
     return o;
-});
+})();
     
 //PROMISE HAS OBSERVERS BUT DOES NOT OBSERVE OTHERS
-private.dererred.tpl.downstream = {};
+private.deferred.tpl.downstream = {};
 
-private.dererred.tpl.execution_history = [];
+private.deferred.tpl.execution_history = [];
 
 //WHEN TRUE, ALLOWS RE-INIT [FOR UPGRADES TO A QUEUE]          
-private.dererred.tpl.overwritable = 0; 
+private.deferred.tpl.overwritable = 0; 
 
 //Default timeout for a deferred
-private.dererred.tpl.timeout = 5000;
+private.deferred.tpl.timeout = 5000;
 
 /**
  * REMOTE
@@ -95,10 +99,10 @@ private.dererred.tpl.timeout = 5000;
  * ONLY APPLIES TO SCRIPTS RUN UNDER NODE AS BROWSER HAS NO 
  * FILESYSTEM ACCESS
  */
-private.dererred.tpl.remote = 1;
+private.deferred.tpl.remote = 1;
 
 //ADDS TO MASTER LIST. ALWAYS TRUE UNLESS UPGRADING A PROMISE TO A QUEUE
-private.dererred.tpl.list = 1;
+private.deferred.tpl.list = 1;
 
 
 //////////////////////////////////////////
@@ -112,7 +116,7 @@ private.dererred.tpl.list = 1;
  * @param {mixed} value
  * @returns {void}
  */
-private.dererred.tpl.resolve = function(value){
+private.deferred.tpl.resolve = function(value){
 
     if(this.settled === 1){
         public.debug([
@@ -130,7 +134,9 @@ private.dererred.tpl.resolve = function(value){
     //RUN RESOLVER BEFORE PROCEEDING
     //EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
     if(!this.resolver_fired && typeof this.resolver === 'function'){
-            
+        
+        this.resolver_fired = 1;   
+        
         //Add resolver to resolve train
         this.callbacks.resolve.train.push(function(){
             this.resolver(value,this);
@@ -138,13 +144,15 @@ private.dererred.tpl.resolve = function(value){
     }
     else{
         
+        this.resolver_fired = 1;  
+        
         //Add settle to resolve train
-        this.callbacks.resolve.train.push(function(){
+        this.callbacks.resolve.hooks.onComplete.train.push(function(){
             private.deferred.settle(this);
         });
     }
     
-    this.resolver_fired = 1;
+    
     
     //Run resolve [standard respect for any hooks]
     private.deferred.run_train(
@@ -156,11 +164,11 @@ private.dererred.tpl.resolve = function(value){
 
     //resolver is expected to call resolve again
     //and that will get us past this point
-    return deferred;
+    return this;
 };
 
 
-private.dererred.tpl.reject = function(err){
+private.deferred.tpl.reject = function(err){
 
     if(!(err instanceof Array)){
         err = [err];
@@ -190,7 +198,7 @@ private.dererred.tpl.reject = function(err){
 };
 
 
-private.dererred.tpl.then = function(fn,rejector){
+private.deferred.tpl.then = function(fn,rejector){
 
     switch(true){
 
@@ -221,7 +229,7 @@ private.dererred.tpl.then = function(fn,rejector){
 };
 
 
-private.dererred.tpl.done = function(fn){
+private.deferred.tpl.done = function(fn){
 
     if(this.callbacks.done.train.length === 0
        && this.done_fired === 0){
