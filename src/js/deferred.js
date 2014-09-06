@@ -91,6 +91,9 @@ private.deferred.settle = function(def){
     //Add done as a callback to then chain completion.
     def.callbacks.then.hooks.onComplete.train.push(function(){
         
+        //Done can only be called once, so note that it has been
+        def.done_fired = 1;
+        
         //Run done queue
         private.deferred.run_train(
             def
@@ -99,8 +102,6 @@ private.deferred.settle = function(def){
             ,{pause_on_deferred : false}
         );
 
-        //Done can only be called once, so note that it has been
-        def.done_fired = 1;
     });
     
     
@@ -114,11 +115,6 @@ private.deferred.settle = function(def){
     
     
     return def;
-};
-   
-
-private.deferred.make_train = function(fn){
-    
 };
 
 
@@ -146,7 +142,7 @@ private.deferred.run_train = function(def,obj,param,options){
     var r = param || null;
     
     //onBefore event
-    if(obj.hooks && obj.hooks.onBefore.length > 0){
+    if(obj.hooks && obj.hooks.onBefore.train.length > 0){
         private.deferred.run_train(def
                                     ,obj.hooks.onBefore
                                     ,param
@@ -154,16 +150,16 @@ private.deferred.run_train = function(def,obj,param,options){
     }
     
     while(obj.train.length > 0){
-    
-        r = obj.train[0].call(def
-                                ,def.value
-                                ,def
-                                ,r);
         
-        //remove executed portion of train
+        //remove fn to execute
         var last = obj.train.shift();
         def.execution_history.push(last);
         
+        r = last.call(def
+                        ,def.value
+                        ,def
+                        ,r);
+
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
         if(r && r.then 
@@ -177,11 +173,10 @@ private.deferred.run_train = function(def,obj,param,options){
             
             return;
         }
-     
     }
     
     //onComplete event
-    if(obj.hooks && obj.hooks.onComplete.length > 0){
+    if(obj.hooks && obj.hooks.onComplete.train.length > 0){
         private.deferred.run_train(def
                                 ,obj.hooks.onComplete
                                 ,r

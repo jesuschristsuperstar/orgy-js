@@ -23,7 +23,8 @@
         ////////////////////////////////////////
         //  CONSTRUCTOR/RESOLVER
         ////////////////////////////////////////
-        ,__resolver : function(r,deferred){  
+        ,__resolver : function(r,deferred){
+debugger;
             deferred.resolve(this);
         }
     };

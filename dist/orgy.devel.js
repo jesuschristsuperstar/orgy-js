@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.4.1 
-Built: 2014-09-06 09:05:24
+Built: 2014-09-06 17:08:27
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -199,28 +199,27 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         private.deferred.set_state(def, 1);
         def.callbacks.then.hooks.onComplete.train.push(function() {
+            def.done_fired = 1;
             private.deferred.run_train(def, def.callbacks.done, def.value, {
                 pause_on_deferred: false
             });
-            def.done_fired = 1;
         });
         private.deferred.run_train(def, def.callbacks.then, def.value, {
             pause_on_deferred: false
         });
         return def;
     };
-    private.deferred.make_train = function(fn) {};
     private.deferred.run_train = function(def, obj, param, options) {
         var r = param || null;
-        if (obj.hooks && obj.hooks.onBefore.length > 0) {
+        if (obj.hooks && obj.hooks.onBefore.train.length > 0) {
             private.deferred.run_train(def, obj.hooks.onBefore, param, {
                 pause_on_deferred: false
             });
         }
         while (obj.train.length > 0) {
-            r = obj.train[0].call(def, def.value, def, r);
             var last = obj.train.shift();
             def.execution_history.push(last);
+            r = last.call(def, def.value, def, r);
             if (r && r.then && r.settled !== 1 && options.pause_on_deferred) {
                 (function(def, obj, param, options) {
                     private.deferred.run_train(def, obj, param, options);
@@ -228,7 +227,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 return;
             }
         }
-        if (obj.hooks && obj.hooks.onComplete.length > 0) {
+        if (obj.hooks && obj.hooks.onComplete.train.length > 0) {
             private.deferred.run_train(def, obj.hooks.onComplete, r, {
                 pause_on_deferred: false
             });
@@ -600,14 +599,14 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         return deferred;
     };
     private.deferred.tpl = {};
-    private.deferred.tpl.model = "deferred";
-    private.deferred.tpl.settled = 0;
     private.deferred.tpl.id = null;
+    private.deferred.tpl.settled = 0;
+    private.deferred.tpl.state = 0;
+    private.deferred.tpl.value = [];
+    private.deferred.tpl.model = "deferred";
     private.deferred.tpl.done_fired = 0;
     private.deferred.tpl._is_orgy_module = 0;
-    private.deferred.tpl.state = 0;
     private.deferred.tpl.timeout_id = null;
-    private.deferred.tpl.value = [];
     private.deferred.tpl.callback_states = {
         resolve: 0,
         then: 0,

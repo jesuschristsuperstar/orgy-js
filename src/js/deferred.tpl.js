@@ -14,17 +14,11 @@
 
 
 private.deferred.tpl = {};
-        
-private.deferred.tpl.model = "deferred";
-
-//A COUNTER FOR AUT0-GENERATED PROMISE ID'S
-private.deferred.tpl.settled = 0;
 
 private.deferred.tpl.id = null;
 
-private.deferred.tpl.done_fired = 0;
-
-private.deferred.tpl._is_orgy_module = 0;
+//A COUNTER FOR AUT0-GENERATED PROMISE ID'S
+private.deferred.tpl.settled = 0;
 
 /**
  * STATE CODES:
@@ -36,9 +30,15 @@ private.deferred.tpl._is_orgy_module = 0;
  */
 private.deferred.tpl.state = 0;
 
-private.deferred.tpl.timeout_id = null;
-
 private.deferred.tpl.value = [];
+
+private.deferred.tpl.model = "deferred";
+
+private.deferred.tpl.done_fired = 0;
+
+private.deferred.tpl._is_orgy_module = 0;
+
+private.deferred.tpl.timeout_id = null;
 
 private.deferred.tpl.callback_states = {
     resolve : 0
@@ -151,9 +151,7 @@ private.deferred.tpl.resolve = function(value){
             private.deferred.settle(this);
         });
     }
-    
-    
-    
+
     //Run resolve [standard respect for any hooks]
     private.deferred.run_train(
         this
