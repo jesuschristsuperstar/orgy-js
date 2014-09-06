@@ -8,6 +8,7 @@ module.exports = function(grunt) {
     var _src = [
         'src/js/main.js'
         ,'src/js/deferred.js'
+        ,'src/js/deferred.tpl.js'
         ,'src/js/queue.js'
         ,'src/js/cast.js'
         ,'src/js/build.js'

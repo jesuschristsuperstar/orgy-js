@@ -68,7 +68,7 @@ private.queue.tpl = {
        }
 
        //IF NOT PENDING, DO NOT ALLOW TO ADD
-       if(this._state !== 0){
+       if(this.state !== 0){
            return public.debug("Cannot add list to queue id:'"+this.id
            +"'. Queue settled/in the process of being settled.");
        }
@@ -125,7 +125,7 @@ private.queue.tpl = {
    ,remove : function(arr){
 
        //IF NOT PENDING, DO NOT ALLOW REMOVAL
-       if(this._state !== 0){
+       if(this.state !== 0){
            console.error("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
            return false;
        }
@@ -148,20 +148,20 @@ private.queue.tpl = {
     */
    ,reset : function(options){
 
-       if(this.settled !== 1 || this._state !== 1){
+       if(this.settled !== 1 || this.state !== 1){
            public.debug("Can only reset a queue settled without errors.");
        }
 
        options = options || {};
 
        this.settled = 0;
-       this._state = 0; 
+       this.state = 0; 
        this.resolver_fired = 0;
        this.done_fired = 0;
 
        //REMOVE AUTO TIMEOUT TIMER
-       if(this._timeout_id){
-           clearTimeout(this._timeout_id);
+       if(this.timeout_id){
+           clearTimeout(this.timeout_id);
        }
 
        //CLEAR OUT THE DOWNSTREAM
@@ -194,7 +194,7 @@ private.queue.tpl = {
     */
    ,check_self : function(){
        private.queue.receive_signal(this,this.id);
-       return this._state;
+       return this.state;
    }
 }
 
@@ -335,8 +335,8 @@ private.queue.receive_signal = function(target,from_id){
        var status = 1;
        for(var i in target.upstream){
            //SETS STATUS TO 0 IF ANY OBSERVING HAVE FAILED, BUT NOT IF PENDING OR RESOLVED
-           if(target.upstream[i]._state !== 1) {
-               status = target.upstream[i]._state;
+           if(target.upstream[i].state !== 1) {
+               status = target.upstream[i].state;
                break;
            }
        }

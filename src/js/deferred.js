@@ -1,3 +1,8 @@
+/**
+ * Deferred class.
+ * 
+ */
+
 public.deferred = {};
 private.deferred = {};
 
@@ -10,277 +15,6 @@ private.deferred = {};
 //////////////////////////////////////////
 //  PRIVATE VARIABLES
 //////////////////////////////////////////
-
-
-private.deferred.tpl = {
-        
-    model : "deferred"
-
-    //A COUNTER FOR AUT0-GENERATED PROMISE ID'S
-    ,settled : 0 
-    ,id : null
-    ,done_fired : 0
-    ,_is_orgy_module : 0
-
-    /**
-     * STATE CODES:
-     * ------------------
-     * -1   => SETTLING [EXECUTING CALLBACKS]
-     *  0   => PENDING
-     *  1   => RESOLVED / FULFILLED
-     *  2   => REJECTED 
-     */
-    ,_state : 0
-    ,_timeout_id : null
-    ,value : []
-
-    ,error_q : []  
-    ,then_q : []
-    ,done_fn : null
-    ,reject_q : []
-
-    //PROMISE HAS OBSERVERS BUT DOES NOT OBSERVE OTHERS
-    ,downstream : {}
-    ,execution_history : []
-    ,overwritable : 0   //WHEN TRUE, ALLOWS RE-INIT [FOR UPGRADES TO A QUEUE]          
-    ,timeout : 5000
-
-    /**
-     * REMOTE
-     * 
-     * REMOTE == 1  =>  [DEFAULT] Make http request for file
-     * 
-     * REMOTE == 0  =>  Read file directly from the filesystem
-     * 
-     * ONLY APPLIES TO SCRIPTS RUN UNDER NODE AS BROWSER HAS NO 
-     * FILESYSTEM ACCESS
-     */
-    ,remote : 1
-
-    //ADDS TO MASTER LIST. ALWAYS DO THIS UNLESS UPGRADING A PROMISE TO A QUEUE
-    ,list : 1   
-
-    ,resolve : function(value){
-
-        if(this.settled !== 0){
-            public.debug(this.id + " can't resolve. Only unsettled promise objects resolvable.");
-        }
-
-        //SET STATE TO SETTLEMENT IN PROGRESS
-        this._state = -1; 
-
-        //SET VALUE
-        this.value = value;
-
-        //RUN RESOLVER BEFORE PROCEEDING
-        //EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
-        if(!this.resolver_fired){
-
-            this.resolver_fired = 1;
-
-            //FIRE THE RESOLVER IF SET
-            if(typeof this.resolver === 'function'){
-                return private.deferred.hook_before_success.call(this,this.resolver,value);
-            }
-
-        }
-
-        //Allows .then chain to be held up by new async events created as the chain executes.
-        var v,fn,l=this.then_q.length;
-        for(var i = 0; i<l; i++){     
-
-            //REMOVE fn FROM THEN QUEUE. 
-            //WHEN A PROMISE OBJ IS RETURNED, AND EXECUTION STOPPED WE
-            //DONT WANT TO REPEAAT A CALL TO SAME fn
-            fn = this.then_q.splice(0,1);
-
-            //CALL fn WITH PRECEDING RESULT OR IF NONE EXISTS, THE RESOLVER VALUE 
-            v = private.deferred.hook_before_success.call(this,fn[0],v || this.value);
-            //v = fn[0].call(this, v || this.value);
-
-            //SAVE fn TO EXECUTION HISTORY
-            this.execution_history.push(fn[0]);
-
-            //Pause execution chain if callback returned 
-            //array of thenables
-            if(typeof v !== 'undefined'){
-
-                //CHECK IF V IS THENABLE
-                if(v.then){
-
-                    //SET QUEUE STATE BACK TO WAITING
-                    this._state = 0;
-
-                    //ADD THENABLE TO QUEUE'S UPSTREAM
-                    this.add([v]);
-
-                    //END RESOLUTION ATTEMPT AND Orgy FOR v TO RESOLVE
-                    return;
-                }
-                else{
-
-                    //IF RETURNED ARRAY, CHECK FOR THENABLES
-                    if(v instanceof Array){
-
-                        var thenables = [];
-
-                        for(var i in v){
-                            if(v[i].then){
-                                thenables.push(v[i]);
-                            }
-                        }
-
-                        //IF THENABLE FOUND, ADD IN TO DEPS AND BAIL
-                        if(thenables.length > 0){
-
-                            //SET QUEUE STATE BACK TO WAITING
-                            this._state = 0;
-
-                            this.add(thenables,true);
-
-                            this.value = v;
-
-                            return;
-                        }
-                        else{
-                            this.value = v;
-                        }
-
-                    }
-                    else{
-                        //IF V RETURNED A VALUE, PUSH TO EXISTING QUEUE VALUE
-                        this.value = v;
-                    }
-                }
-
-            }
-        }
-
-        //SET RETURN VALUE TO A GIVEN OBJECT PROPERTY
-        if(this.set){
-            //ARRAY IS TRANSORMED INTO A PATH TO POINT TO
-            if(this.set instanceof Array){
-                //@todo make property of private to avoid external dependency
-                var tgt = public.array_to_function(this.set);
-                tgt.parent[tgt.args] = this.value;
-            }
-            //OTHErWISE ASSUMED TO BE AN OBJECT PROPERTY
-            else if (typeof this.set === 'function'){
-                this.set(this.value);
-            }
-        }
-
-        //EXECUTE ANY GLOBALLY REGISTERED CALLBACKS
-        for (var i in public.registered_callbacks){
-
-            //SKIP IF FILTER RETURNS TRUE
-            if(typeof public.registered_callbacks[i].filter === 'function'
-                    && public.registered_callbacks[i].filter.call(this)){
-                continue;
-            }
-
-            if(public.config().debug_mode){
-                console.log("Orgy.js executing registered callback '"+i+"' on " + this.id);
-            }
-
-            public.registered_callbacks[i].fn.call(this);
-        }
-
-        //REMOVE AUTO TIMEOUT TIMER
-        if(this._timeout_id){
-            clearTimeout(this._timeout_id);
-        }
-
-        //SET STATE TO RESOLVED
-        private.deferred._set_state.call(this,1);
-
-        this.done();
-
-        return this;
-    }
-
-    ,reject : function(err){
-
-        if(!(err instanceof Array)){
-            err = [err]
-        }
-
-        err.unshift("REJECTED "+this.model+": '"+this.id+"'");
-
-        public.debug(err);
-
-        //REMOVE AUTO TIMEOUT TIMER
-        if(this._timeout_id){
-            clearTimeout(this._timeout_id);
-        }
-
-        //SAVE ERROR OBJECT TO MEMORY FOR USE IN CATCH CALLBACK
-        this.catch_params = err;
-
-        //SET STATE TO REJECTED
-        private.deferred._set_state.call(this,2);
-
-        //EXECUTE REJECTION QUEUE
-        for(var i in this.reject_q){
-            this.value.push(this.reject_q[i].apply(this,arguments));
-        }
-
-        return this;
-    }
-
-    ,then : function(fn,rejector){
-
-        switch(true){
-
-            //ERROR WAS PREVIOUSLY THROWN
-            case(this._state === 2):
-                break;
-
-            case(this.done_fired === 1):
-                public.debug(this.id+" can't attach .then() after .done() has fired.");
-                break;
-
-            case(this.settled === 1 && this._state === 1 && !this.done_fired):
-                var r = private.deferred.hook_before_success.call(this,fn,this.value);
-                if(typeof r !== 'undefined'){
-                    this.value = r;
-                }
-                break;
-
-            default:
-
-                //PUSH CALLBACK TO THEN QUEUE
-                this.then_q.push(fn);
-
-                //PUSH REJECT CALLBACK TO REJECTION QUEUE
-                if(typeof rejector === 'function'){
-                    this.reject_q.push(rejector);
-                }
-                break;
-        }
-
-        return this;
-    }
-
-    ,done : function(fn){
-
-        if(this.done_fn === null){
-            if(fn){
-                this.done_fn = fn
-            }
-        }
-        else if(fn){
-            public.debug("done() can only be called once.");
-            return;
-        }
-
-        if(this.settled === 1 && this._state === 1 && this.done_fn){
-            this.done_fired = 1;
-            private.deferred.hook_before_success.call(this,this.done_fn,this.value);
-        }
-    }
-
-};
 
 
 //////////////////////////////////////////
@@ -321,33 +55,163 @@ private.deferred.factory = function(options){
         ,options
     ]);
 
-    //YOU NOW HAVE A DEFERRED OBJECT THAT IS INACTIVE ON THE OrgyLIST
+    //YOU NOW HAVE A DEFERRED OBJECT THAT IS INACTIVE ON THE Orgy LIST
     return _o;
 };
     
+
+private.deferred.settle = function(def){
     
-/**
- * Methods to run before then(), done() 
- * 
- * @param {function} fn
- * @param {array}
- * @returns {mixed}
- */
-private.deferred.hook_before_success = function(fn,arr){
+    //REMOVE AUTO TIMEOUT TIMER
+    if(def.timeout_id){
+        clearTimeout(def.timeout_id);
+    }
+    
+    
+    //SET RETURN VALUE TO A GIVEN OBJECT PROPERTY
+    if(def.set){
+        //ARRAY IS TRANSORMED INTO A PATH TO POINT TO
+        if(def.set instanceof Array){
+            //@todo make property of private to avoid external dependency
+            var tgt = public.array_to_function(def.set);
+            tgt.parent[tgt.args] = def.value;
+        }
+        //OTHErWISE ASSUMED TO BE AN OBJECT PROPERTY
+        else if (typeof def.set === 'function'){
+            def.set(def.value);
+        }
+    }
 
-    return fn(arr,this);
 
+    //Run settlement queue
+    private.deferred.run_train({
+        deferred : def
+        ,train : def.settlement_q
+        ,value : def.value
+    });
+    
+    
+    //Set state to resolved
+    private.deferred.set_state.call(def,1);
+    
+    
+    //Run any globally set callbacks
+    private.deferred.run_train({
+        deferred : def
+        ,train : public.registered_callbacks
+        ,value : def.value
+        ,onBeforeEach : function(r,def,i){
+            
+            //SKIP IF FILTER RETURNS TRUE
+            if(this.filter === 'function' && this.filter.call(def)){
+                return;
+            }
+
+            if(public.config().debug_mode){
+                console.log("Orgy.js executing registered callback '"+i+"' on " + def.id);
+            }
+        }
+    });
+    
+    
+    //Run then queue and done
+    private.deferred.run_train({
+        deferred : def
+        ,train : def.then_q
+        ,value : def.value
+        ,onAfter : def.done
+    });
+    
+    
+    return def;
 };
+   
+   
+/**
+ * Runs a chain of train after a deferred has resolved.
+ * 
+ * Chain is paused when a callback returns an unresolved
+ * deferred.
+ * 
+ * @param {object} obj
+ *      deferred        {object}    Required.
+ *      train           {array}     Required.
+ *      value           {mixed}     Required.
+ *      onBefore        {function}
+ *      onBeforeEach    {function}
+ *      onAfterEach     {function}
+ *      onComplete      {function}
+ *
+ * @returns {void}
+ */
+private.deferred.run_train = function(obj){
     
+    var r = obj.r || null;
+    var def = obj.deferred;
     
+    //onBefore event
+    if(obj.onBefore === 'function'){
+        obj.onBefore.call(def,def.value,def);
+    }
+    
+    for(var i in obj.train){
+        
+        //onBeforeEach event
+        if(obj.onBeforeEach === 'function'){
+            obj.onBeforeEach.call(def,def.value,def,i);
+        }
+    
+        r = obj.train[i].call(obj.deferred
+                                ,obj.deferred.value
+                                ,obj.deferred
+                                ,obj.value);
+        
+        //onAfterEach event
+        if(obj.onAfterEach === 'function'){
+            obj.onAfterEach.call(def,def.value,def,i);
+        }
+        
+        //if result is an thenable, halt execution 
+        //and run unfired arr when thenable settles
+        if(r.then && r.settled !== 1){
+            
+            //splice off executed portion of arr
+            var execArr = def.arr.splice(0,i);
+            
+            //track it
+            def.execution_history.concat(execArr);
+
+            //splice off unexecuted portion of arr
+            obj.train = def.arr.splice(i,obj.train.length);
+        
+            //execute when thenable settles
+            (function(o){
+                
+                r.onSettle(function(){
+                    private.deferred.run_train(o);
+                });
+
+            })(obj);
+            
+            return;
+        }
+    }
+    
+    //onComplete event
+    if(obj.onComplete === 'function'){
+        obj.onComplete.call(def,def.value,def);
+    }
+};
+
+
 /**
  * 
  * @param {type} int
- * @returns {undefined}
+ * @returns {void}
  */
-private.deferred._set_state = function(int){
+private.deferred.set_state = function(int){
 
-    this._state = int;
+    this.state = int;
 
     //IF RESOLVED OR REJECTED, SETTLE
     if(int === 1 || int === 2){
@@ -359,7 +223,7 @@ private.deferred._set_state = function(int){
     
     
 private.deferred._get_state = function(){
-    return this._state;
+    return this.state;
 };
 
 
@@ -391,7 +255,7 @@ private.deferred.activate = function(obj){
 /**
  * Sets the automatic timeout on a promise object.
  * 
- * @param {integer} optional. timeout
+ * @param {integer} timeout (optional)
  * @returns {Boolean}
  */
 private.deferred.auto_timeout = function(timeout){
@@ -402,8 +266,8 @@ private.deferred.auto_timeout = function(timeout){
     if(!this.type || this.type !== 'timer'){
 
         //DELETE PREVIOUS TIMEOUT IF EXISTS
-        if(this._timeout_id){
-            clearTimeout(this._timeout_id);
+        if(this.timeout_id){
+            clearTimeout(this.timeout_id);
         }
 
         if(typeof this.timeout === 'undefined'){
@@ -415,7 +279,7 @@ private.deferred.auto_timeout = function(timeout){
         }
         var scope = this;
 
-        this._timeout_id = setTimeout(function(){
+        this.timeout_id = setTimeout(function(){
             private.deferred.auto_timeout_cb.call(scope);
         }, this.timeout);
     }
@@ -423,26 +287,25 @@ private.deferred.auto_timeout = function(timeout){
         //@todo WHEN A TIMER, ADD DURATION TO ALL UPSTREAM AND LATERAL?
     }
     return true;
-}
+};
 
 
 /**
  * Callback for autotimeout. Declaration here avoids memory leak.
  * 
- * @param {type} exp
  * @returns {undefined}
  */
 private.deferred.auto_timeout_cb = function(){
 
-    if(this._state !== 1){
+    if(this.state !== 1){
 
         //GET THE UPSTREAM ERROR ID
         var msgs = [];
         var scope = this;
 
         var fn = function(obj){
-            if(obj._state !== 1){
-                return obj.id
+            if(obj.state !== 1){
+                return obj.id;
             }
             else{
                 return false;
@@ -450,7 +313,7 @@ private.deferred.auto_timeout_cb = function(){
         };
 
         /**
-         * Run over a given object property recursively, applying callback until 
+         * Run over a gi_qven object property recursively, applying callback until 
          * callback returns a non-false value.
          */
         var r = private.deferred.search_obj_recursively(this,'upstream',fn);
@@ -460,17 +323,17 @@ private.deferred.auto_timeout_cb = function(){
         return private.deferred.tpl.reject.call(this,msgs);
 
     }
-}
+};
 
 
 private.deferred.error = function(cb){
 
     //IF ERROR ALREADY THROWN, EXECUTE CB IMMEDIATELY
-    if(this._state === 2){
+    if(this.state === 2){
         cb();
     }
     else{
-        this.error_q.push(cb);
+        this.reject_q.push(cb);
     }
 
     return this;
@@ -490,6 +353,7 @@ private.deferred._make_id = function(model){
  * indirectly via shared dependencies, make sure not to double resolve
  * - which throws an error.
  *     
+ * @param {object} target deferred/queue
  * @returns {void}
  */
 private.deferred._signal_downstream = function(target){
@@ -562,7 +426,7 @@ private.deferred.search_obj_recursively = function(obj,propName,fn,breadcrumb){
     }
 
     return breadcrumb;
-}
+};
     
     
 /**
@@ -829,13 +693,13 @@ private.deferred.attach_xhr = function(deferred,dep){
                         //Do not autoresolve modules, which are
                         //self-resolved via Orgy.export
                         if(!deferred._is_orgy_module){
-                            deferred.resolve((typeof node.value !== 'undefined') ? node.value : node)
+                            deferred.resolve((typeof node.value !== 'undefined') ? node.value : node);
                         }
                     };
                     node.onerror = function(){
                         deferred.reject("Failed to load path: " + dep.url);
                     };
-                }(node,dep,deferred))
+                }(node,dep,deferred));
 
                 //put scripts before <base> elements, after <meta>
                 this.head.appendChild(node);
@@ -856,7 +720,7 @@ private.deferred.attach_xhr = function(deferred,dep){
 
                        node.onerror = function(){
                            deferred.reeject("Failed to load path: " + dep.url);
-                       }
+                       };
 
                     }(node,dep,deferred));
 
@@ -932,7 +796,7 @@ private.deferred.attach_xhr = function(deferred,dep){
             request.get(dep.url, function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                     process_result(deferred,body,dep);
-                }
+                };
             });
 
         }
@@ -976,9 +840,7 @@ private.deferred.attach_xhr = function(deferred,dep){
                 }(deferred,dep));
 
             }
-
         }
-
     }
 
     return deferred;
