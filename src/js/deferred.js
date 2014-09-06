@@ -90,6 +90,7 @@ private.deferred.settle = function(def){
     
     //Add done as a callback to then chain completion.
     def.callbacks.then.hooks.onComplete.push(function(){
+        
         //Run done queue
         private.deferred.run_train(
             def
@@ -97,6 +98,9 @@ private.deferred.settle = function(def){
             ,def.value
             ,{pause_on_deferred : false}
         );
+
+        //Done can only be called once, so note that it has been
+        def.done_fired = 1;
     });
     
     

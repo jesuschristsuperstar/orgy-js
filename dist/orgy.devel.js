@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.4.0 
-Built: 2014-08-28 
+Version: 1.4.1 
+Built: 2014-09-06 07:46:36
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -177,149 +177,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     public.deferred = {};
     private.deferred = {};
-    private.deferred.tpl = {
-        model: "deferred",
-        settled: 0,
-        id: null,
-        done_fired: 0,
-        _is_orgy_module: 0,
-        _state: 0,
-        _timeout_id: null,
-        value: [],
-        error_q: [],
-        then_q: [],
-        done_fn: null,
-        reject_q: [],
-        downstream: {},
-        execution_history: [],
-        overwritable: 0,
-        timeout: 5e3,
-        remote: 1,
-        list: 1,
-        resolve: function(value) {
-            if (this.settled !== 0) {
-                public.debug(this.id + " can't resolve. Only unsettled promise objects resolvable.");
-            }
-            this._state = -1;
-            this.value = value;
-            if (!this.resolver_fired) {
-                this.resolver_fired = 1;
-                if (typeof this.resolver === "function") {
-                    return private.deferred.hook_before_success.call(this, this.resolver, value);
-                }
-            }
-            var v, fn, l = this.then_q.length;
-            for (var i = 0; i < l; i++) {
-                fn = this.then_q.splice(0, 1);
-                v = private.deferred.hook_before_success.call(this, fn[0], v || this.value);
-                this.execution_history.push(fn[0]);
-                if (typeof v !== "undefined") {
-                    if (v.then) {
-                        this._state = 0;
-                        this.add([ v ]);
-                        return;
-                    } else {
-                        if (v instanceof Array) {
-                            var thenables = [];
-                            for (var i in v) {
-                                if (v[i].then) {
-                                    thenables.push(v[i]);
-                                }
-                            }
-                            if (thenables.length > 0) {
-                                this._state = 0;
-                                this.add(thenables, true);
-                                this.value = v;
-                                return;
-                            } else {
-                                this.value = v;
-                            }
-                        } else {
-                            this.value = v;
-                        }
-                    }
-                }
-            }
-            if (this.set) {
-                if (this.set instanceof Array) {
-                    var tgt = public.array_to_function(this.set);
-                    tgt.parent[tgt.args] = this.value;
-                } else if (typeof this.set === "function") {
-                    this.set(this.value);
-                }
-            }
-            for (var i in public.registered_callbacks) {
-                if (typeof public.registered_callbacks[i].filter === "function" && public.registered_callbacks[i].filter.call(this)) {
-                    continue;
-                }
-                if (public.config().debug_mode) {
-                    console.log("Orgy.js executing registered callback '" + i + "' on " + this.id);
-                }
-                public.registered_callbacks[i].fn.call(this);
-            }
-            if (this._timeout_id) {
-                clearTimeout(this._timeout_id);
-            }
-            private.deferred._set_state.call(this, 1);
-            this.done();
-            return this;
-        },
-        reject: function(err) {
-            if (!(err instanceof Array)) {
-                err = [ err ];
-            }
-            err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
-            public.debug(err);
-            if (this._timeout_id) {
-                clearTimeout(this._timeout_id);
-            }
-            this.catch_params = err;
-            private.deferred._set_state.call(this, 2);
-            for (var i in this.reject_q) {
-                this.value.push(this.reject_q[i].apply(this, arguments));
-            }
-            return this;
-        },
-        then: function(fn, rejector) {
-            switch (true) {
-              case this._state === 2:
-                break;
-
-              case this.done_fired === 1:
-                public.debug(this.id + " can't attach .then() after .done() has fired.");
-                break;
-
-              case this.settled === 1 && this._state === 1 && !this.done_fired:
-                var r = private.deferred.hook_before_success.call(this, fn, this.value);
-                if (typeof r !== "undefined") {
-                    this.value = r;
-                }
-                break;
-
-              default:
-                this.then_q.push(fn);
-                if (typeof rejector === "function") {
-                    this.reject_q.push(rejector);
-                }
-                break;
-            }
-            return this;
-        },
-        done: function(fn) {
-            if (this.done_fn === null) {
-                if (fn) {
-                    this.done_fn = fn;
-                }
-            } else if (fn) {
-                public.debug("done() can only be called once.");
-                return;
-            }
-            if (this.settled === 1 && this._state === 1 && this.done_fn) {
-                this.done_fired = 1;
-                private.deferred.hook_before_success.call(this, this.done_fn, this.value);
-            }
-        }
-    };
     public.deferred = function(options) {
         if (!options || typeof options.id !== "string") {
             return public.debug("Must set id.");
@@ -336,22 +193,60 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         var _o = public.naive_cloner([ private.deferred.tpl, options ]);
         return _o;
     };
-    private.deferred.hook_before_success = function(fn, arr) {
-        return fn(arr, this);
-    };
-    private.deferred._set_state = function(int) {
-        this._state = int;
-        if (int === 1 || int === 2) {
-            this.settled = 1;
+    private.deferred.settle = function(def) {
+        if (def.timeout_id) {
+            clearTimeout(def.timeout_id);
         }
-        private.deferred._signal_downstream.call(this, this);
+        private.deferred.set_state(def, 1);
+        def.callbacks.then.hooks.onComplete.push(function() {
+            private.deferred.run_train(def, def.callbacks.done, def.value, {
+                pause_on_deferred: false
+            });
+        });
+        private.deferred.run_train(def, def.callbacks.then, def.value, {
+            pause_on_deferred: false
+        });
+        return def;
     };
-    private.deferred._get_state = function() {
-        return this._state;
+    private.deferred.run_train = function(def, obj, param, options) {
+        var r = param || null;
+        if (obj.hooks && obj.hooks.onBefore.length > 0) {
+            private.deferred.run_trainl(def, obj.hooks.onBefore, param, {
+                pause_on_deferred: false
+            });
+        }
+        while (obj.train) {
+            r = obj.train[0].call(obj.deferred, obj.deferred.value, obj.deferred, r);
+            var last = obj.train.shift();
+            def.execution_history.push(last);
+            if (r.then && r.settled !== 1 && options.pause_on_deferred) {
+                (function(def, obj, param, options) {
+                    private.deferred.run_train(def, obj, param, options);
+                })(def, obj, param, options);
+                return;
+            }
+        }
+        if (obj.hooks && obj.hooks.onComplete.length > 0) {
+            private.deferred.run_trainl(def, obj.hooks.onComplete, r, {
+                pause_on_deferred: false
+            });
+        }
+    };
+    private.deferred.set_state = function(def, int) {
+        def.state = int;
+        if (int === 1 || int === 2) {
+            def.settled = 1;
+        }
+        if (int === 1 || int === 2) {
+            private.deferred.signal_downstream(def);
+        }
+    };
+    private.deferred.get_state = function(def) {
+        return def.state;
     };
     private.deferred.activate = function(obj) {
         if (!obj.id) {
-            obj.id = private.deferred._make_id(obj.model);
+            obj.id = private.deferred.make_id(obj.model);
             obj.autonamed = true;
         }
         if (public.list[obj.id] && !public.list[obj.id].overwritable) {
@@ -366,8 +261,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.auto_timeout = function(timeout) {
         this.timeout = typeof timeout === "undefined" ? this.timeout : timeout;
         if (!this.type || this.type !== "timer") {
-            if (this._timeout_id) {
-                clearTimeout(this._timeout_id);
+            if (this.timeout_id) {
+                clearTimeout(this.timeout_id);
             }
             if (typeof this.timeout === "undefined") {
                 public.debug(this.id + " Auto timeout this.timeout cannot be undefined.");
@@ -375,18 +270,18 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 return false;
             }
             var scope = this;
-            this._timeout_id = setTimeout(function() {
+            this.timeout_id = setTimeout(function() {
                 private.deferred.auto_timeout_cb.call(scope);
             }, this.timeout);
         } else {}
         return true;
     };
     private.deferred.auto_timeout_cb = function() {
-        if (this._state !== 1) {
+        if (this.state !== 1) {
             var msgs = [];
             var scope = this;
             var fn = function(obj) {
-                if (obj._state !== 1) {
+                if (obj.state !== 1) {
                     return obj.id;
                 } else {
                     return false;
@@ -400,17 +295,17 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
     };
     private.deferred.error = function(cb) {
-        if (this._state === 2) {
+        if (this.state === 2) {
             cb();
         } else {
-            this.error_q.push(cb);
+            this.reject_q.push(cb);
         }
         return this;
     };
-    private.deferred._make_id = function(model) {
+    private.deferred.make_id = function(model) {
         return "anonymous-" + model + "-" + public.i++;
     };
-    private.deferred._signal_downstream = function(target) {
+    private.deferred.signal_downstream = function(target) {
         for (var i in target.downstream) {
             if (target.downstream[i].settled === 1) {
                 public.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
@@ -702,6 +597,116 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return deferred;
     };
+    private.deferred.tpl = {};
+    private.deferred.tpl.model = "deferred";
+    private.deferred.tpl.settled = 0;
+    private.deferred.tpl.id = null;
+    private.deferred.tpl.done_fired = 0;
+    private.deferred.tpl._is_orgy_module = 0;
+    private.deferred.tpl.state = 0;
+    private.deferred.tpl.timeout_id = null;
+    private.deferred.tpl.value = [];
+    private.deferred.tpl.callback_states = {
+        resolve: 0,
+        then: 0,
+        done: 0,
+        reject: 0
+    };
+    private.dererred.tpl.callbacks = function() {
+        var o;
+        for (var i in private.deferred.tpl.callback_states) {
+            o[i] = {
+                train: [],
+                hooks: {
+                    onBefore: [],
+                    onComplete: []
+                }
+            };
+        }
+        return o;
+    };
+    private.dererred.tpl.downstream = {};
+    private.dererred.tpl.execution_history = [];
+    private.dererred.tpl.overwritable = 0;
+    private.dererred.tpl.timeout = 5e3;
+    private.dererred.tpl.remote = 1;
+    private.dererred.tpl.list = 1;
+    private.dererred.tpl.resolve = function(value) {
+        if (this.settled === 1) {
+            public.debug([ this.id + " can't resolve.", "Only unsettled deferreds are resolvable." ]);
+        }
+        private.deferred.set_state(this, -1);
+        this.value = value;
+        if (!this.resolver_fired && typeof this.resolver === "function") {
+            this.callbacks.resolve.train.push(function() {
+                this.resolver(value, this);
+            });
+        } else {
+            this.callbacks.resolve.train.push(function() {
+                private.deferred.settle(this);
+            });
+        }
+        this.resolver_fired = 1;
+        private.deferred.run_train(this, this.callbacks.resolve, this.value, {
+            pause_on_deferred: false
+        });
+        return deferred;
+    };
+    private.dererred.tpl.reject = function(err) {
+        if (!(err instanceof Array)) {
+            err = [ err ];
+        }
+        err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
+        public.debug(err);
+        if (this.timeout_id) {
+            clearTimeout(this.timeout_id);
+        }
+        this.catch_params = err;
+        private.deferred.set_state(this, 2);
+        for (var i in this.reject_q) {
+            this.value.push(this.reject_q[i].apply(this, arguments));
+        }
+        return this;
+    };
+    private.dererred.tpl.then = function(fn, rejector) {
+        switch (true) {
+          case this.state === 2:
+            break;
+
+          case this.done_fired === 1:
+            public.debug(this.id + " can't attach .then() after .done() has fired.");
+            break;
+
+          case this.settled === 1 && this.state === 1 && !this.done_fired:
+            var r = fn.call(this, this.value, this);
+            if (typeof r !== "undefined") {
+                this.value = r;
+            }
+            break;
+
+          default:
+            this.then_q.push(fn);
+            if (typeof rejector === "function") {
+                this.reject_q.push(rejector);
+            }
+            break;
+        }
+        return this;
+    };
+    private.dererred.tpl.done = function(fn) {
+        if (this.done_fn === null) {
+            if (fn) {
+                this.done_fn = fn;
+            }
+        } else if (fn) {
+            public.debug("done() can only be called once.");
+            return;
+        }
+        if (this.settled === 1 && this.state === 1 && this.done_fn) {
+            this.done_fired = 1;
+            this.done_fn.call(this, this.value, this);
+        }
+    };
     public.queue = {};
     private.queue = {};
     private.queue.tpl = {
@@ -716,7 +721,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             } catch (err) {
                 public.debug(err);
             }
-            if (this._state !== 0) {
+            if (this.state !== 0) {
                 return public.debug("Cannot add list to queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
             }
             for (var a in arr) {
@@ -750,7 +755,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             return this.upstream;
         },
         remove: function(arr) {
-            if (this._state !== 0) {
+            if (this.state !== 0) {
                 console.error("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
                 return false;
             }
@@ -762,16 +767,16 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             }
         },
         reset: function(options) {
-            if (this.settled !== 1 || this._state !== 1) {
+            if (this.settled !== 1 || this.state !== 1) {
                 public.debug("Can only reset a queue settled without errors.");
             }
             options = options || {};
             this.settled = 0;
-            this._state = 0;
+            this.state = 0;
             this.resolver_fired = 0;
             this.done_fired = 0;
-            if (this._timeout_id) {
-                clearTimeout(this._timeout_id);
+            if (this.timeout_id) {
+                clearTimeout(this.timeout_id);
             }
             this.downstream = {};
             this.dependencies = [];
@@ -780,7 +785,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         },
         check_self: function() {
             private.queue.receive_signal(this, this.id);
-            return this._state;
+            return this.state;
         }
     };
     public.queue = function(deps, options) {
@@ -835,8 +840,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         } else {
             var status = 1;
             for (var i in target.upstream) {
-                if (target.upstream[i]._state !== 1) {
-                    status = target.upstream[i]._state;
+                if (target.upstream[i].state !== 1) {
+                    status = target.upstream[i].state;
                     break;
                 }
             }

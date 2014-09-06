@@ -170,21 +170,21 @@ private.dererred.tpl.reject = function(err){
 
     public.debug(err);
 
-    //REMOVE AUTO TIMEOUT TIMER
+    //Remove auto timeout timer
     if(this.timeout_id){
         clearTimeout(this.timeout_id);
     }
 
-    //SAVE ERROR OBJECT TO MEMORY FOR USE IN CATCH CALLBACK
-    this.catch_params = err;
-
-    //SET STATE TO REJECTED
+    //Set state to rejected
     private.deferred.set_state(this,2);
 
-    //EXECUTE REJECTION QUEUE
-    for(var i in this.reject_q){
-        this.value.push(this.reject_q[i].apply(this,arguments));
-    }
+    //Execute rejection queue
+    private.deferred.run_train(
+        this
+        ,this.callbacks.reject
+        ,err
+        ,{pause_on_deferred : false}
+    );
 
     return this;
 };
@@ -194,29 +194,25 @@ private.dererred.tpl.then = function(fn,rejector){
 
     switch(true){
 
-        //ERROR WAS PREVIOUSLY THROWN
+        //An error was previously thrown, bail out
         case(this.state === 2):
             break;
 
+        //Execution chain already finished. Bail out.
         case(this.done_fired === 1):
-            public.debug(this.id+" can't attach .then() after .done() has fired.");
+            public.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
             break;
 
+        //Settled, but execution chain not finished
         case(this.settled === 1 && this.state === 1 && !this.done_fired):
-            var r = fn.call(this,this.value,this);
-            if(typeof r !== 'undefined'){
-                this.value = r;
-            }
-            break;
-
         default:
 
-            //PUSH CALLBACK TO THEN QUEUE
-            this.then_q.push(fn);
+            //Push callback to then queue
+            this.callbacks.then.train.push(fn);
 
-            //PUSH REJECT CALLBACK TO REJECTION QUEUE
+            //Push reject callback to the rejection queue
             if(typeof rejector === 'function'){
-                this.reject_q.push(rejector);
+                this.callbacks.reject.train.push(rejector);
             }
             break;
     }
@@ -227,18 +223,14 @@ private.dererred.tpl.then = function(fn,rejector){
 
 private.dererred.tpl.done = function(fn){
 
-    if(this.done_fn === null){
+    if(this.callbacks.done.train.length === 0
+       && this.done_fired === 0){
         if(fn){
-            this.done_fn = fn;
+            this.callbacks.done.train.push(fn);
         }
     }
     else if(fn){
         public.debug("done() can only be called once.");
         return;
-    }
-
-    if(this.settled === 1 && this.state === 1 && this.done_fn){
-        this.done_fired = 1;
-        this.done_fn.call(this,this.value,this);
     }
 };
