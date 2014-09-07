@@ -44,7 +44,7 @@
 
     //CREATE DEFERREDS TO DEMONSTRATE CHAIN PAUSE-ON-RETURN-DEFERRED
     var d1 = Orgy.deferred({
-        id : "simul-throttler1"
+        id : "d1"
     });
     setTimeout(function(){
         console.timeEnd("d1-resolver");
@@ -59,7 +59,7 @@
 
 
     var d2 = Orgy.deferred({
-        id : "simul-throttler2"
+        id : "d2"
     });
     setTimeout(function(){
         console.timeEnd("d2-resolver");

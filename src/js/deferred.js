@@ -110,7 +110,7 @@ private.deferred.settle = function(def){
         def
         ,def.callbacks.then
         ,def.value
-        ,{pause_on_deferred : false}
+        ,{pause_on_deferred : true}
     );
     
     
@@ -143,10 +143,12 @@ private.deferred.run_train = function(def,obj,param,options){
     
     //onBefore event
     if(obj.hooks && obj.hooks.onBefore.train.length > 0){
-        private.deferred.run_train(def
-                                    ,obj.hooks.onBefore
-                                    ,param
-                                    ,{pause_on_deferred : false});
+        private.deferred.run_train(
+            def
+            ,obj.hooks.onBefore
+            ,param
+            ,{pause_on_deferred : false}
+        );
     }
     
     while(obj.train.length > 0){
@@ -155,23 +157,70 @@ private.deferred.run_train = function(def,obj,param,options){
         var last = obj.train.shift();
         def.execution_history.push(last);
         
-        r = last.call(def
-                        ,def.value
-                        ,def
-                        ,r);
+        r = last.call(def,def.value,def,r);
 
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
-        if(r && r.then 
-           && r.settled !== 1
-           && options.pause_on_deferred){
-
-            //execute rest of train when thenable settles
-            (function(def,obj,param,options){
-                private.deferred.run_train(def,obj,param,options);
-            })(def,obj,param,options);
+        if(options.pause_on_deferred){
             
-            return;
+            //If r is an unsettled thenable
+            if(r && r.then && r.settled !== 1){
+
+                //execute rest of this train after r resolves
+                r.callbacks.resolve.hooks.onComplete.train.push(function(){
+
+                    private.deferred.run_train(
+                        def
+                        ,obj
+                        ,param
+                        ,{pause_on_deferred : true}
+                    );
+                });
+
+                //terminate execution
+                return;
+            }
+            
+            //If is an array than contains an unsettled thenable
+            else if(r instanceof Array){
+
+                var thenables = [];
+
+                for(var i in r){
+                    if(r[i].then && r[i].settled !== 1){
+                        
+                        thenables.push(r[i]);
+           
+                        var fn = (function(t,def,obj,param){
+                    
+                            return function(){
+      
+                                //Bail if any thenables unsettled
+                                for(var i in t){
+                                    if(t[i].settled !== 1){
+                                        return;
+                                    }
+                                }
+
+                                private.deferred.run_train(
+                                    def
+                                    ,obj
+                                    ,param
+                                    ,{pause_on_deferred : true}
+                                );
+                            };
+                            
+                        })(thenables,def,obj,param);
+                        
+                        //execute rest of this train after
+                        //all thenables found in r resolve
+                        r[i].callbacks.resolve.hooks.onComplete.train.push(fn);
+
+                        //terminate execution
+                        return;
+                    }
+                }
+            }
         }
     }
     

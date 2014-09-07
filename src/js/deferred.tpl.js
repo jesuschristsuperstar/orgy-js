@@ -147,7 +147,8 @@ private.deferred.tpl.resolve = function(value){
         this.resolver_fired = 1;  
         
         //Add settle to resolve train
-        this.callbacks.resolve.hooks.onComplete.train.push(function(){
+        //Always settle before all other complete callbacks
+        this.callbacks.resolve.hooks.onComplete.train.unshift(function(){
             private.deferred.settle(this);
         });
     }

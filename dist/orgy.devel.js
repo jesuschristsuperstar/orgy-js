@@ -1,7 +1,7 @@
 /** 
 orgy: A queue and deferred library that is so very hot right now. 
 Version: 1.4.1 
-Built: 2014-09-06 17:10:05
+Built: 2014-09-06 20:27:39
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -205,7 +205,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             });
         });
         private.deferred.run_train(def, def.callbacks.then, def.value, {
-            pause_on_deferred: false
+            pause_on_deferred: true
         });
         return def;
     };
@@ -220,11 +220,36 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             var last = obj.train.shift();
             def.execution_history.push(last);
             r = last.call(def, def.value, def, r);
-            if (r && r.then && r.settled !== 1 && options.pause_on_deferred) {
-                (function(def, obj, param, options) {
-                    private.deferred.run_train(def, obj, param, options);
-                })(def, obj, param, options);
-                return;
+            if (options.pause_on_deferred) {
+                if (r && r.then && r.settled !== 1) {
+                    r.callbacks.resolve.hooks.onComplete.train.push(function() {
+                        private.deferred.run_train(def, obj, param, {
+                            pause_on_deferred: true
+                        });
+                    });
+                    return;
+                } else if (r instanceof Array) {
+                    var thenables = [];
+                    for (var i in r) {
+                        if (r[i].then && r[i].settled !== 1) {
+                            thenables.push(r[i]);
+                            var fn = function(t, def, obj, param) {
+                                return function() {
+                                    for (var i in t) {
+                                        if (t[i].settled !== 1) {
+                                            return;
+                                        }
+                                    }
+                                    private.deferred.run_train(def, obj, param, {
+                                        pause_on_deferred: true
+                                    });
+                                };
+                            }(thenables, def, obj, param);
+                            r[i].callbacks.resolve.hooks.onComplete.train.push(fn);
+                            return;
+                        }
+                    }
+                }
             }
         }
         if (obj.hooks && obj.hooks.onComplete.train.length > 0) {
@@ -649,7 +674,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             });
         } else {
             this.resolver_fired = 1;
-            this.callbacks.resolve.hooks.onComplete.train.push(function() {
+            this.callbacks.resolve.hooks.onComplete.train.unshift(function() {
                 private.deferred.settle(this);
             });
         }
