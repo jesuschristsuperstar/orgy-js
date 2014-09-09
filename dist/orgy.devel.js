@@ -1,7 +1,7 @@
 /** 
-orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.4.1 
-Built: 2014-09-06 20:27:39
+orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
+Version: 1.5.0 
+Built: 2014-09-09 09:40:47
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 

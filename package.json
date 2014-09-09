@@ -1,6 +1,6 @@
 {
   "name": "orgy",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable.",
   "author": "tecfu.com <help@tecfu.com> (http://github.com/tecfu)",
   "main": "dist/orgy.devel.js",
@@ -24,7 +24,8 @@
     "grunt-mocha-test": "~0.11.0",
     "blanket": "~1.1.6",
     "karma-firefox-launcher": "~0.1.3",
-    "karma-opera-launcher": "~0.1.0"
+    "karma-opera-launcher": "~0.1.0",
+    "grunt-contrib-watch": "~0.6.1"
   },
   "scripts": {
     "test": "mocha test/mocha"
