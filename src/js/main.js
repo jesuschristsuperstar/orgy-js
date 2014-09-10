@@ -324,7 +324,12 @@ public.naive_cloner = function(donors){
 public.debug = function(msg,force_debug_mode){
     if(msg instanceof Array){
         for(var i in msg){
-            console.error("ERROR-"+i+": "+msg[i]);
+            if(typeof msg[i] === 'string'){
+                console.error("ERROR-"+i+": "+msg[i]);
+            }
+            else{
+                console.error(msg[i]);
+            }
         }
     }
     else{
