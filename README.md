@@ -92,8 +92,7 @@ q.then(function(value){
 });
 
 q.done(function(value){ 
-    //Done value is carried from last then .then() statement.
-    console.log("done");
+    //Done value is carried from last .then() statement.
     console.log(value);
     
     //GET MODIFIED DOM CONTENT 
