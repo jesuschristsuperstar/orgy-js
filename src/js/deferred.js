@@ -24,15 +24,17 @@ private.deferred = {};
 
 public.deferred = function(options){
     
-    if(!public.list[options.id]){
+    options = options || {};
+    
+    if(options.id && public.list[options.id]){
+        _o = public.list[options.id];
+    }
+    else{
         //CREATE NEW INSTANCE OF DEFERRED CLASS
         var _o = private.deferred.factory(options);
 
         //ACTIVATE DEFERRED
         _o = private.deferred.activate(_o);
-    }
-    else{
-        _o = public.list[options.id];
     }
     
     return _o;
@@ -52,11 +54,10 @@ private.deferred.factory = function(options){
     ]);
     
     //Save backtrace for async debugging
-    var l = new Error().stack.split("public.deferred")[1].split("//")[2].split(" ")[0].trim();
-    _o.origin_line = l;
+    _o.origin_line = private.origin_line('public.deferred');
 
     //if no id, use origin
-    if(!options.id){
+    if(typeof options.id === 'undefined'){
         _o.id = _o.origin_line;
     }
     

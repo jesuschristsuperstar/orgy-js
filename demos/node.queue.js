@@ -57,3 +57,10 @@ q.done(function(value){
     //GET MODIFIED DOM CONTENT 
     console.log(Orgy.config().document.html());
 });
+
+
+var d1 = Orgy.deferred();
+d1.resolve("hi");
+d1.then(function(r,def){
+    console.log(def.id + " then.");
+})

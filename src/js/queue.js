@@ -273,8 +273,7 @@ private.queue.factory = function(options){
     ]);
 
     //Save backtrace for async debugging
-    var l = new Error().stack.split("public.queue")[1].split("//")[2].split(" ")[0].trim();
-    _o.origin_line = l;
+    _o.origin_line = private.origin_line('public.queue');
     
     //if no id, use origin
     if(!options.id){
