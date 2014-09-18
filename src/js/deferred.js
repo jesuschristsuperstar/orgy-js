@@ -24,10 +24,6 @@ private.deferred = {};
 
 public.deferred = function(options){
     
-    if(!options || typeof options.id !== 'string'){
-        return public.debug("Must set id.");
-    }
-    
     if(!public.list[options.id]){
         //CREATE NEW INSTANCE OF DEFERRED CLASS
         var _o = private.deferred.factory(options);
@@ -54,8 +50,16 @@ private.deferred.factory = function(options){
         private.deferred.tpl
         ,options
     ]);
+    
+    //Save backtrace for async debugging
+    var l = new Error().stack.split("//");
+    _o.origin_line = l.pop();
 
-    //YOU NOW HAVE A DEFERRED OBJECT THAT IS INACTIVE ON THE Orgy LIST
+    //if no id, use origin
+    if(!options.id){
+        _o.id = _o.origin_line;
+    }
+    
     return _o;
 };
     
@@ -267,13 +271,7 @@ private.deferred.get_state = function(def){
 
 
 private.deferred.activate = function(obj){
-
-    //SET ID
-    if(!obj.id){
-        obj.id = private.deferred.make_id(obj.model);
-        obj.autonamed = true;
-    }
-
+    
     //MAKE SURE NAMING CONFLICT DOES NOT EXIST
     if(public.list[obj.id] && !public.list[obj.id].overwritable){
         public.debug("Tried to overwrite "+obj.id+" without overwrite permissions.");
@@ -799,15 +797,18 @@ private.deferred.attach_xhr = function(deferred,dep){
                                         r = JSON.parse(r);
                                     }
                                     catch(e){
-                                        public.debug(["Could not decode JSON",dep.url,r]);
-
+                                        public.debug([
+                                            "Could not decode JSON"
+                                            ,dep.url
+                                            ,r
+                                        ],deferred);
                                     }
                                 }
                                 //WE WANT TO RESOLVE WITH DOM NODE FOR CSS FILES
                                 deferred.resolve(node || r);
                             }
                             else{
-                                deferred.reject("Error loading "+dep.url);
+                                deferred.reject("Error loading " + dep.url);
                             }
                         }
                     };
@@ -861,7 +862,10 @@ private.deferred.attach_xhr = function(deferred,dep){
                     deferred.resolve(node);
                 }
                 else{
-                    return public.debug([dep.url,"Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies."]);
+                    return public.debug([
+                        dep.url
+                        ,"Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies."
+                    ],deferred);
                 }
             }
             else{
@@ -873,7 +877,11 @@ private.deferred.attach_xhr = function(deferred,dep){
                     fs.readFile(dep.url, 'utf8', function (err, data) {
 
                         if (err){
-                            public.debug(["File " + dep.url + " not found @ local dep.url '" + dep.url +"'","CWD: "+process.cwd()]);
+                            public.debug([
+                                "File " + dep.url + " not found @ local dep.url '" + dep.url +"'"
+                                ,"CWD: "+process.cwd()
+                            ],deferred);
+                            
                             process.exit();
                         }
 

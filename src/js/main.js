@@ -113,7 +113,7 @@ public.define = function(id,data){
 
     //MAKE SURE NOT TRYING TO RESOLVE EXISTING DEF
     if(public.list[id] && public.list[id].settled === 1){
-        return public.debug("Can't define " + id + ". Already resolved.",true);
+        return public.debug("Can't define " + id + ". Already resolved.");
     }
 
     data.__dependencies = (typeof data.__dependencies === 'function') 
@@ -171,7 +171,7 @@ public.assign = function(tgt,arr,add){
             id = tgt;
             break;
         default:
-            return public.debug("Assign target must be a queue object or the id of a queue.");
+            return public.debug("Assign target must be a queue object or the id of a queue.",this);
     }
 
     //IF TARGET ALREADY LISTED
@@ -196,7 +196,7 @@ public.assign = function(tgt,arr,add){
     }
     //ERROR: CAN'T REMOVE FROM A QUEUE THAT DOES NOT EXIST
     else{
-        public.debug("Cannot remove dependencies from a queue that does not exist.");
+        public.debug("Cannot remove dependencies from a queue that does not exist.",this);
     }
 
     return q;
@@ -321,23 +321,29 @@ public.naive_cloner = function(donors){
  * @param {boolean} force_debug_mode   Forces debugger when set to true. 
  * @returns {Boolean}
  */
-public.debug = function(msg,force_debug_mode){
-    if(msg instanceof Array){
-        for(var i in msg){
-            if(typeof msg[i] === 'string'){
-                console.error("ERROR-"+i+": "+msg[i]);
-            }
-            else{
-                console.error(msg[i]);
-            }
+public.debug = function(msg,def){
+    
+    if(! (msg instanceof Array)){
+        msg = [msg];
+    }
+
+    for(var i in msg){
+        if(typeof msg[i] === 'string'){
+            console.error("ERROR-"+i+": "+msg[i]);
+        }
+        else{
+            console.error(msg[i]);
         }
     }
-    else{
-        console.error("ERROR: "+msg);
+
+    //if we saved a stack trace to connect async, push it
+    if(def && def.origin_line){
+        console.log("Source:");
+        console.log("http://" + def.origin_line);
     }
-    if(private.config.debug_mode == 1 || force_debug_mode){
-        debugger;
-    }
+    
+    debugger;
+    
     if(private.config.mode === 'browser'){
         return false;
     }
@@ -345,3 +351,8 @@ public.debug = function(msg,force_debug_mode){
         process.exit();
     }
 }
+
+
+////////////////////////////////////////
+//  PUBLIC METHODS
+////////////////////////////////////////

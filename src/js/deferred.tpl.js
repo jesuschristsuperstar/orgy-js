@@ -178,7 +178,7 @@ private.deferred.tpl.reject = function(err){
 
     err.unshift("REJECTED "+this.model+": '"+this.id+"'");
 
-    public.debug(err);
+    public.debug(err,this);
 
     //Remove auto timeout timer
     if(this.timeout_id){

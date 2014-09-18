@@ -211,9 +211,7 @@ public.queue = function(deps,options){
         return public.debug("Queue dependencies must be an array.");
     }
     
-    if(!options || !options.id){
-        return public.debug("Queues require an id.");
-    }
+    options = options || {};
     
     //DOES NOT ALREADY EXIST
     if(!public.list[options.id]){
@@ -274,7 +272,15 @@ private.queue.factory = function(options){
         ,options
     ]);
 
-    //YOU NOW HAVE A QUEUE OBJECT THAT IS INACTIVE ON THE OrgyLIST
+    //Save backtrace for async debugging
+    var l = new Error().stack.split("//");
+    _o.origin_line = l.pop();
+    
+    //if no id, use origin
+    if(!options.id){
+        _o.id = _o.origin_line;
+    }
+    
     return _o;
 }    
     

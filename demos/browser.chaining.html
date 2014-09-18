@@ -16,10 +16,11 @@
             id : "debugger-timer"
             ,type : "timer"
             ,timeout : 1000
+        },{
+            url : "data/data2.json"
+            ,type : "json"
         }
-    ],{
-        id : "q1"
-    });
+    ]);
 
     //FIRES WHEN RESOLVED
     q.then(function(r){
