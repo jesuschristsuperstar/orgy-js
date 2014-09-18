@@ -227,6 +227,9 @@ public.array_to_function = function(target){
 
     //CLONE TARGET
     var clone = target.slice(0);
+    
+    //Make a string copy for debugging.
+    var pathstr = clone.join(".");
 
     var root_id = clone[0];
     clone.splice(0,1);
@@ -272,9 +275,11 @@ public.array_to_function = function(target){
         }
 
         if(typeof x[key] === 'undefined'){
-            console.error("Property '"+key+"' not found on object:", x);
-            debugger;
-            return;
+            return public.debug([
+                "Property '"+key+"' undefined @"
+                ,pathstr
+                ,clone
+            ]);
         }
         x = x[key];
         y = x;
