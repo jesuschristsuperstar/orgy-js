@@ -10,20 +10,21 @@
         id : "d1"
     });
     
+    d1.resolve(1);
+    
     d1.then(function(r){
-        console.log("then 1");
+        console.log("then 1-" + r);
+        return 2;
     })
 
-    d1.then(function(r){
-        console.log("then 2");
+    d1.then(function(r,def,last){
+        console.log("then 2-" + last);
     })
     
     d1.done(function(r){
         console.log("done");
     })
     
-    d1.resolve("wayfarers");
-
 </script>
 </head>
 <body>

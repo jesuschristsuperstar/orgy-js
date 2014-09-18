@@ -90,11 +90,8 @@ private.deferred.settle = function(def){
     
     //Add done as a callback to then chain completion.
     def.callbacks.then.hooks.onComplete.train.push(function(){
-        
-        //Done can only be called once, so note that it has been
-        def.done_fired = 1;
-        
-        //Run done queue
+
+        //Run done
         private.deferred.run_train(
             def
             ,def.callbacks.done
@@ -104,7 +101,7 @@ private.deferred.settle = function(def){
 
     });
     
-    
+  
     //Run then queue
     private.deferred.run_train(
         def
@@ -139,7 +136,8 @@ private.deferred.settle = function(def){
  */
 private.deferred.run_train = function(def,obj,param,options){
     
-    var r = param || null;
+    //allow previous return values to be passed down chain
+    var r = param || def.caboose || def.value;
     
     //onBefore event
     if(obj.hooks && obj.hooks.onBefore.train.length > 0){
@@ -157,7 +155,7 @@ private.deferred.run_train = function(def,obj,param,options){
         var last = obj.train.shift();
         def.execution_history.push(last);
         
-        r = last.call(def,def.value,def,r);
+        r = def.caboose = last.call(def,def.value,def,r);
 
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
@@ -187,6 +185,7 @@ private.deferred.run_train = function(def,obj,param,options){
                 var thenables = [];
 
                 for(var i in r){
+                    
                     if(r[i].then && r[i].settled !== 1){
                         
                         thenables.push(r[i]);
