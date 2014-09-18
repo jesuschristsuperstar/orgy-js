@@ -1,7 +1,7 @@
 /** 
-orgy: A queue and deferred library that is so very hot right now. 
-Version: 1.4.1 
-Built: 2014-09-06 20:27:39
+orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
+Version: 1.5.3 
+Built: 2014-09-18 05:55:38
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -161,7 +161,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     public.debug = function(msg, force_debug_mode) {
         if (msg instanceof Array) {
             for (var i in msg) {
-                console.error("ERROR-" + i + ": " + msg[i]);
+                if (typeof msg[i] === "string") {
+                    console.error("ERROR-" + i + ": " + msg[i]);
+                } else {
+                    console.error(msg[i]);
+                }
             }
         } else {
             console.error("ERROR: " + msg);
@@ -199,7 +203,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         private.deferred.set_state(def, 1);
         def.callbacks.then.hooks.onComplete.train.push(function() {
-            def.done_fired = 1;
             private.deferred.run_train(def, def.callbacks.done, def.value, {
                 pause_on_deferred: false
             });
@@ -210,7 +213,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         return def;
     };
     private.deferred.run_train = function(def, obj, param, options) {
-        var r = param || null;
+        var r = param || def.caboose || def.value;
         if (obj.hooks && obj.hooks.onBefore.train.length > 0) {
             private.deferred.run_train(def, obj.hooks.onBefore, param, {
                 pause_on_deferred: false
@@ -219,7 +222,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         while (obj.train.length > 0) {
             var last = obj.train.shift();
             def.execution_history.push(last);
-            r = last.call(def, def.value, def, r);
+            r = def.caboose = last.call(def, def.value, def, r);
             if (options.pause_on_deferred) {
                 if (r && r.then && r.settled !== 1) {
                     r.callbacks.resolve.hooks.onComplete.train.push(function() {
@@ -628,6 +631,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.tpl.settled = 0;
     private.deferred.tpl.state = 0;
     private.deferred.tpl.value = [];
+    private.deferred.tpl.caboose = null;
     private.deferred.tpl.model = "deferred";
     private.deferred.tpl.done_fired = 0;
     private.deferred.tpl._is_orgy_module = 0;
@@ -707,24 +711,37 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             public.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
             break;
 
-          case this.settled === 1 && this.state === 1 && !this.done_fired:
           default:
             this.callbacks.then.train.push(fn);
             if (typeof rejector === "function") {
                 this.callbacks.reject.train.push(rejector);
             }
-            break;
+            if (this.settled === 1 && this.state === 1 && !this.done_fired) {
+                private.deferred.run_train(this, this.callbacks.then, null, {
+                    pause_on_deferred: true
+                });
+            } else {}
         }
         return this;
     };
     private.deferred.tpl.done = function(fn) {
         if (this.callbacks.done.train.length === 0 && this.done_fired === 0) {
-            if (fn) {
-                this.callbacks.done.train.push(fn);
+            if (typeof fn === "function") {
+                var fn2 = function(r, deferred, last) {
+                    deferred.done_fired = 1;
+                    fn(r, deferred, last);
+                };
+                this.callbacks.done.train.push(fn2);
+                if (this.settled === 1 && this.state === 1) {
+                    private.deferred.run_train(this, this.callbacks.done, null, {
+                        pause_on_deferred: false
+                    });
+                } else {}
+            } else {
+                return public.debug("done() must be passed a function.");
             }
-        } else if (fn) {
-            public.debug("done() can only be called once.");
-            return;
+        } else {
+            return public.debug("done() can only be called once.");
         }
     };
     public.queue = {};

@@ -16,8 +16,8 @@ Deferred / Queue library that yields to no spec.
 
 - Creates deferreds or queues.
 - Queues can be held back from settling after their dependencies have resolved by a resolver method. 
-- When then() is passed a return value that value is passed down the execution chain.
-- When then() is passed an unsettled thenable, it pauses further execution on the dependency/queue callback chain until that thenable is settled. The return value of the child thenable is appended to the parent then's return value.
+- When then() returns a value that value is passed down the execution chain.
+- When then() returns an unsettled thenable, it pauses further execution on the dependency/queue callback chain until that thenable is settled. The return value of the child thenable is appended to the parent then's return value.
 - When running under nodejs, can be passed a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser: 
 ```
 Orgy.config({
@@ -92,8 +92,7 @@ q.then(function(value){
 });
 
 q.done(function(value){ 
-    //Done value is carried from last then .then() statement.
-    console.log("done");
+    //Done value is carried from last .then() statement.
     console.log(value);
     
     //GET MODIFIED DOM CONTENT 

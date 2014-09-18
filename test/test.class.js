@@ -51,16 +51,31 @@
         
         var scope = this;
         
-        describe('then function', function(){
+        describe('then chain', function(){
     
-                before(function(done){
+                before(function(td){
                     
                     //EXTEND TEST TIMEOUT TO 5 SECONDS
                     this.timeout(5000);
 
-                   //FIRES WHEN RESOLVED
                     q.then(function(r){
-                        done();
+                        
+                        //test deferred
+                        td();
+                        
+                        //Return a deferred to prevent queue
+                        //resolver chain from completing here,
+                        //because we need to check q.done() 
+                        //separately.
+                        var def = Orgy.deferred({
+                            id : 'test-throttler'
+                        });
+                        
+                        setTimeout(function(){
+                            def.resolve(1);
+                        },50);
+                        
+                        return def;
                     });
 
                 });
@@ -87,12 +102,12 @@
 
         describe('done function', function(){
 
-            before(function(done){
+            before(function(td){
 
                //FIRES WHEN RESOLVED
-                q.done(function(r){
-                    done();
-                });
+            q.done(function(r){
+                td();
+            });
 
             });
 
