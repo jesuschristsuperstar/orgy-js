@@ -70,7 +70,7 @@ private.queue.tpl = {
        //IF NOT PENDING, DO NOT ALLOW TO ADD
        if(this.state !== 0){
            return public.debug("Cannot add list to queue id:'"+this.id
-           +"'. Queue settled/in the process of being settled.");
+           +"'. Queue settled/in the process of being settled.",this);
        }
 
        for(var a in arr){
@@ -273,11 +273,11 @@ private.queue.factory = function(options){
     ]);
 
     //Save backtrace for async debugging
-    _o.origin_line = private.origin_line('public.queue');
+    _o.origin_stack = private.origin_stack('public.queue');
     
     //if no id, use origin
     if(!options.id){
-        _o.id = _o.origin_line;
+        _o.id = _o.origin_stack[_o.origin_stack.length -1];
     }
     
     return _o;

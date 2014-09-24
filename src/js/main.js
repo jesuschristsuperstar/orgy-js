@@ -342,9 +342,11 @@ public.debug = function(msg,def){
     }
 
     //if we saved a stack trace to connect async, push it
-    if(def && def.origin_line){
-        console.log("Source:");
-        console.log("http://" + def.origin_line);
+    if(def && def.origin_stack){
+        console.log("Backtrace:");
+        for(var i in def.origin_stack){
+          console.log(def.origin_stack[i]);
+        }
     }
     
     debugger;
@@ -363,12 +365,16 @@ public.debug = function(msg,def){
 ////////////////////////////////////////
 
 
-private.origin_line = function(ss){
+private.origin_stack = function(ss){
 
     var l = new Error().stack.split(ss)[1].trim();
 
     if(private.config.mode == 'browser'){
-        l = l.split("//")[2].split(" ")[0].trim();
+        l = l.split("//");
+        l = l.slice(1);
+        for(var i in l){
+          l[i] = window.location.protocol + "//" + l[i].split(" ")[0];
+        }//[2].split(" ")[0].trim();
     }
     else{
         l = '/' + l.split("(/")[2].split(" ")[0].trim().slice(0,-1);

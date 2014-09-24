@@ -54,11 +54,11 @@ private.deferred.factory = function(options){
     ]);
     
     //Save backtrace for async debugging
-    _o.origin_line = private.origin_line('public.deferred');
+    _o.origin_stack = private.origin_stack('public.deferred');
 
     //if no id, use origin
     if(typeof options.id === 'undefined'){
-        _o.id = _o.origin_line;
+        _o.id = _o.origin_stack[_o.origin_stack.length -1];
     }
     
     return _o;

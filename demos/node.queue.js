@@ -50,6 +50,13 @@ q.then(function(value){
     return value;
 });
 
+/*
+q.then(function(value){
+    var d = Orgy.deferred();
+    return d;       //never gets resolved, should throw trace back to here.
+});
+*/
+
 q.done(function(value){
     console.log("done");
     console.log(value);
