@@ -56,44 +56,54 @@ Orgy.config({
     }())
 });
 
+
 var q = Orgy.queue([
-   {
-       type : "json"
-       ,url : "data/data1.json"
-   },
-   {
-       type : "json"
-       ,url : "data/data2.json"
-   },
-   {
-       type : "css"
-       ,url : "data/sample.css"
-   }
+    {
+        type : "json"
+        ,url : "data/data1.json"
+    },
+    {
+        type : "json"
+        ,url : "data/data2.json"
+    },
+    {
+        type : "css"
+        ,url : "data/sample.css"
+    }
 ],{
-   id : "q1" //Optional. Id by which to reference the queue globally.
+  id : "q1" //Optional. Id by which to reference the queue globally.
 });
+
+
+//Done can be called async and out of order.
+setTimeout(function(){
+  q.done(function(r,deferred,last){ 
+    console.log(last); // 2
+  });
+},500)
 
 
 /**
-If a then function returns a value, that value is passed down to any subsequent then() or done() functions.
+ * If a then function returns a value, that value is passed down to any
+ * subsequent then() or done() functions.
 */
-
 q.then(function(r){
-    console.log(r); //
+
+    //Modify some DOM content
+    Orgy.config().document.find("body").append("hey!");
+
+    console.log(r); //Dependency values.
     return 1;
 });
 
+
 q.then(function(r,deferred,last){
+
+    //Get modified DOM content
+    console.log(Orgy.config().document.find("body").html()); //hey!
+
     console.log(last); // 1
     return 2;
-});
-
-q.done(function(r,deferred,last){ 
-
-    console.log(last); // 2
-    
-    //GET MODIFIED DOM CONTENT 
-    console.log(Orgy.config().document.html());
 });
 ```
 
