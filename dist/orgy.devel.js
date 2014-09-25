@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.5.8 
-Built: 2014-09-24 04:45:58
+Version: 1.5.9 
+Built: 2014-09-25 13:19:51
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -219,8 +219,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             clearTimeout(def.timeout_id);
         }
         private.deferred.set_state(def, 1);
-        def.callbacks.then.hooks.onComplete.train.push(function() {
-            private.deferred.run_train(def, def.callbacks.done, def.value, {
+        def.callbacks.then.hooks.onComplete.train.push(function(d2, itinerary, last) {
+            def.caboose = last;
+            private.deferred.run_train(def, def.callbacks.done, def.caboose, {
                 pause_on_deferred: false
             });
         });
@@ -239,7 +240,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         while (obj.train.length > 0) {
             var last = obj.train.shift();
             def.execution_history.push(last);
-            r = def.caboose = last.call(def, def.value, def, r);
+            r = last.call(def, def.value, def, r);
             if (options.pause_on_deferred) {
                 if (r && r.then && r.settled !== 1) {
                     r.callbacks.resolve.hooks.onComplete.train.push(function() {
@@ -730,7 +731,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 this.callbacks.reject.train.push(rejector);
             }
             if (this.settled === 1 && this.state === 1 && !this.done_fired) {
-                private.deferred.run_train(this, this.callbacks.then, null, {
+                private.deferred.run_train(this, this.callbacks.then, this.caboose, {
                     pause_on_deferred: true
                 });
             } else {}
@@ -746,7 +747,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 };
                 this.callbacks.done.train.push(fn2);
                 if (this.settled === 1 && this.state === 1) {
-                    private.deferred.run_train(this, this.callbacks.done, null, {
+                    private.deferred.run_train(this, this.callbacks.done, this.caboose, {
                         pause_on_deferred: false
                     });
                 } else {}

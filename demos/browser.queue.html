@@ -10,65 +10,44 @@
     
 <script>
     
-    Orgy.config({
-        autopath : "../demos/"
-    })
 
-    var q = Orgy.queue([
-        {
-            url : "data/data1.json"
-            ,type : "json"
-        }
-        ,{
-            url : "data/data2.json"
-            ,type : "json"
-        }
-        ,{
-            type : "css"
-            ,url : "data/sample.css"
-        }
-        ,{
-            type : "script"
-            ,url : "data/test-module.js"
-        }
-        /*
-        ,{
-            timeout : 2500
-            ,type : "timer"
-        }
-        */
-        
-    ],{
-       id : "q1" //Optional. Knowing the id allows you to access via Orgy.list[id]
+  var q = Orgy.queue([
+      {
+          type : "json"
+          ,url : "data/data1.json"
+      },
+      {
+          type : "json"
+          ,url : "data/data2.json"
+      },
+      {
+          type : "css"
+          ,url : "data/sample.css"
+      }
+  ]);
+
+  //Done can be called async and out of order.
+  setTimeout(function(){
+    q.done(function(r,deferred,last){ 
+      console.log(last); // 2
     });
+  },500)
 
 
-    /*
-    If a then statement returns a value, that value becomes the new 
-    value of the queue and is passed to any subsequent
-    then() or done() statements.
-    */
+  /**
+   * If a then function returns a value, that value is passed down to any
+   * subsequent then() or done() functions.
+  */
+  q.then(function(r){
+      console.log(r); //Dependency values.
+      return 1;
+  });
 
-    q.then(function(r){
-        r.push('foo');
-        return r;
-    });
+  q.then(function(r,deferred,last){
+      console.log(last); // 1
+      return 2;
+  });
 
-    q.then(function(r){
-        r.pop(); //'foo'
-        r.push('bar');
-        return r;
-    });
-    
-    q.then(function(value){
-        var d = Orgy.deferred();
-        return d;       //never gets resolved, should throw trace back to here.
-    });
-
-    q.done(function(r){ 
-        //Done r is carried from last then .then() statement.
-        console.log(r);
-    });
 </script>
 </head>
 <body>

@@ -94,13 +94,14 @@ private.deferred.settle = function(def){
     
     
     //Add done as a callback to then chain completion.
-    def.callbacks.then.hooks.onComplete.train.push(function(){
-
+    def.callbacks.then.hooks.onComplete.train.push(function(d2,itinerary,last){
+        def.caboose = last;
+        
         //Run done
         private.deferred.run_train(
             def
             ,def.callbacks.done
-            ,def.value
+            ,def.caboose
             ,{pause_on_deferred : false}
         );
 
@@ -159,8 +160,8 @@ private.deferred.run_train = function(def,obj,param,options){
         //remove fn to execute
         var last = obj.train.shift();
         def.execution_history.push(last);
-        
-        r = def.caboose = last.call(def,def.value,def,r);
+  
+        r = last.call(def,def.value,def,r);
 
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles

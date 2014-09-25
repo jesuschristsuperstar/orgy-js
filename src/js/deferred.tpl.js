@@ -228,7 +228,7 @@ private.deferred.tpl.then = function(fn,rejector){
                 private.deferred.run_train(
                     this
                     ,this.callbacks.then
-                    ,null
+                    ,this.caboose
                     ,{pause_on_deferred : true}
                 );
             }
@@ -258,12 +258,11 @@ private.deferred.tpl.done = function(fn){
             this.callbacks.done.train.push(fn2);
             
             //Settled, run train now
-            if(this.settled === 1 && this.state === 1){        
-                
+            if(this.settled === 1 && this.state === 1){     
                 private.deferred.run_train(
                     this
                     ,this.callbacks.done
-                    ,null
+                    ,this.caboose
                     ,{pause_on_deferred : false}
                 );
             }

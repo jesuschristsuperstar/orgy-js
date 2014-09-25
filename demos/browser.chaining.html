@@ -6,7 +6,7 @@
     
 <script>
 
-    var q = Orgy.queue([
+    var dependencies = [
         {
             comment : "Document ready."
             ,id : "DOMContentLoaded"
@@ -20,22 +20,26 @@
             url : "data/data2.json"
             ,type : "json"
         }
-    ]);
+    ];
+    var q = Orgy.queue(dependencies);
 
     //FIRES WHEN RESOLVED
     q.then(function(r){
-        console.log("Original value:");
-        console.log(r);
+        console.log(r); //Result of dependencies
+        debugger;
         return 1;
     });
     
     //FIRES WHEN RESOLVED
-    q.then(function(r){
+    q.then(function(a,b,c){
+        console.log(a,b,c);
+        debugger;
         return 2;
     });
     
     //FIRES WHEN RESOLVED
     q.then(function(r){
+        console.log(r);
         return 3;
     });
 

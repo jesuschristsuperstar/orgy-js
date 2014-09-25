@@ -58,8 +58,8 @@ Orgy.config({
 
 var q = Orgy.queue([
    {
-       type : "timer"
-       ,timeout : 2000
+       type : "json"
+       ,url : "data/data1.json"
    },
    {
        type : "json"
@@ -70,30 +70,27 @@ var q = Orgy.queue([
        ,url : "data/sample.css"
    }
 ],{
-   id : "q1" //GLOBAL ACCESSOR
+   id : "q1" //Optional. Id by which to reference the queue globally.
 });
 
 
 /**
-If a then function returns a value, that value becomes the new 
-value of the queue and is passed to any subsequent
-then() or done() functions.
+If a then function returns a value, that value is passed down to any subsequent then() or done() functions.
 */
 
-q.then(function(value){
-    value.push('foo');
-    return value;
+q.then(function(r){
+    console.log(r); //
+    return 1;
 });
 
-q.then(function(value){
-    $("body").append("Appended value: "+value.pop()); //'foo'
-    value.push('bar');
-    return value;
+q.then(function(r,deferred,last){
+    console.log(last); // 1
+    return 2;
 });
 
-q.done(function(value){ 
-    //Done value is carried from last .then() statement.
-    console.log(value);
+q.done(function(r,deferred,last){ 
+
+    console.log(last); // 2
     
     //GET MODIFIED DOM CONTENT 
     console.log(Orgy.config().document.html());
