@@ -75,9 +75,9 @@ var q = Orgy.queue([
 
 
 /**
-If a then statement returns a value, that value becomes the new 
+If a then function returns a value, that value becomes the new 
 value of the queue and is passed to any subsequent
-then() or done() statements.
+then() or done() functions.
 */
 
 q.then(function(value){
