@@ -90,7 +90,7 @@ setTimeout(function(){
 q.then(function(r){
 
     //Modify some DOM content
-    Orgy.config().document.find("body").append("hey!");
+    $("body").append("hey!");
 
     console.log(r); //Dependency values.
     return 1;
@@ -100,7 +100,7 @@ q.then(function(r){
 q.then(function(r,deferred,last){
 
     //Get modified DOM content
-    console.log(Orgy.config().document.find("body").html()); //hey!
+    console.log($("body").html()); //hey!
 
     console.log(last); // 1
     return 2;

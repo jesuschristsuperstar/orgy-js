@@ -62,7 +62,7 @@ q.done(function(value){
     console.log(value);
     
     //GET MODIFIED DOM CONTENT 
-    console.log(Orgy.config().document.html());
+    console.log($("body").html());
 });
 
 
