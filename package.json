@@ -6,6 +6,7 @@
   "main": "dist/orgy.devel.js",
   "keywords": [
     "q",
+    "queue",
     "promise",
     "promises",
     "deferred",
