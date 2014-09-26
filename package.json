@@ -20,7 +20,7 @@
     "fluent interface",
     "file downloader",
     "curl",
-    "promises a+ sucks"
+    "promises a+ nonconforming"
   ],
   "dependencies": {},
   "devDependencies": {
