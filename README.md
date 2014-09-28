@@ -6,7 +6,9 @@ Orgy
 Deferred / Queue library that yields to no spec.  
 
 ## Features:
+
 - Works both with nodejs and with browsers. 
+
 - Handles a variety of dependency types and automatically converts them into promises.
     - javascript files
     - css files
@@ -15,10 +17,17 @@ Deferred / Queue library that yields to no spec.
     - all other file types handled as text
 
 - Creates deferreds or queues.
+
 - Queues can be held back from settling after their dependencies have resolved by a resolver method. 
+
 - When then() returns a value that value is passed down the execution chain.
-- When then() returns an unsettled thenable, it pauses further execution on the dependency/queue callback chain until that thenable is settled. The return value of the child thenable is appended to the parent then's return value.
-- When running under nodejs, can be passed a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser: 
+
+- When then() returns an unsettled thenable, it pauses further execution on the callback chain until the returned thenable is settled. The return value of the returned thenable is then pushed into the parent's value array.
+
+- When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser. 
+
+For example: 
+
 ```
 Orgy.config({
     document : (function(){
@@ -40,7 +49,7 @@ npm install orgy
 <script src="/dist/orgy.min.js"></script>
 ```
 
-## Example:
+## Usage:
 
 - Wait for an array of dependencies to resolve prior to executing a callback:
 
