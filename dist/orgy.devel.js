@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.5.11 
-Built: 2014-09-28 08:24:04
+Version: 1.5.12 
+Built: 2014-09-28 16:27:56
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -86,7 +86,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 id: id
             });
         } else {
-            public.debug("Cannot remove dependencies from a queue that does not exist.", this);
+            return public.debug("Cannot remove dependencies from a queue that does not exist.", this);
         }
         return q;
     };
@@ -111,8 +111,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             root = window[root_id];
         }
         if (typeof root === "undefined") {
-            console.error(root_id + " not found on window or public.list");
-            debugger;
+            return public.debug(root_id + " not found on window or public.list");
         }
         var x, y;
         x = y = root;
@@ -183,7 +182,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.origin_stack = function(ss) {
         var l = new Error().stack.split(ss)[1].trim();
-        if (private.config.mode == "browser") {
+        if (private.config.mode === "browser") {
             l = l.split("//");
             l = l.slice(1);
             for (var i in l) {
@@ -209,8 +208,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.factory = function(options) {
         var _o = public.naive_cloner([ private.deferred.tpl, options ]);
         _o.origin_stack = private.origin_stack("public.deferred");
-        if (typeof options.id === "undefined") {
-            _o.id = _o.origin_stack[_o.origin_stack.length - 1];
+        if (typeof options.id !== "string") {
+            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "(" + public.i++ + ")";
         }
         return _o;
     };
@@ -344,9 +343,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             this.reject_q.push(cb);
         }
         return this;
-    };
-    private.deferred.make_id = function(model) {
-        return "anonymous-" + model + "-" + public.i++;
     };
     private.deferred.signal_downstream = function(target) {
         for (var i in target.downstream) {
@@ -726,7 +722,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             break;
 
           case this.done_fired === 1:
-            public.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+            return public.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
             break;
 
           default:
@@ -811,8 +807,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         },
         remove: function(arr) {
             if (this.state !== 0) {
-                console.error("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
-                return false;
+                return public.debug("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
             }
             for (var a in arr) {
                 if (this.upstream[arr[a].id]) {
@@ -823,7 +818,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         },
         reset: function(options) {
             if (this.settled !== 1 || this.state !== 1) {
-                public.debug("Can only reset a queue settled without errors.");
+                return public.debug("Can only reset a queue settled without errors.");
             }
             options = options || {};
             this.settled = 0;
@@ -891,9 +886,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.queue.receive_signal = function(target, from_id) {
         if (target.halt_resolution === 1) return;
         if (from_id !== target.id && !target.upstream[from_id]) {
-            console.error(from_id + " can't signal " + target.id + " because not in upstream.");
-            debugger;
-            return;
+            return public.debug(from_id + " can't signal " + target.id + " because not in upstream.");
         } else {
             var status = 1;
             for (var i in target.upstream) {
@@ -934,18 +927,18 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 return public.debug("Castable objects require: " + required[i]);
             }
         }
-        var deferred = public.deferred({
+        var def = public.deferred({
             id: obj.id
         });
         var resolver = function() {
-            deferred.resolve.call(deferred, arguments[0]);
+            def.resolve.call(def, arguments[0]);
         };
         obj.then(resolver);
         var err = function(err) {
-            deferred.reject(err);
+            def.reject(err);
         };
         obj.error(err);
-        return deferred;
+        return def;
     };
     if (typeof process === "object" && process + "" === "[object process]") {
         module.exports = public;

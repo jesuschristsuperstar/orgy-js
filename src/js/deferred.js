@@ -57,7 +57,7 @@ private.deferred.factory = function(options){
     _o.origin_stack = private.origin_stack('public.deferred');
 
     //if no id, use code line origin + iterator
-    if(typeof options.id === 'undefined'){
+    if(typeof options.id !== 'string'){
         _o.id = _o.origin_stack[_o.origin_stack.length -1] 
                 + '('+(public.i++)+')';
     }
@@ -73,22 +73,6 @@ private.deferred.settle = function(def){
         clearTimeout(def.timeout_id);
     }
     
-    
-    //SET RETURN VALUE TO A GIVEN OBJECT PROPERTY
-/*
-    if(def.set){
-        //ARRAY IS TRANSORMED INTO A PATH TO POINT TO
-        if(def.set instanceof Array){
-            //@todo make property of private to avoid external dependency
-            var tgt = public.array_to_function(def.set);
-            tgt.parent[tgt.args] = def.value;
-        }
-        //OTHErWISE ASSUMED TO BE AN OBJECT PROPERTY
-        else if (typeof def.set === 'function'){
-            def.set(def.value);
-        }
-    }
-*/
     
     //Set state to resolved
     private.deferred.set_state(def,1);

@@ -178,6 +178,7 @@ private.deferred.tpl.reject = function(err){
 
     err.unshift("REJECTED "+this.model+": '"+this.id+"'");
 
+    //@todo reconsider this
     public.debug(err,this);
 
     //Remove auto timeout timer
@@ -210,7 +211,7 @@ private.deferred.tpl.then = function(fn,rejector){
 
         //Execution chain already finished. Bail out.
         case(this.done_fired === 1):
-            public.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+            return public.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
             break;
 
         default:

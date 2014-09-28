@@ -8,18 +8,19 @@ public.cast = function(obj){
     var required = ["then","error","id"];
     for(var i in required){
         if(!obj[required[i]]){
-            return public.debug("Castable objects require: " + required[i]);
+            return public.debug("Castable objects require: " 
+                    + required[i]);
         }
     }
 
     //GET A BLANK DEFERRED TO PLAY WITH
-    var deferred = public.deferred({
+    var def = public.deferred({
         id : obj.id
     });
 
     //CREATE RESOLVER [ASYNC]
     var resolver = function(){
-        deferred.resolve.call(deferred,arguments[0]);
+        def.resolve.call(def,arguments[0]);
     };
 
     //SET RESOLVER
@@ -27,13 +28,12 @@ public.cast = function(obj){
 
     //CREATE REJECTOR [ASYNC]
     var err = function(err){
-        deferred.reject(err);
+        def.reject(err);
     };
 
     //SET REJECTOR
     obj.error(err);
 
     //RETURN THE DEFERRED
-    return deferred;
-}
-        
+    return def;
+};      

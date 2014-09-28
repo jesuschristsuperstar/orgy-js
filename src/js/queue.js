@@ -51,11 +51,12 @@ private.queue.tpl = {
     * The queue will resolve once all the promises in its 
     * upstream array are resolved.
     * 
-    * When public.config.debug == 1, method will test each dependency is not
-    * previously scheduled to resolve downstream from the target, in which 
+    * When public.config.debug == 1, method will test each 
+    * dependency is not previously scheduled to resolve 
+    * downstream from the target, in which 
     * case it would never resolve because its upstream depends on it.
     * 
-    * @param {array} array of dependencies to add
+    * @param {array} arr  /array of dependencies to add
     * @returns {array} upstream
     */
    ,add : function(arr){
@@ -126,8 +127,7 @@ private.queue.tpl = {
 
        //IF NOT PENDING, DO NOT ALLOW REMOVAL
        if(this.state !== 0){
-           console.error("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
-           return false;
+           return public.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
        }
 
        for(var a in arr){
@@ -139,17 +139,17 @@ private.queue.tpl = {
    }
 
 
-   /**
-    * Resets an existing,settled queue back to Orgying state.
-    * Clears out the downstream.
-    * Fails if not settled.
-    * 
-    * @returns {obj}
-    */
+  /**
+   * Resets an existing,settled queue back to Orgying state.
+   * Clears out the downstream.
+   * Fails if not settled.
+   * @param {object} options
+   * @returns {private.queue.tpl|Boolean}
+   */
    ,reset : function(options){
 
        if(this.settled !== 1 || this.state !== 1){
-           public.debug("Can only reset a queue settled without errors.");
+           return public.debug("Can only reset a queue settled without errors.");
        }
 
        options = options || {};
@@ -196,7 +196,7 @@ private.queue.tpl = {
        private.queue.receive_signal(this,this.id);
        return this.state;
    }
-}
+};
 
 
 //////////////////////////////////////////
@@ -281,7 +281,7 @@ private.queue.factory = function(options){
     }
     
     return _o;
-}    
+};    
     
     
 /**
@@ -315,12 +315,13 @@ private.queue.activate = function(o,options,deps){
     
     
 /**
-* A "signal" here causes a queue to look through each item in its upstream and 
-* check to see if all are resolved. 
+* A "signal" here causes a queue to look through each item 
+* in its upstream and check to see if all are resolved. 
 * 
-* Signals can only be received by a queue itself or a promise/deferred/queue
+* Signals can only be received by a queue itself or an instance
 * in its upstream.
 * 
+* @param {object} target
 * @param {string} from_id
 * @returns {void}
 */
@@ -331,9 +332,7 @@ private.queue.receive_signal = function(target,from_id){
    //MAKE SURE THE SIGNAL WAS FROM A PROMISE BEING LISTENED TO
    //BUT ALLOW SELF STATUS CHECK
    if(from_id !== target.id && !target.upstream[from_id]){
-       console.error(from_id + " can't signal " + target.id + " because not in upstream.");
-       debugger;
-       return;
+       return public.debug(from_id + " can't signal " + target.id + " because not in upstream.");
    }
    //RUN THROUGH QUEUE OF OBSERVING PROMISES TO SEE IF ALL DONE
    else{
@@ -373,9 +372,9 @@ private.queue.receive_signal = function(target,from_id){
 /**
 * Upgrades a promise object to a queue.
 * 
-* @param {object} prom
+* @param {object} obj
 * @param {object} options
-* @param {array} dependencies
+* @param {array} deps \dependencies
 * @returns {object} queue object
 */
 private.queue.upgrade = function(obj,options,deps){

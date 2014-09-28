@@ -60,11 +60,11 @@ private.config = {
     ,mode : (function(){
         if(typeof process === 'object' && process + '' === '[object process]'){
             // is node
-            return "node"
+            return "node";
         }
         else{
             // not node
-            return "browser"
+            return "browser";
         }
     }())
 };
@@ -78,7 +78,8 @@ private.config = {
 /**
  * Configuration setter.
  * 
- * @type string
+ * @param {object} obj
+ * @returns {object}
  */
 public.config = function(obj){
     
@@ -93,15 +94,13 @@ public.config = function(obj){
         }
     }
     
-    
     return private.config;
-}
+};
 
 
 /**
-* Creates a new promise from a value and an id and automatically resolves it.
-* 
-*     obj.__has_ui = (typeof obj.__has_ui !== 'undefined') ? false : obj.__has_ui;
+* Creates a new promise from a value and an id and automatically 
+* resolves it.
 * 
 * @param {string} id
 * @param {mixed} data
@@ -196,7 +195,7 @@ public.assign = function(tgt,arr,add){
     }
     //ERROR: CAN'T REMOVE FROM A QUEUE THAT DOES NOT EXIST
     else{
-        public.debug("Cannot remove dependencies from a queue that does not exist.",this);
+        return public.debug("Cannot remove dependencies from a queue that does not exist.",this);
     }
 
     return q;
@@ -244,8 +243,7 @@ public.array_to_function = function(target){
 
 
     if(typeof root === 'undefined'){
-        console.error(root_id + " not found on window or public.list");
-        debugger;
+        return public.debug(root_id + " not found on window or public.list");
     }
 
 
@@ -290,14 +288,15 @@ public.array_to_function = function(target){
         ,args : args
         ,parent : parent
     };
-}
+};
 
 
 /**
  * Makes a shallow copy of an array. 
  * Makes a copy of an object so long as it is JSON
  * 
- * @param {array} array of donor objects, overwritten from right to left
+ * @param {array} donors /array of donor objects, 
+ *                overwritten from right to left
  * @returns {object}
  */
 public.naive_cloner = function(donors){
@@ -316,14 +315,14 @@ public.naive_cloner = function(donors){
         }
     }
     return o;
-}
+};
         
 
 /**
  * Debugging method.
  * 
  * @param {string|array} msg
- * @param {boolean} force_debug_mode   Forces debugger when set to true. 
+ * @param {object} def
  * @returns {Boolean}
  */
 public.debug = function(msg,def){
@@ -357,7 +356,7 @@ public.debug = function(msg,def){
     else{
         process.exit();
     }
-}
+};
 
 
 ////////////////////////////////////////
@@ -369,7 +368,7 @@ private.origin_stack = function(ss){
 
     var l = new Error().stack.split(ss)[1].trim();
 
-    if(private.config.mode == 'browser'){
+    if(private.config.mode === 'browser'){
         l = l.split("//");
         l = l.slice(1);
         for(var i in l){
