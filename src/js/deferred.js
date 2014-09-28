@@ -56,9 +56,10 @@ private.deferred.factory = function(options){
     //Save backtrace for async debugging
     _o.origin_stack = private.origin_stack('public.deferred');
 
-    //if no id, use origin
+    //if no id, use code line origin + iterator
     if(typeof options.id === 'undefined'){
-        _o.id = _o.origin_stack[_o.origin_stack.length -1];
+        _o.id = _o.origin_stack[_o.origin_stack.length -1] 
+                + '('+(public.i++)+')';
     }
     
     return _o;
@@ -380,11 +381,6 @@ private.deferred.error = function(cb){
     }
 
     return this;
-};
-
-
-private.deferred.make_id = function(model){
-    return "anonymous-" + model + "-" + (public.i++);
 };
 
 
