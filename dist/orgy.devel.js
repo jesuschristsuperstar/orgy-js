@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.5.9 
-Built: 2014-09-25 13:19:51
+Version: 1.5.11 
+Built: 2014-09-28 08:22:17
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -400,7 +400,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         if (obj.type !== "timer") {
             if (typeof public.list[obj.id] !== "undefined") {
-                return public.list[obj.id];
+                if (obj.resolver) {
+                    public.debug([ "You can't set a resolver on a deferred that has already been declared. You can only reference the original.", "Detected re-init of '" + obj.id + "'.", "Attempted:", obj, "Existing:", public.list[obj.id] ]);
+                } else {
+                    return public.list[obj.id];
+                }
             }
         }
         var prom;

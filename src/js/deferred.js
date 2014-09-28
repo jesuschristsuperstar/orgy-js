@@ -507,7 +507,22 @@ private.deferred.convert_to_promise = function(obj){
     if(obj.type !== 'timer'){
         //RETURN THE PROMISE IF IT ALREADY EXISTS
         if(typeof public.list[obj.id] !== 'undefined'){
+          //A previous promise of the same id exists. 
+          //Make sure this dependency object doesn't have a
+          //resolver - if it does error
+          if(obj.resolver){
+            public.debug([
+              "You can't set a resolver on a queue that has already been declared. You can only reference the original."
+              ,"Detected re-init of '" + obj.id + "'."
+              ,"Attempted:"
+              ,obj
+              ,"Existing:"
+              ,public.list[obj.id]
+            ]);
+          }
+          else{
             return public.list[obj.id];
+          }
         }
     }
 
