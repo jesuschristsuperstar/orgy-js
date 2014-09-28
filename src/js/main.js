@@ -147,6 +147,25 @@ public.define = function(id,data){
 
 
 /**
+ * Getter.
+ * 
+ * @param {string} id
+ * @param {object} options
+ * @returns {object}
+ */
+public.get = function(id,options){
+  if(public.list[id]){
+    return public.list[id];
+  }
+  else{
+    return public.debug([
+      "No instance exists: "+id
+    ]);
+  }
+};
+
+
+/**
  * Add/remove an upstream dependency to/from a queue. 
  * 
  * Can use a queue id, even for a queue that is yet to be created.
