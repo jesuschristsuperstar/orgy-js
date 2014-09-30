@@ -29,17 +29,16 @@
           ,timeout : 1000
        }
   ],{
-    timeout : 200  //optional. defaults to Orgy.config().timeout [5000]
+    //timeout : 200  //optional. defaults to Orgy.config().timeout [5000]
   });
 
   //Done can be called async and out of order.
   setTimeout(function(){
-    debugger;
     q.done(function(r,deferred,last){ 
       console.log(last); // 2
       console.log("Done.");
     },function(){
-      console.error(this.id + " rejected.");
+      console.error(this.id + " done rejected.");
     });
   },1000)
 

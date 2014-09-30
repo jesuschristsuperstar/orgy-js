@@ -6,21 +6,29 @@
     
 <script>
 
-    var d1 = Orgy.deferred();
+    var d1 = Orgy.deferred({
+      //timeout : 100
+    });
     
-    d1.resolve(1);
+    setTimeout(function(){
+      d1.resolve(1);
+    },500);
     
     d1.then(function(r){
-        console.log("then 1-" + r);
-        return 2;
+      console.log("then 1-" + r);
+      return 2;
     })
 
     d1.then(function(r,def,last){
-        console.log("then 2-" + last);
+      console.log("then 2-" + last);
+    },function(){
+      console.error(this.id + " then2-rejected");
     })
     
     d1.done(function(r){
-        console.log("done");
+      console.log("done");
+    },function(){
+      console.error(this.id + " done-rejected");
     })
     
 </script>
