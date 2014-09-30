@@ -89,8 +89,12 @@ private.deferred.tpl.execution_history = [];
 //WHEN TRUE, ALLOWS RE-INIT [FOR UPGRADES TO A QUEUE]          
 private.deferred.tpl.overwritable = 0; 
 
-//Default timeout for a deferred
-private.deferred.tpl.timeout = 5000;
+
+/**
+ * Default timeout for a deferred
+ * @type number
+ */
+private.deferred.tpl.timeout = private.config.timeout;
 
 /**
  * REMOTE
@@ -176,9 +180,13 @@ private.deferred.tpl.reject = function(err){
         err = [err];
     }
 
+    var msg = "Rejected "+this.model+": '"+this.id+"'. Turn debug mode on for more info.";
     if(private.config.debug_mode){
-      err.unshift("REJECTED "+this.model+": '"+this.id+"'");
+      err.unshift(msg);
       public.debug(err,this);
+    }
+    else{
+      console.log(msg);
     }
 
     //Remove auto timeout timer
@@ -264,13 +272,23 @@ private.deferred.tpl.done = function(fn,rejector){
             }
             
             //Settled, run train now
-            if(this.settled === 1 && this.state === 1){     
+            if(this.settled === 1){
+              if(this.state === 1){     
                 private.deferred.run_train(
                     this
                     ,this.callbacks.done
                     ,this.caboose
                     ,{pause_on_deferred : false}
                 );
+              }
+              else{
+                private.deferred.run_train(
+                    this
+                    ,this.callbacks.reject
+                    ,this.caboose
+                    ,{pause_on_deferred : false}
+                );
+              }
             }
             //Unsettled, train will be run when settled
             else{}

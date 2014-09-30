@@ -3,7 +3,6 @@
  * 
  */
 
-public.deferred = {};
 private.deferred = {};
 
 
@@ -22,6 +21,14 @@ private.deferred = {};
 //////////////////////////////////////////
 
 
+/**
+ * Creates a new deferred object. 
+ * 
+ * @param {object} options
+ *          {string}  id  /Optional. Use the id with Orgy.get(id). Defaults to line number of instantiation, plus an iterator.
+ *          {number} timeout /time in ms after which reject is called. Defaults to Orgy.config().timeout [5000]. Note the timeout is only affected by dependencies and/or the resolver callback. Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+ * @returns {object}
+ */
 public.deferred = function(options){
     
     options = options || {};
@@ -59,7 +66,7 @@ private.deferred.factory = function(options){
     //if no id, use code line origin + iterator
     if(typeof options.id !== 'string'){
         _o.id = _o.origin_stack[_o.origin_stack.length -1] 
-                + '('+(public.i++)+')';
+                +'-'+(++public.i);
     }
     
     return _o;
@@ -296,7 +303,10 @@ private.deferred.auto_timeout = function(timeout){
         }
 
         if(typeof this.timeout === 'undefined'){
-            public.debug(this.id+" Auto timeout this.timeout cannot be undefined.");
+            public.debug([
+              "Auto timeout this.timeout cannot be undefined."
+              ,this.id
+            ]);
         }
         else if (this.timeout === -1){
             //NO AUTO TIMEOUT SET
@@ -307,6 +317,7 @@ private.deferred.auto_timeout = function(timeout){
         this.timeout_id = setTimeout(function(){
             private.deferred.auto_timeout_cb.call(scope);
         }, this.timeout);
+
     }
     else{
         //@todo WHEN A TIMER, ADD DURATION TO ALL UPSTREAM AND LATERAL?
@@ -319,7 +330,7 @@ private.deferred.auto_timeout = function(timeout){
 /**
  * Callback for autotimeout. Declaration here avoids memory leak.
  * 
- * @returns {undefined}
+ * @returns {void}
  */
 private.deferred.auto_timeout_cb = function(){
 
@@ -354,8 +365,6 @@ private.deferred.auto_timeout_cb = function(){
         else{
             return private.deferred.tpl.reject.call(this);
         }
-        
-
     }
 };
 
@@ -390,7 +399,15 @@ private.deferred.signal_downstream = function(target){
     //MAKE SURE ALL DOWNSTREAM IS UNSETTLED
     for(var i in target.downstream){
         if(target.downstream[i].settled === 1){
+
+          if(target.downstream[i].state !== 1){
+            //tried to settle a rejected downstream
+            continue;
+          }
+          else{
+            //tried to settle a successfully settled downstream
             public.debug(target.id + " tried to settle promise "+"'"+target.downstream[i].id+"' that has already been settled.");
+          }
         }
     }
 
@@ -470,7 +487,7 @@ private.deferred.convert_to_promise = function(obj){
     if(!obj.id){
 
         if(obj.type === 'timer'){
-            obj.id = "timer-" + obj.timeout + "-"+public.i++;
+            obj.id = "timer-" + obj.timeout + "-"+(++public.i);
         }
         else if(typeof obj.url === 'string'){
             obj.id = obj.url.split("/").pop();

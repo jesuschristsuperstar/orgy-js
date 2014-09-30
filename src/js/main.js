@@ -67,6 +67,7 @@ private.config = {
             return "browser";
         }
     }())
+    ,timeout : 5000 //default timeout
 };
 
 

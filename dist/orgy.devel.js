@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.5.12 
-Built: 2014-09-30 13:40:17
+Version: 1.5.13 
+Built: 2014-09-30 15:50:39
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -24,7 +24,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             } else {
                 return "browser";
             }
-        }()
+        }(),
+        timeout: 5e3
     };
     public.config = function(obj) {
         if (obj) {
@@ -200,7 +201,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return l;
     };
-    public.deferred = {};
     private.deferred = {};
     public.deferred = function(options) {
         options = options || {};
@@ -216,7 +216,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         var _o = public.naive_cloner([ private.deferred.tpl, options ]);
         _o.origin_stack = private.origin_stack("public.deferred");
         if (typeof options.id !== "string") {
-            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "(" + public.i++ + ")";
+            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "-" + ++public.i;
         }
         return _o;
     };
@@ -314,7 +314,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 clearTimeout(this.timeout_id);
             }
             if (typeof this.timeout === "undefined") {
-                public.debug(this.id + " Auto timeout this.timeout cannot be undefined.");
+                public.debug([ "Auto timeout this.timeout cannot be undefined.", this.id ]);
             } else if (this.timeout === -1) {
                 return false;
             }
@@ -358,7 +358,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.signal_downstream = function(target) {
         for (var i in target.downstream) {
             if (target.downstream[i].settled === 1) {
-                public.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
+                if (target.downstream[i].state !== 1) {
+                    continue;
+                } else {
+                    public.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
+                }
             }
         }
         for (var i in target.downstream) {
@@ -393,7 +397,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.convert_to_promise = function(obj) {
         if (!obj.id) {
             if (obj.type === "timer") {
-                obj.id = "timer-" + obj.timeout + "-" + public.i++;
+                obj.id = "timer-" + obj.timeout + "-" + ++public.i;
             } else if (typeof obj.url === "string") {
                 obj.id = obj.url.split("/").pop();
                 if (obj.id.search(".js") !== -1) {
@@ -687,7 +691,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.tpl.downstream = {};
     private.deferred.tpl.execution_history = [];
     private.deferred.tpl.overwritable = 0;
-    private.deferred.tpl.timeout = 5e3;
+    private.deferred.tpl.timeout = private.config.timeout;
     private.deferred.tpl.remote = 1;
     private.deferred.tpl.list = 1;
     private.deferred.tpl.resolve = function(value) {
@@ -716,9 +720,12 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (!(err instanceof Array)) {
             err = [ err ];
         }
+        var msg = "Rejected " + this.model + ": '" + this.id + "'. Turn debug mode on for more info.";
         if (private.config.debug_mode) {
-            err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
+            err.unshift(msg);
             public.debug(err, this);
+        } else {
+            console.log(msg);
         }
         if (this.timeout_id) {
             clearTimeout(this.timeout_id);
@@ -762,10 +769,16 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 if (typeof rejector === "function") {
                     this.callbacks.reject.hooks.onComplete.train.push(rejector);
                 }
-                if (this.settled === 1 && this.state === 1) {
-                    private.deferred.run_train(this, this.callbacks.done, this.caboose, {
-                        pause_on_deferred: false
-                    });
+                if (this.settled === 1) {
+                    if (this.state === 1) {
+                        private.deferred.run_train(this, this.callbacks.done, this.caboose, {
+                            pause_on_deferred: false
+                        });
+                    } else {
+                        private.deferred.run_train(this, this.callbacks.reject, this.caboose, {
+                            pause_on_deferred: false
+                        });
+                    }
                 } else {}
             } else {
                 return public.debug("done() must be passed a function.");
@@ -884,7 +897,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         var _o = public.naive_cloner([ private.deferred.tpl, private.queue.tpl, options ]);
         _o.origin_stack = private.origin_stack("public.queue");
         if (!options.id) {
-            _o.id = _o.origin_stack[_o.origin_stack.length - 1];
+            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "-" + ++public.i;
         }
         return _o;
     };

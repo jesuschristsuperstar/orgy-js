@@ -23,15 +23,25 @@
       {
           type : "css"
           ,url : "data/sample.css"
-      }
-  ]);
+      },
+      {
+          type : "timer"
+          ,timeout : 1000
+       }
+  ],{
+    timeout : 200  //optional. defaults to Orgy.config().timeout [5000]
+  });
 
   //Done can be called async and out of order.
   setTimeout(function(){
+    debugger;
     q.done(function(r,deferred,last){ 
       console.log(last); // 2
+      console.log("Done.");
+    },function(){
+      console.error(this.id + " rejected.");
     });
-  },500)
+  },1000)
 
 
   /**
@@ -41,6 +51,8 @@
   q.then(function(r){
       console.log(r); //Dependency values.
       return 1;
+  },function(){
+    console.error(this.id + " then 1 rejected.");
   });
 
   q.then(function(r,deferred,last){

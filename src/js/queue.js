@@ -204,6 +204,17 @@ private.queue.tpl = {
 //////////////////////////////////////////
 
 
+/**
+ * Creates a new queue object.
+ * 
+ * @param {array} deps
+ * @param {object} options
+ *          {string}  id  /Optional. Use the id with Orgy.get(id). Defaults to line number of instantiation, plus an iterator.
+ *          {callback(result,deferred)} resolver /Callback function to execute after all dependencies have resolved. Arg1 is an array of the dependencies' resolved values. Arg2 is the deferred object. The queue will only resolve when Arg2.resolve() is called. If not, it will timeout to options.timeout || Orgy.config.timeout. 
+ *          {number} timeout /time in ms after which reject is called. Defaults to Orgy.config().timeout [5000]. Note the timeout is only affected by dependencies and/or the resolver callback. Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+ *          
+ * @returns {object}
+ */
 public.queue = function(deps,options){
 
     var _o;
@@ -277,7 +288,8 @@ private.queue.factory = function(options){
     
     //if no id, use origin
     if(!options.id){
-        _o.id = _o.origin_stack[_o.origin_stack.length -1];
+      _o.id = _o.origin_stack[_o.origin_stack.length -1] 
+      +'-'+(++public.i);
     }
     
     return _o;
