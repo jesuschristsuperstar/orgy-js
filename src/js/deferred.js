@@ -339,16 +339,22 @@ private.deferred.auto_timeout_cb = function(){
         };
 
         /**
-         * Run over a gi_qven object property recursively, 
+         * Run over a given object property recursively, 
          * applying callback until 
          * callback returns a non-false value.
          */
-        var r = private.deferred.search_obj_recursively(this,'upstream',fn);
-        msgs.push(scope.id + ": rejected by auto timeout after " 
-                + this.timeout + "ms");
-        msgs.push("Cause:");
-        msgs.push(r);
-        return private.deferred.tpl.reject.call(this,msgs);
+        if(private.config.debug_mode){
+            var r = private.deferred.search_obj_recursively(this,'upstream',fn);
+            msgs.push(scope.id + ": rejected by auto timeout after " 
+                    + this.timeout + "ms");
+            msgs.push("Cause:");
+            msgs.push(r);
+            return private.deferred.tpl.reject.call(this,msgs);
+        }
+        else{
+            return private.deferred.tpl.reject.call(this);
+        }
+        
 
     }
 };
@@ -735,7 +741,7 @@ private.deferred.attach_xhr = function(deferred,dep){
                         }
                     };
                     node.onerror = function(){
-                        deferred.reject("Failed to load path: " + dep.url);
+                        deferred.reject("Error loading: " + dep.url);
                     };
                 }(node,dep,deferred));
 
@@ -805,7 +811,7 @@ private.deferred.attach_xhr = function(deferred,dep){
                                 deferred.resolve(node || r);
                             }
                             else{
-                                deferred.reject("Error loading " + dep.url);
+                                deferred.reject("Error loading: " + dep.url);
                             }
                         }
                     };

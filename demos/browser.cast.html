@@ -6,41 +6,35 @@
     
 <script>
     
-    // CONVERT A $.ajax OBEJCT TO A SELF-RESOLVING DEFERRED, RESOLVED WHEN \
-    // AJAX REQUEST COMPLETED
-    
-    //AJAX OPTTIONS
+    //Show backtraces when instances rejected
+    Orgy.config({
+        debug_mode : 1
+    });
+
+    // Example: Cast $.ajax to Orgy
     var options = {
         url : "data/data1.json"
         ,dataType : "json"
+        ,error : function(){
+            console.error("Request failed.");
+        }
+        ,then : function(data){
+            console.log("Request succeeded.");
+            console.log(data);
+        }
     };
     
-    
-    //JQUERY AJAX OBJECT
     var castable1 = $.ajax(options);
-    
-    
-    //CASTED OBJECTS NEED AN ID
-    castable1.id = options.url;
 
-    
-    //CAST
+    //Cast
     var c1 = Orgy.cast(castable1);
-    
-    
-    //AJAX OPTTIONS
-    var options = {
-        url : "data/data2.json"
-        ,dataType : "json"
-    };
 
-
+    //Then and done don't need to be entered in correct order
     c1.done(function(r){
         console.log("c1 done");
         console.log(r);
     });
 
-    
     c1.then(function(r){
         console.log("c1 then");
     });

@@ -56,7 +56,7 @@ private.config = {
     
     autopath : ''
     ,document : null
-    ,debug_mode : 1
+    ,debug_mode : 0
     ,mode : (function(){
         if(typeof process === 'object' && process + '' === '[object process]'){
             // is node

@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.5.12 
-Built: 2014-09-28 16:27:56
+Built: 2014-09-30 10:06:52
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -17,7 +17,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.config = {
         autopath: "",
         document: null,
-        debug_mode: 1,
+        debug_mode: 0,
         mode: function() {
             if (typeof process === "object" && process + "" === "[object process]") {
                 return "node";
@@ -58,6 +58,13 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             def.resolve(data);
         }
         return def;
+    };
+    public.get = function(id, options) {
+        if (public.list[id]) {
+            return public.list[id];
+        } else {
+            return public.debug([ "No instance exists: " + id ]);
+        }
     };
     public.assign = function(tgt, arr, add) {
         add = typeof add === "boolean" ? add : 1;
@@ -329,11 +336,15 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     return false;
                 }
             };
-            var r = private.deferred.search_obj_recursively(this, "upstream", fn);
-            msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
-            msgs.push("Cause:");
-            msgs.push(r);
-            return private.deferred.tpl.reject.call(this, msgs);
+            if (private.config.debug_mode) {
+                var r = private.deferred.search_obj_recursively(this, "upstream", fn);
+                msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
+                msgs.push("Cause:");
+                msgs.push(r);
+                return private.deferred.tpl.reject.call(this, msgs);
+            } else {
+                return private.deferred.tpl.reject.call(this);
+            }
         }
     };
     private.deferred.error = function(cb) {
@@ -534,7 +545,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                         }
                     };
                     node.onerror = function() {
-                        deferred.reject("Failed to load path: " + dep.url);
+                        deferred.reject("Error loading: " + dep.url);
                     };
                 })(node, dep, deferred);
                 this.head.appendChild(node);
@@ -585,7 +596,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                                 }
                                 deferred.resolve(node || r);
                             } else {
-                                deferred.reject("Error loading " + dep.url);
+                                deferred.reject("Error loading: " + dep.url);
                             }
                         }
                     };
@@ -921,23 +932,26 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         return obj;
     };
     public.cast = function(obj) {
-        var required = [ "then", "error", "id" ];
+        var required = [ "then", "error" ];
         for (var i in required) {
             if (!obj[required[i]]) {
                 return public.debug("Castable objects require: " + required[i]);
             }
         }
-        var def = public.deferred({
-            id: obj.id
+        var options = {};
+        if (obj.id) {
+            options.id = obj.id;
+        } else if (obj.url) {
+            options.id = obj.url;
+        }
+        var def = public.deferred(options);
+        def.then(function(r) {
+            debugger;
+            obj.then(r);
+        }, function(r) {
+            debugger;
+            obj.error(r);
         });
-        var resolver = function() {
-            def.resolve.call(def, arguments[0]);
-        };
-        obj.then(resolver);
-        var err = function(err) {
-            def.reject(err);
-        };
-        obj.error(err);
         return def;
     };
     if (typeof process === "object" && process + "" === "[object process]") {
