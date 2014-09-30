@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.5.12 
-Built: 2014-09-30 10:06:52
+Built: 2014-09-30 13:40:17
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -716,8 +716,10 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (!(err instanceof Array)) {
             err = [ err ];
         }
-        err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
-        public.debug(err, this);
+        if (private.config.debug_mode) {
+            err.unshift("REJECTED " + this.model + ": '" + this.id + "'");
+            public.debug(err, this);
+        }
         if (this.timeout_id) {
             clearTimeout(this.timeout_id);
         }
@@ -749,7 +751,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return this;
     };
-    private.deferred.tpl.done = function(fn) {
+    private.deferred.tpl.done = function(fn, rejector) {
         if (this.callbacks.done.train.length === 0 && this.done_fired === 0) {
             if (typeof fn === "function") {
                 var fn2 = function(r, deferred, last) {
@@ -757,6 +759,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     fn(r, deferred, last);
                 };
                 this.callbacks.done.train.push(fn2);
+                if (typeof rejector === "function") {
+                    this.callbacks.reject.hooks.onComplete.train.push(rejector);
+                }
                 if (this.settled === 1 && this.state === 1) {
                     private.deferred.run_train(this, this.callbacks.done, this.caboose, {
                         pause_on_deferred: false
@@ -945,13 +950,14 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             options.id = obj.url;
         }
         var def = public.deferred(options);
-        def.then(function(r) {
-            debugger;
-            obj.then(r);
-        }, function(r) {
-            debugger;
-            obj.error(r);
-        });
+        var resolver = function() {
+            def.resolve.call(def, arguments[0]);
+        };
+        obj.then(resolver);
+        var err = function(err) {
+            def.reject(err);
+        };
+        obj.error(err);
         return def;
     };
     if (typeof process === "object" && process + "" === "[object process]") {

@@ -156,7 +156,7 @@ private.deferred.tpl.resolve = function(value){
         });
     }
 
-    //Run resolve [standard respect for any hooks]
+    //Run resolve
     private.deferred.run_train(
         this
         ,this.callbacks.resolve
@@ -176,10 +176,10 @@ private.deferred.tpl.reject = function(err){
         err = [err];
     }
 
-    err.unshift("REJECTED "+this.model+": '"+this.id+"'");
-
-    //@todo reconsider this
-    public.debug(err,this);
+    if(private.config.debug_mode){
+      err.unshift("REJECTED "+this.model+": '"+this.id+"'");
+      public.debug(err,this);
+    }
 
     //Remove auto timeout timer
     if(this.timeout_id){
@@ -241,7 +241,7 @@ private.deferred.tpl.then = function(fn,rejector){
 };
 
 
-private.deferred.tpl.done = function(fn){
+private.deferred.tpl.done = function(fn,rejector){
 
     if(this.callbacks.done.train.length === 0
        && this.done_fired === 0){
@@ -257,6 +257,11 @@ private.deferred.tpl.done = function(fn){
             };
 
             this.callbacks.done.train.push(fn2);
+            
+            //Push reject callback to the rejection queue onComplete
+            if(typeof rejector === 'function'){
+                this.callbacks.reject.hooks.onComplete.train.push(rejector);
+            }
             
             //Settled, run train now
             if(this.settled === 1 && this.state === 1){     

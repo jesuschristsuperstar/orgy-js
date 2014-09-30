@@ -34,16 +34,25 @@ public.cast = function(obj){
     else if(obj.url){
         options.id = obj.url;
     }
-    
+
     //Create a deferred
     var def = public.deferred(options);
 
-    //Set then, rejector
-    def.then(function(r){
-        obj.then(r);
-    },function(r){
-        obj.error(r);
-    });
+    //Create resolver
+    var resolver = function(){
+        def.resolve.call(def,arguments[0]);
+    };
+
+    //Set Resolver
+    obj.then(resolver);
+
+    //Create Rejector
+    var err = function(err){
+      def.reject(err);
+    };
+
+    //Set rejector
+    obj.error(err);
 
     //Return deferred
     return def;

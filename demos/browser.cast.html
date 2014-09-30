@@ -8,19 +8,16 @@
     
     //Show backtraces when instances rejected
     Orgy.config({
-        debug_mode : 1
+        debug_mode : 0
     });
 
     // Example: Cast $.ajax to Orgy
+    // Change the url to see error behavior
     var options = {
         url : "data/data1.json"
         ,dataType : "json"
         ,error : function(){
             console.error("Request failed.");
-        }
-        ,then : function(data){
-            console.log("Request succeeded.");
-            console.log(data);
         }
     };
     
@@ -31,12 +28,16 @@
 
     //Then and done don't need to be entered in correct order
     c1.done(function(r){
-        console.log("c1 done");
-        console.log(r);
+      console.log("c1 done");
+      console.log(r);
+    },function(){
+      console.log("c1 done rejected");
     });
 
     c1.then(function(r){
-        console.log("c1 then");
+      console.log("c1 then");
+    },function(){
+      console.log("c1 then rejected");
     });
     
 </script>
