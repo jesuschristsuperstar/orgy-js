@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.5.13 
-Built: 2014-09-30 15:50:39
+Version: 1.5.15 
+Built: 2014-10-01 15:19:17
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -106,48 +106,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             }
         }
         public.registered_callbacks[obj.id] = obj;
-    };
-    public.array_to_function = function(target) {
-        var clone = target.slice(0);
-        var pathstr = clone.join(".");
-        var root_id = clone[0];
-        clone.splice(0, 1);
-        var root;
-        if (public.list[root_id] && public.list[root_id].hasOwnProperty("value")) {
-            root = public.list[root_id].value;
-        } else {
-            root = window[root_id];
-        }
-        if (typeof root === "undefined") {
-            return public.debug(root_id + " not found on window or public.list");
-        }
-        var x, y;
-        x = y = root;
-        var l = clone.length;
-        var args = clone[l - 1];
-        var end;
-        if (args instanceof Array) {
-            end = l - 1;
-        } else {
-            end = l;
-        }
-        var parent;
-        for (var b = 0; b < end; b++) {
-            var key = clone[b];
-            if (b === end - 1 || l === 1) {
-                parent = x;
-            }
-            if (typeof x[key] === "undefined") {
-                return public.debug([ "Property '" + key + "' undefined @", pathstr, clone ]);
-            }
-            x = x[key];
-            y = x;
-        }
-        return {
-            constructor: x,
-            args: args,
-            parent: parent
-        };
     };
     public.naive_cloner = function(donors) {
         var o = {};
