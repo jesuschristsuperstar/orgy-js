@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.6.0 
-Built: 2014-10-01 22:47:03
+Version: 1.6.2 
+Built: 2014-10-02 03:30:51
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -12,7 +12,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     public.list = {};
     public.modules_exported = [];
     public.modules_loaded = 0;
-    public.registered_callbacks = {};
     public.i = 0;
     private.config = {
         autopath: "",
@@ -25,16 +24,13 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 return "browser";
             }
         }(),
+        hooks: {},
         timeout: 5e3
     };
     public.config = function(obj) {
-        if (obj) {
+        if (typeof obj === "object") {
             for (var i in obj) {
-                if (typeof private.config[i] !== "undefined") {
-                    private.config[i] = obj[i];
-                } else {
-                    return public.debug("Property '" + i + "' is not configurable.");
-                }
+                private.config[i] = obj[i];
             }
         }
         return private.config;
@@ -97,15 +93,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             return public.debug("Cannot remove dependencies from a queue that does not exist.", this);
         }
         return q;
-    };
-    public.register_callback = function(obj) {
-        var req = [ "id", "fn" ];
-        for (var i in req) {
-            if (typeof obj[req[i]] === "undefined") {
-                return public.debug("registered callbacks require property: " + req[i]);
-            }
-        }
-        public.registered_callbacks[obj.id] = obj;
     };
     public.naive_cloner = function(donors) {
         var o = {};
@@ -185,6 +172,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             clearTimeout(def.timeout_id);
         }
         private.deferred.set_state(def, 1);
+        if (private.config.hooks.onSettle) {
+            private.config.hooks.onSettle(def);
+        }
         def.callbacks.then.hooks.onComplete.train.push(function(d2, itinerary, last) {
             def.caboose = last;
             private.deferred.run_train(def, def.callbacks.done, def.caboose, {
@@ -261,10 +251,12 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (public.list[obj.id] && !public.list[obj.id].overwritable) {
             public.debug("Tried to overwrite " + obj.id + " without overwrite permissions.");
             return public.list[obj.id];
-        } else {
-            public.list[obj.id] = obj;
         }
+        public.list[obj.id] = obj;
         private.deferred.auto_timeout.call(obj);
+        if (private.config.hooks.onActivate) {
+            private.config.hooks.onActivate(obj);
+        }
         return obj;
     };
     private.deferred.auto_timeout = function(timeout) {

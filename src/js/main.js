@@ -28,13 +28,6 @@ public.modules_exported = [];
 public.modules_loaded = 0;
 
 
-/** 
- * Callbacks that are run on every resolved item
- * 
- */
-public.registered_callbacks = {};
-
-
 /**
  * iterator for ids
  * @type integer
@@ -67,6 +60,14 @@ private.config = {
             return "browser";
         }
     }())
+    /**
+     * - onActivate /when each instance activated
+     * - onSettle   /when each instance settles
+     * 
+     * @type object
+     */
+    ,hooks : {
+    }
     ,timeout : 5000 //default timeout
 };
 
@@ -84,14 +85,9 @@ private.config = {
  */
 public.config = function(obj){
     
-    if(obj){
+    if(typeof obj === 'object'){
         for(var i in obj){
-            if(typeof private.config[i] !== 'undefined'){
-                private.config[i] = obj[i];
-            }
-            else{
-                return public.debug("Property '"+i+"' is not configurable.");
-            }
+          private.config[i] = obj[i];
         }
     }
     
@@ -219,19 +215,6 @@ public.assign = function(tgt,arr,add){
     }
 
     return q;
-};
-
-
-public.register_callback = function(obj){
-    
-    var req = ['id','fn'];
-    for(var i in req){
-        if(typeof obj[req[i]] === 'undefined'){
-            return public.debug("registered callbacks require property: "+req[i]);
-        }
-    }
-    
-    public.registered_callbacks[obj.id] = obj;
 };
 
 

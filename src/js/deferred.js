@@ -85,6 +85,12 @@ private.deferred.settle = function(def){
     private.deferred.set_state(def,1);
     
     
+    //Call hook
+    if(private.config.hooks.onSettle){
+      private.config.hooks.onSettle(def);
+    }
+    
+    
     //Add done as a callback to then chain completion.
     def.callbacks.then.hooks.onComplete.train.push(function(d2,itinerary,last){
         def.caboose = last;
@@ -271,14 +277,18 @@ private.deferred.activate = function(obj){
         public.debug("Tried to overwrite "+obj.id+" without overwrite permissions.");
         return public.list[obj.id];
     }
-    else{
-        //SAVE TO MASTER LIST
-        public.list[obj.id] = obj;
-    }
+
+    //SAVE TO MASTER LIST
+    public.list[obj.id] = obj;
 
     //AUTO TIMEOUT
     private.deferred.auto_timeout.call(obj);
 
+    //Call hook
+    if(private.config.hooks.onActivate){
+      private.config.hooks.onActivate(obj);
+    }
+    
     return obj;
 };
 
