@@ -292,7 +292,10 @@ public.debug = function(msg,def){
         }
     }
     
-    debugger;
+    if(private.config.debug_mode){
+      //turn off debug_mode to avoid hitting debugger
+      debugger;
+    }
     
     if(private.config.mode === 'browser'){
         return false;
