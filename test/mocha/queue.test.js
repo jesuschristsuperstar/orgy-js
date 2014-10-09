@@ -13,21 +13,26 @@ global.chai = require('chai');
 global.expect = chai.expect;
 global.assert = require("assert");
 
-var Test = require('../test.class.js');
 
 Orgy.config({
-    
-    autopath : process.cwd() + "/demos"
-    
-    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
-    ,document : (function(){
-        var cheerio = require('cheerio');
-        return global.$ = cheerio.load("<html><head></head><body></body></html>");
-    }())
+  //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+  document : (function(){
+    var cheerio = require('cheerio');
+    return global.$ = cheerio.load("<html><head></head><body></body></html>");
+  }())
+  ,debug_mode : 1
 });
 
+var cwd = process.cwd();
+process.chdir(cwd + "/demos");
+
+var Test = require('../test.class.js');
+
 var q = Orgy.queue(Test.deps,{
-    id : "some-que-id"
+  id : "some-que-id"
 });
+
+//Change back to original cwd
+process.chdir(cwd);
 
 Test.describe(q,Test.deps);

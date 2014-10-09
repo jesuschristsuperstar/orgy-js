@@ -16,11 +16,11 @@
         ,__dependencies : [
 
             {
-                url : "../subdir1/test-module-2a.js"
+                url : "../../data/subdir1/test-module-2a.js"
                 ,type : "script"
             }
             ,{
-                url : "../subdir2/test-module-2b.js"
+                url : "../../data/subdir2/test-module-2b.js"
                 ,type : "script"
             }
         ]

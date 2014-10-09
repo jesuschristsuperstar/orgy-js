@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.6.3 
-Built: 2014-10-09 05:49:03
+Built: 2014-10-09 09:16:10
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -122,9 +122,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         if (def) {
             console.log("Backtrace:");
-            for (var i in def.backtrace.stack) {
-                console.log(def.backtrace.stack[i]);
-            }
+            console.log(def.backtrace.stack);
         }
         if (private.config.debug_mode) {
             debugger;
@@ -481,6 +479,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.deferred.attach_xhr = function(deferred, dep) {
         if (typeof process !== "object" || process + "" !== "[object process]") {
+            if (dep.url[0] === "." && dep.url[1] === "/") {
+                dep.url = dep.url.substring(1);
+            }
             this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
               case dep.type === "script":
@@ -675,11 +676,12 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (!(err instanceof Array)) {
             err = [ err ];
         }
-        var msg = "Rejected " + this.model + ": '" + this.id + "'. Turn debug mode on for more info.";
+        var msg = "Rejected " + this.model + ": '" + this.id + "'.";
         if (private.config.debug_mode) {
             err.unshift(msg);
             public.debug(err, this);
         } else {
+            msg = msg + "\n Turn debug mode on for more info.";
             console.log(msg);
         }
         if (this.timeout_id) {

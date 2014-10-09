@@ -7,7 +7,10 @@ module.exports = function(config) {
     // base path that will be used to resolve all patterns (eg. files, exclude) 
     basePath: '',
 
-
+    
+    //The base url, where Karma runs.
+    //urlRoot: '/base/demos',
+    
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
     frameworks: ['mocha', 'chai', 'sinon'],
@@ -17,7 +20,7 @@ module.exports = function(config) {
     files: [
       'dist/orgy.devel.js',
       'test/test.class.js',
-      {pattern: 'demos/data/*', included: false},
+      {pattern: 'demos/data/*', included: false, served:true, watched:true},
       {pattern: 'test/karma/*.js', included: true}
     ],
 

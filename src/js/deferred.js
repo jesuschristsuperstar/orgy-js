@@ -728,10 +728,15 @@ private.deferred.attach_xhr = function(deferred,dep){
 
     //BROWSER
     if(typeof process !== 'object' || process + '' !== '[object process]'){
+      
+      //replace node style './' with '/'
+      if(dep.url[0] === "." && dep.url[1] === "/"){
+        dep.url = dep.url.substring(1);
+      }
 
-        this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
+      this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
 
-        switch(true){
+      switch(true){
 
             case(dep.type==='script'):
 
@@ -831,99 +836,97 @@ private.deferred.attach_xhr = function(deferred,dep){
     //NODEJS
     else{
         
-    //NOTE: fs.readdir uses process.cwd() as start point, while require() uses __dirname
         
-        function process_result(deferred,data,dep){
+      function process_result(deferred,data,dep){
 
-            switch(true){
+          switch(true){
 
-                case(dep.type === 'json'):
-                    data = JSON.parse(data);
-                    deferred.resolve(data);
-                    break;
+              case(dep.type === 'json'):
+                  data = JSON.parse(data);
+                  deferred.resolve(data);
+                  break;
 
-                default:
-                    deferred.resolve(data);
+              default:
+                  deferred.resolve(data);
 
+          }
+      }     
+
+      if(dep.remote){
+        var request = require('request');
+        request.get(dep.url, function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                process_result(deferred,body,dep);
+            };
+        });
+      }
+      else{
+
+        var cwd = process.cwd();
+        var path = require("path");
+        dep.url = path.resolve(dep.url);
+
+        //Get scripts
+        if(dep.type === 'script'){
+
+            //get dest dir
+            var dd = dep.url.split("/");
+            dd.pop();
+            dd = dd.join("/");
+            if(dd !== cwd){
+              //Make working directory relative to 
+              //included script
+              process.chdir(dd);
             }
-        }     
 
-        if(dep.remote){
-            var request = require('request');
-            request.get(dep.url, function (error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    process_result(deferred,body,dep);
-                };
-            });
+            var data = require(dep.url);
 
+            //Change back to saved cwd
+            process.chdir(cwd);
+
+            //Autoresolve if no resolver expected in script
+            if(deferred.resolver === null){
+                deferred.resolve(data);
+            }
+        }
+        //DON'T GET CSS, JUST ADD NODE
+        else if(dep.type === 'css'){
+
+          if(private.config.document !== null){
+            var node = private.config.document('head').append('<link rel="stylesheet" href="'+dep.url+'" type="text/css" />');
+            deferred.resolve(node);
+          }
+          else{
+              return public.debug([
+                  dep.url
+                  ,"Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies."
+              ],deferred);
+          }
         }
         else{
-          
-            var cwd = process.cwd();
-            var path = require("path");
-            dep.url = path.resolve(dep.url);
 
-            //Get scripts
-            if(dep.type === 'script'){
-                
-                //get dest dir
-                var dd = dep.url.split("/");
-                dd.pop();
-                dd = dd.join("/");
-                if(dd !== cwd){
-                  //Make working directory relative to 
-                  //included script
-                  process.chdir(dd);
-                }
-                
-                var data = require(dep.url);
-                
-                //Change back to saved cwd
-                process.chdir(cwd);
+          var fs = require('fs');
 
-                //Autoresolve if no resolver expected in script
-                if(deferred.resolver === null){
-                    deferred.resolve(data);
-                }
-            }
-            //DON'T GET CSS, JUST ADD NODE
-            else if(dep.type === 'css'){
+          (function(deferred,dep){
 
-                if(private.config.document !== null){
-                    var node = private.config.document('head').append('<link rel="stylesheet" href="'+dep.url+'" type="text/css" />');
-                    deferred.resolve(node);
-                }
-                else{
-                    return public.debug([
-                        dep.url
-                        ,"Must pass html document to Orgy.config() before attempting to add DOM nodes [i.e. css] as dependencies."
-                    ],deferred);
-                }
-            }
-            else{
+                fs.readFile(dep.url, 'utf8', function (err, data) {
 
-                var fs = require('fs');
+                    if (err){
+                        public.debug([
+                            "File " + dep.url + " not found @ local dep.url '" + dep.url +"'"
+                            ,"CWD: "+process.cwd()
+                        ],deferred);
 
-                (function(deferred,dep){
+                        process.exit();
+                    }
 
-                    fs.readFile(dep.url, 'utf8', function (err, data) {
+                    process_result(deferred,data,dep);
+                });
 
-                        if (err){
-                            public.debug([
-                                "File " + dep.url + " not found @ local dep.url '" + dep.url +"'"
-                                ,"CWD: "+process.cwd()
-                            ],deferred);
-                            
-                            process.exit();
-                        }
+            }(deferred,dep));
 
-                        process_result(deferred,data,dep);
-                    });
-
-                }(deferred,dep));
-
-            }
         }
+      }
     }
 
     return deferred;

@@ -270,9 +270,7 @@ public.debug = function(msg,def){
     //if we saved a stack trace to connect async, push it
     if(def){
         console.log("Backtrace:");
-        for(var i in def.backtrace.stack){
-          console.log(def.backtrace.stack[i]);
-        }
+        console.log(def.backtrace.stack);
     }
     
     if(private.config.debug_mode){

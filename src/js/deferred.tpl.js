@@ -178,12 +178,14 @@ private.deferred.tpl.reject = function(err){
         err = [err];
     }
 
-    var msg = "Rejected "+this.model+": '"+this.id+"'. Turn debug mode on for more info.";
+    var msg = "Rejected "+this.model+": '"+this.id+"'."
+    
     if(private.config.debug_mode){
       err.unshift(msg);
       public.debug(err,this);
     }
     else{
+      msg = msg + "\n Turn debug mode on for more info.";
       console.log(msg);
     }
 

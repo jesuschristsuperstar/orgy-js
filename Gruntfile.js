@@ -68,13 +68,23 @@ module.exports = function(grunt) {
             dsk: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
-                browsers: ['Chrome',"Firefox","Opera"]
+                browsers: ['Chrome',"Firefox","Opera"],
                 //browsers: ["PhantomJS"]
+                //urlRoot: '/base/demos',
+                proxies: {
+                  '/data' : "http://192.168.56.101/orgy-js/demos/data"
+                }
             }
             ,travis: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
                 browsers: ["Firefox"]
+                //,urlRoot: '/base/demos'
+                /**/
+                ,proxies: {
+                  '/data' : "http://localhost:9876/base/demos/data"
+                }
+                
                 //browsers: ["PhantomJS"]
             }
         },
@@ -114,5 +124,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.registerTask('default', ['uglify']);
     grunt.registerTask('t', ['uglify','test-dsk']);
+    grunt.registerTask('k', ['karma:dsk']);
 
 };
