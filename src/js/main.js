@@ -111,20 +111,19 @@ public.define = function(id,data){
     if(public.list[id] && public.list[id].settled === 1){
         return public.debug("Can't define " + id + ". Already resolved.");
     }
-
-    data.__dependencies = (typeof data.__dependencies === 'function') 
-        ? data.__dependencies.call(data) 
-        : data.__dependencies;
     
-    //ORGY MODULE HANDLING
-    if(typeof data === 'object' && typeof data.__id === 'string'){
+    //Get backtrace info, here - so origin points to callee
+    var cs = private.get_backtrace_info('public.define');
+    
+    if(typeof data === 'object' 
+      && typeof data.__id === 'string'
+      && data.__dependencies instanceof Array){
         
-        def = public.queue(data.__dependencies || [],{
+        def = public.queue(data.__dependencies,{
             id : id
-            ,__ui : (typeof data.__ui !== 'undefined') ? data.__ui : 1
-            ,_is_orgy_module : 1
             ,resolver : (typeof data.__resolver === 'function')
             ? data.__resolver.bind(data) : null
+            ,backtrace : cs
         });
     }
     else{
@@ -132,6 +131,7 @@ public.define = function(id,data){
         //CREATE/GET DEFERRED
         def = public.deferred({
            id : id
+           ,backtrace : cs
         });
 
         //SETTLE 
@@ -268,10 +268,10 @@ public.debug = function(msg,def){
     }
 
     //if we saved a stack trace to connect async, push it
-    if(def && def.origin_stack){
+    if(def){
         console.log("Backtrace:");
-        for(var i in def.origin_stack){
-          console.log(def.origin_stack[i]);
+        for(var i in def.backtrace.stack){
+          console.log(def.backtrace.stack[i]);
         }
     }
     
@@ -294,20 +294,26 @@ public.debug = function(msg,def){
 ////////////////////////////////////////
 
 
-private.origin_stack = function(ss){
+private.get_backtrace_info = function(ss){
 
-    var l = new Error().stack.split(ss)[1].trim();
-
+    //Origin is the call immediately preceding"ss"
+          
+    var r = {},
+    l;
+    l = r.stack = new Error().stack;
+    
+    
     if(private.config.mode === 'browser'){
-        l = l.split("//");
-        l = l.slice(1);
-        for(var i in l){
-          l[i] = window.location.protocol + "//" + l[i].split(" ")[0];
-        }//[2].split(" ")[0].trim();
+      l = l.split(ss)[1].trim().split("\n").pop();
+      l = window.location.protocol + "//" + l.split("//")[1];
     }
     else{
-        l = '/' + l.split("(/")[2].split(" ")[0].trim().slice(0,-1);
+      l = l.split(ss + " ")[1].split("\n")[1];
+      l = l.match(/\(([^)]+)\)/)[1];
     }
+
+    //Set origin
+    r.origin = l;
     
-    return l;
+    return r;
 };

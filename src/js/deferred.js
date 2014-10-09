@@ -59,14 +59,15 @@ private.deferred.factory = function(options){
         private.deferred.tpl
         ,options
     ]);
-    
-    //Save backtrace for async debugging
-    _o.origin_stack = private.origin_stack('public.deferred');
 
-    //if no id, use code line origin + iterator
-    if(typeof options.id !== 'string'){
-        _o.id = _o.origin_stack[_o.origin_stack.length -1] 
-                +'-'+(++public.i);
+    //Get backtrace info if none found [may be set @ public.define]
+    if(!_o.backtrace){
+      _o.backtrace = private.get_backtrace_info('public.deferred');
+    }
+    
+    //if no id, use backtrace origin
+    if(!options.id){
+      _o.id = _o.backtrace.origin + '-' + (++public.i);
     }
     
     return _o;
@@ -725,25 +726,6 @@ private.deferred._wrap_xhr = function(dep){
  */
 private.deferred.attach_xhr = function(deferred,dep){
 
-    //GET AUTOPATH
-    if(dep.url[0] === "*"){
-
-        var autopath = Orgy.config().autopath;
-
-        if(typeof autopath !== 'string'){
-            public.debug([
-                    "config.autopath must be set to a string."
-                ]
-                ,[
-                    "When a dependency url begins with *, it is replaced by the config property 'autopath'."
-            ]);
-        }
-        else{
-            dep.url = dep.url.replace(/\*/,autopath);
-        }
-    }
-
-
     //BROWSER
     if(typeof process !== 'object' || process + '' !== '[object process]'){
 
@@ -761,9 +743,8 @@ private.deferred.attach_xhr = function(deferred,dep){
                 (function(node,dep,deferred){
 
                     node.onload = node.onreadystatechange = function(){
-                        //Do not autoresolve modules, which are
-                        //self-resolved via Orgy.export
-                        if(!deferred._is_orgy_module){
+                        //Autoresolve if no resolver expected in script
+                        if(deferred.resolver === null){
                             deferred.resolve((typeof node.value !== 'undefined') ? node.value : node);
                         }
                     };
@@ -849,7 +830,9 @@ private.deferred.attach_xhr = function(deferred,dep){
     }
     //NODEJS
     else{
-
+        
+    //NOTE: fs.readdir uses process.cwd() as start point, while require() uses __dirname
+        
         function process_result(deferred,data,dep){
 
             switch(true){
@@ -875,12 +858,31 @@ private.deferred.attach_xhr = function(deferred,dep){
 
         }
         else{
+          
+            var cwd = process.cwd();
+            var path = require("path");
+            dep.url = path.resolve(dep.url);
 
-            //DON'T GET SCRIPTS AS TEXT
+            //Get scripts
             if(dep.type === 'script'){
+                
+                //get dest dir
+                var dd = dep.url.split("/");
+                dd.pop();
+                dd = dd.join("/");
+                if(dd !== cwd){
+                  //Make working directory relative to 
+                  //included script
+                  process.chdir(dd);
+                }
+                
                 var data = require(dep.url);
+                
+                //Change back to saved cwd
+                process.chdir(cwd);
 
-                if(!deferred._is_orgy_module){
+                //Autoresolve if no resolver expected in script
+                if(deferred.resolver === null){
                     deferred.resolve(data);
                 }
             }

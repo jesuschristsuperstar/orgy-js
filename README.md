@@ -80,7 +80,8 @@ var q = Orgy.queue([
         ,url : "data/sample.css"
     }
 ],{
-  id : "q1" //Optional. Id by which to reference the queue globally.
+  id : "q1" //Optional. Id used to get instance outside of local scope. 
+            //i.e. var q = Orgy.get("q1")
 });
 
 
@@ -114,6 +115,14 @@ q.then(function(r,deferred,last){
     console.log(last); // 1
     return 2;
 });
+
+
+/**
+ * To reference the queue above outside of the local scope:
+ *
+*/
+var q = Orgy.get("q1");
+
 ```
 
 ## More examples:

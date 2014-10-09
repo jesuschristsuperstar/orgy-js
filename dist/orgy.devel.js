@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.6.2 
-Built: 2014-10-02 03:30:51
+Version: 1.6.3 
+Built: 2014-10-09 05:49:03
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -40,17 +40,17 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (public.list[id] && public.list[id].settled === 1) {
             return public.debug("Can't define " + id + ". Already resolved.");
         }
-        data.__dependencies = typeof data.__dependencies === "function" ? data.__dependencies.call(data) : data.__dependencies;
-        if (typeof data === "object" && typeof data.__id === "string") {
-            def = public.queue(data.__dependencies || [], {
+        var cs = private.get_backtrace_info("public.define");
+        if (typeof data === "object" && typeof data.__id === "string" && data.__dependencies instanceof Array) {
+            def = public.queue(data.__dependencies, {
                 id: id,
-                __ui: typeof data.__ui !== "undefined" ? data.__ui : 1,
-                _is_orgy_module: 1,
-                resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null
+                resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null,
+                backtrace: cs
             });
         } else {
             def = public.deferred({
-                id: id
+                id: id,
+                backtrace: cs
             });
             def.resolve(data);
         }
@@ -120,10 +120,10 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 console.error(msg[i]);
             }
         }
-        if (def && def.origin_stack) {
+        if (def) {
             console.log("Backtrace:");
-            for (var i in def.origin_stack) {
-                console.log(def.origin_stack[i]);
+            for (var i in def.backtrace.stack) {
+                console.log(def.backtrace.stack[i]);
             }
         }
         if (private.config.debug_mode) {
@@ -135,18 +135,18 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             process.exit();
         }
     };
-    private.origin_stack = function(ss) {
-        var l = new Error().stack.split(ss)[1].trim();
+    private.get_backtrace_info = function(ss) {
+        var r = {}, l;
+        l = r.stack = new Error().stack;
         if (private.config.mode === "browser") {
-            l = l.split("//");
-            l = l.slice(1);
-            for (var i in l) {
-                l[i] = window.location.protocol + "//" + l[i].split(" ")[0];
-            }
+            l = l.split(ss)[1].trim().split("\n").pop();
+            l = window.location.protocol + "//" + l.split("//")[1];
         } else {
-            l = "/" + l.split("(/")[2].split(" ")[0].trim().slice(0, -1);
+            l = l.split(ss + " ")[1].split("\n")[1];
+            l = l.match(/\(([^)]+)\)/)[1];
         }
-        return l;
+        r.origin = l;
+        return r;
     };
     private.deferred = {};
     public.deferred = function(options) {
@@ -161,9 +161,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.deferred.factory = function(options) {
         var _o = public.naive_cloner([ private.deferred.tpl, options ]);
-        _o.origin_stack = private.origin_stack("public.deferred");
-        if (typeof options.id !== "string") {
-            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "-" + ++public.i;
+        if (!_o.backtrace) {
+            _o.backtrace = private.get_backtrace_info("public.deferred");
+        }
+        if (!options.id) {
+            _o.id = _o.backtrace.origin + "-" + ++public.i;
         }
         return _o;
     };
@@ -478,14 +480,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         return deferred;
     };
     private.deferred.attach_xhr = function(deferred, dep) {
-        if (dep.url[0] === "*") {
-            var autopath = Orgy.config().autopath;
-            if (typeof autopath !== "string") {
-                public.debug([ "config.autopath must be set to a string." ], [ "When a dependency url begins with *, it is replaced by the config property 'autopath'." ]);
-            } else {
-                dep.url = dep.url.replace(/\*/, autopath);
-            }
-        }
         if (typeof process !== "object" || process + "" !== "[object process]") {
             this.head = this.head || document.getElementsByTagName("head")[0] || document.documentElement;
             switch (true) {
@@ -496,7 +490,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 node.setAttribute("id", dep.id);
                 (function(node, dep, deferred) {
                     node.onload = node.onreadystatechange = function() {
-                        if (!deferred._is_orgy_module) {
+                        if (deferred.resolver === null) {
                             deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
                         }
                     };
@@ -579,9 +573,19 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     }
                 });
             } else {
+                var cwd = process.cwd();
+                var path = require("path");
+                dep.url = path.resolve(dep.url);
                 if (dep.type === "script") {
+                    var dd = dep.url.split("/");
+                    dd.pop();
+                    dd = dd.join("/");
+                    if (dd !== cwd) {
+                        process.chdir(dd);
+                    }
                     var data = require(dep.url);
-                    if (!deferred._is_orgy_module) {
+                    process.chdir(cwd);
+                    if (deferred.resolver === null) {
                         deferred.resolve(data);
                     }
                 } else if (dep.type === "css") {
@@ -615,7 +619,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.deferred.tpl.caboose = null;
     private.deferred.tpl.model = "deferred";
     private.deferred.tpl.done_fired = 0;
-    private.deferred.tpl._is_orgy_module = 0;
     private.deferred.tpl.timeout_id = null;
     private.deferred.tpl.callback_states = {
         resolve: 0,
@@ -847,9 +850,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.queue.factory = function(options) {
         var _o = public.naive_cloner([ private.deferred.tpl, private.queue.tpl, options ]);
-        _o.origin_stack = private.origin_stack("public.queue");
+        if (!_o.backtrace) {
+            _o.backtrace = private.get_backtrace_info("public.queue");
+        }
         if (!options.id) {
-            _o.id = _o.origin_stack[_o.origin_stack.length - 1] + "-" + ++public.i;
+            _o.id = _o.backtrace.origin + "-" + ++public.i;
         }
         return _o;
     };

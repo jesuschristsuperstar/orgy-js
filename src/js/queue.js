@@ -283,13 +283,14 @@ private.queue.factory = function(options){
         ,options
     ]);
 
-    //Save backtrace for async debugging
-    _o.origin_stack = private.origin_stack('public.queue');
+    //Get backtrace info if none found [may be set @ public.define]
+    if(!_o.backtrace){
+      _o.backtrace = private.get_backtrace_info('public.queue');
+    }
     
-    //if no id, use origin
+    //if no id, use backtrace origin
     if(!options.id){
-      _o.id = _o.origin_stack[_o.origin_stack.length -1] 
-      +'-'+(++public.i);
+      _o.id = _o.backtrace.origin + '-' + (++public.i);
     }
     
     return _o;
@@ -308,8 +309,8 @@ private.queue.activate = function(o,options,deps){
 
     //ACTIVATE AS A DEFERRED
     o = private.deferred.activate(o);
-
-    //ADD ANY DEFERREDS TO QUEUE
+    
+    //ADD DEPENDENCIES TO QUEUE
     private.queue.tpl.add.call(o,deps);
 
     //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM

@@ -39,8 +39,6 @@ private.deferred.tpl.model = "deferred";
 
 private.deferred.tpl.done_fired = 0;
 
-private.deferred.tpl._is_orgy_module = 0;
-
 private.deferred.tpl.timeout_id = null;
 
 private.deferred.tpl.callback_states = {

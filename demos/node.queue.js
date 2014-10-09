@@ -6,7 +6,6 @@ Orgy.config({
         var cheerio = require('cheerio');
         return global.$ = cheerio.load("<html><head></head><body></body></html>");
     }())
-    ,autopath : __dirname
 });
 
 var q = Orgy.queue(
@@ -16,27 +15,27 @@ var q = Orgy.queue(
             ,timeout : 1000
         }
         ,{
-            url : "*/data/data1.json"
+            url : "./data/data1.json"
             ,type : "json"
         }
         ,{
-            url : "*/data/data2.json"
+            url : "./data/data2.json"
             ,type : "json"
         }
         ,{
-            url : "*/data/data3.json"
+            url : "./data/data3.json"
             ,type : "json"
         }
         ,{
-            url : "*/data/sample.css"
+            url : "./data/sample.css"
             ,type : "css"
         }
         ,{
             type : "script"
-            ,url : "*/data/test-module.js"
+            ,url : "./data/subdir0/test-module.js"
         }
     ],{
-    id : "q1"
+      id : "q1" //Optional. Id used to get instance outside of local scope. i.e. var q = Orgy.get("q1")
 });
 
 q.then(function(value){
