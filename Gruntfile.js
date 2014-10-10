@@ -124,6 +124,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.registerTask('default', ['uglify']);
     grunt.registerTask('t', ['uglify','test-dsk']);
-    grunt.registerTask('k', ['karma:dsk']);
+    grunt.registerTask('k', ['uglify','karma:dsk']);
+    grunt.registerTask('m', ['uglify','mochaTest:test']);
 
 };

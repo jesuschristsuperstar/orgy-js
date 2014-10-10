@@ -1,8 +1,11 @@
 (function(obj){
-    
-    var def = Orgy.define(obj.__id,obj);
     if(typeof process === 'object' && process + '' === '[object process]'){
-        module.exports = def;
+      obj.cwd = __dirname;
+      var def = Orgy.define(obj.__id,obj);
+      module.exports = def;
+    }
+    else{
+      Orgy.define(obj.__id,obj);
     }
     
 }(function(){
@@ -15,7 +18,7 @@
         __id : "test-module-2b"
         ,__dependencies : [
             {
-                url : "data/data3.json"
+                url : "../data3.json"
                 ,type : "json"
             }
         ]

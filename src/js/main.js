@@ -50,6 +50,9 @@ private.config = {
     autopath : ''
     ,document : null
     ,debug_mode : 0
+    //set the current working directory of the callee script,
+    //because node has no constant for this
+    ,cwd : false
     ,mode : (function(){
         if(typeof process === 'object' && process + '' === '[object process]'){
             // is node
@@ -104,7 +107,7 @@ public.config = function(obj){
 * @returns {object} resolved promise
 */
 public.define = function(id,data){
-    
+
     var def;
 
     //MAKE SURE NOT TRYING TO RESOLVE EXISTING DEF
@@ -113,29 +116,33 @@ public.define = function(id,data){
     }
     
     //Get backtrace info, here - so origin points to callee
-    var cs = private.get_backtrace_info('public.define');
+    data.backtrace = private.get_backtrace_info('public.define');
     
-    if(typeof data === 'object' 
-      && typeof data.__id === 'string'
-      && data.__dependencies instanceof Array){
+    //Aliases
+    data.id = data.id || data.__id;
+    data.dependencies = data.dependencies || data.__dependencies;
+    data.resolver = data.resolver || data.__resolver;
+    data.resolver = (typeof data.resolver === 'function')
+        ? data.resolver.bind(data) : null;
         
-        def = public.queue(data.__dependencies,{
-            id : id
-            ,resolver : (typeof data.__resolver === 'function')
-            ? data.__resolver.bind(data) : null
-            ,backtrace : cs
-        });
+    if(typeof data === 'object' 
+      && typeof data.id === 'string'
+      && data.dependencies instanceof Array){
+        
+        def = public.queue(data.dependencies,data);
     }
     else{
 
         //CREATE/GET DEFERRED
-        def = public.deferred({
-           id : id
-           ,backtrace : cs
-        });
+        def = public.deferred(data);
 
         //SETTLE 
-        def.resolve(data);
+        if(data.resolver === null 
+          && (typeof data.autoresolve !== 'boolean' 
+          || data.autoresolve === true)){
+          
+          def.resolve(data);
+        }
        
     }
     
@@ -147,10 +154,9 @@ public.define = function(id,data){
  * Getter.
  * 
  * @param {string} id
- * @param {object} options
  * @returns {object}
  */
-public.get = function(id,options){
+public.get = function(id){
   if(public.list[id]){
     return public.list[id];
   }

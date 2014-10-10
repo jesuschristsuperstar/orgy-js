@@ -492,13 +492,13 @@ private.deferred.search_obj_recursively = function(obj,propName,fn,breadcrumb){
  * @param {type} obj
  * @returns {undefined}
  */
-private.deferred.convert_to_promise = function(obj){
+private.deferred.convert_to_promise = function(parent,obj){
 
-    //IF ALREADY EXISTS, RETURN EXISTING
+    //Return if instance already exists with this id
     if(!obj.id){
 
         if(obj.type === 'timer'){
-            obj.id = "timer-" + obj.timeout + "-"+(++public.i);
+            obj.id = "timer-" + obj.timeout + "-" + (++public.i);
         }
         else if(typeof obj.url === 'string'){
             obj.id = obj.url.split("/").pop();
@@ -519,7 +519,7 @@ private.deferred.convert_to_promise = function(obj){
     }
 
     if(obj.type !== 'timer'){
-        //RETURN THE PROMISE IF IT ALREADY EXISTS
+        //Return if already exists
         if(typeof public.list[obj.id] !== 'undefined'){
           //A previous promise of the same id exists. 
           //Make sure this dependency object doesn't have a
@@ -540,25 +540,29 @@ private.deferred.convert_to_promise = function(obj){
         }
     }
 
-    //CONVERT DEPENDENCY TO PROMISE
-    var prom;
+    //Convert dependency to an instance
+    var def;
     switch(true){
 
-        //EVENT
+        //Event
         case(obj.type === 'event'):
-            prom = private.deferred._wrap_event(obj);
+            def = private.deferred._wrap_event(obj);
             break;
 
-        //ALREADY A PROMISE
+        case(obj.type === 'queue'):
+            def = public.queue(obj.dependencies,obj);
+            break;
+            
+        //Already an instance
         case(obj.type === 'deferred'):
         case(obj.type === 'promise' || obj.then):   
 
             switch(true){
 
-                //OBJECT IS A REFERENCE TO A PROMISE
+                //Reference to an existing instance
                 case(typeof obj.id === 'string'):
-                    console.warn("Promise '"+obj.id +"': did not exist. Auto creating new deferred.");
-                    prom = public.deferred({
+                    console.warn("'"+obj.id +"': did not exist. Auto creating new deferred.");
+                    def = public.deferred({
                         id : obj.id
                     });
                     break;
@@ -566,42 +570,46 @@ private.deferred.convert_to_promise = function(obj){
                 //OBJECT PROPERTY .promise EXPECTED TO RETURN A PROMISE
                 case(typeof obj.promise === 'function'):
                     if(obj.scope){
-                        prom = obj.promise.call(obj.scope);
+                        def = obj.promise.call(obj.scope);
                     }
                     else{
-                        prom = obj.promise();
+                        def = obj.promise();
                     }
                     break;
 
-                //OBJECT IS A PROMISE
+                //Object is a thenable
                 case(obj.then):
-                    prom = obj;
+                    def = obj;
                     break;
 
                 default:
 
             }
 
-            //MAKE SURE IS PROMISE
-            if(typeof prom !== 'object' || !prom.then){
+            //Check if is a thenable
+            if(typeof def !== 'object' || !def.then){
                 return public.debug("Dependency labeled as a promise did not return a promise.",obj);
             }
             break;
 
         case(obj.type === 'timer'):
-            prom = private.deferred._wrap_timer(obj);
+            def = private.deferred._wrap_timer(obj);
             break;
 
-        //XHR
+        //Load file
         default:
             obj.type = obj.type || "default";
-            prom = private.deferred._wrap_xhr(obj);
+            //Inherit parent's current working directory
+            if(parent.cwd){
+              obj.cwd = parent.cwd;
+            }
+            def = private.deferred._wrap_xhr(obj);
     }
 
-    //INDEX PROMISE BY ID FOR FUTURE REFERENCING
-    public.list[obj.id] = prom;
+    //Index promise by id for future referencing
+    public.list[obj.id] = def;
 
-    return prom;
+    return def;
 };
     
     
@@ -704,10 +712,10 @@ private.deferred._wrap_xhr = function(dep){
 
 
     //CONVERT TO DEFERRED:
-    var deferred;
-    deferred = public.deferred(dep);
-    deferred = private.deferred.attach_xhr(deferred,dep);
-    return deferred;
+    var def;
+    def = public.deferred(dep);
+    def = private.deferred.attach_xhr(def,dep);
+    return def;
 };
     
     
@@ -738,7 +746,7 @@ private.deferred.attach_xhr = function(deferred,dep){
 
       switch(true){
 
-            case(dep.type==='script'):
+            case(dep.type === 'script'):
 
                 var node = document.createElement("script");
                 node.type = 'text/javascript';
@@ -748,9 +756,11 @@ private.deferred.attach_xhr = function(deferred,dep){
                 (function(node,dep,deferred){
 
                     node.onload = node.onreadystatechange = function(){
-                        //Autoresolve if no resolver expected in script
-                        if(deferred.resolver === null){
-                            deferred.resolve((typeof node.value !== 'undefined') ? node.value : node);
+
+                        //Autoresolve by default
+                        if(typeof deferred.autoresolve !== 'boolean' 
+                        || deferred.autoresolve === true){
+                          deferred.resolve((typeof node.value !== 'undefined') ? node.value : node);
                         }
                     };
                     node.onerror = function(){
@@ -758,7 +768,6 @@ private.deferred.attach_xhr = function(deferred,dep){
                     };
                 }(node,dep,deferred));
 
-                //put scripts before <base> elements, after <meta>
                 this.head.appendChild(node);
                 break;
 
@@ -861,32 +870,31 @@ private.deferred.attach_xhr = function(deferred,dep){
         });
       }
       else{
-
-        var cwd = process.cwd();
-        var path = require("path");
-        dep.url = path.resolve(dep.url);
+        
+        var owd = process.cwd()
+        ,cwd = (deferred.cwd) ? deferred.cwd : 
+                  ((private.config.cwd) ? private.config.cwd : false)
+        ,dirchanged = false;
+        
+        if(cwd){
+          process.chdir(cwd);
+          dirchanged = true;
+        }
+        else{
+          cwd = process.cwd();
+        }
+        
+        var path = cwd + "/" + dep.url;
 
         //Get scripts
         if(dep.type === 'script'){
 
-            //get dest dir
-            var dd = dep.url.split("/");
-            dd.pop();
-            dd = dd.join("/");
-            if(dd !== cwd){
-              //Make working directory relative to 
-              //included script
-              process.chdir(dd);
-            }
+            var data = require(path);
 
-            var data = require(dep.url);
-
-            //Change back to saved cwd
-            process.chdir(cwd);
-
-            //Autoresolve if no resolver expected in script
-            if(deferred.resolver === null){
-                deferred.resolve(data);
+            //Autoresolve by default
+            if(typeof deferred.autoresolve !== 'boolean' 
+            || deferred.autoresolve === true){
+              deferred.resolve(data);
             }
         }
         //DON'T GET CSS, JUST ADD NODE
@@ -909,7 +917,7 @@ private.deferred.attach_xhr = function(deferred,dep){
 
           (function(deferred,dep){
 
-                fs.readFile(dep.url, 'utf8', function (err, data) {
+                fs.readFile(path, 'utf8', function (err, data) {
 
                     if (err){
                         public.debug([
@@ -925,6 +933,11 @@ private.deferred.attach_xhr = function(deferred,dep){
 
             }(deferred,dep));
 
+        }
+        
+        //Change back to saved cwd
+        if(dirchanged){
+          process.chdir(owd);
         }
       }
     }

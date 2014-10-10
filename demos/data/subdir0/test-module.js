@@ -1,8 +1,11 @@
 (function(obj){
-    
-    var def = Orgy.define(obj.__id,obj);
     if(typeof process === 'object' && process + '' === '[object process]'){
-        module.exports = def;
+      obj.cwd = __dirname;
+      var def = Orgy.define(obj.__id,obj);
+      module.exports = def;
+    }
+    else{
+      Orgy.define(obj.__id,obj);
     }
     
 }(function(){
@@ -16,12 +19,14 @@
         ,__dependencies : [
 
             {
-                url : "../../data/subdir1/test-module-2a.js"
+                url : "../subdir1/test-module-2a.js"
                 ,type : "script"
+                ,autoresolve : false
             }
             ,{
-                url : "../../data/subdir2/test-module-2b.js"
+                url : "../subdir2/test-module-2b.js"
                 ,type : "script"
+                ,autoresolve : false
             }
         ]
         

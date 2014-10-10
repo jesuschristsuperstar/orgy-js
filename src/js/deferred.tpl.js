@@ -220,7 +220,6 @@ private.deferred.tpl.then = function(fn,rejector){
         //Execution chain already finished. Bail out.
         case(this.done_fired === 1):
             return public.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
-            break;
 
         default:
 

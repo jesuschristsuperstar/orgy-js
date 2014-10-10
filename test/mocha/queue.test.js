@@ -27,12 +27,13 @@ var cwd = process.cwd();
 process.chdir(cwd + "/demos");
 
 var Test = require('../test.class.js');
+var deps = require('../../demos/node.queue.js').deps;
 
-var q = Orgy.queue(Test.deps,{
+var q = Orgy.queue(deps,{
   id : "some-que-id"
 });
 
 //Change back to original cwd
 process.chdir(cwd);
 
-Test.describe(q,Test.deps);
+Test.describe(q,deps);

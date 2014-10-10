@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.6.3 
-Built: 2014-10-09 09:16:10
+Built: 2014-10-10 01:46:52
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -17,6 +17,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         autopath: "",
         document: null,
         debug_mode: 0,
+        cwd: false,
         mode: function() {
             if (typeof process === "object" && process + "" === "[object process]") {
                 return "node";
@@ -40,23 +41,22 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (public.list[id] && public.list[id].settled === 1) {
             return public.debug("Can't define " + id + ". Already resolved.");
         }
-        var cs = private.get_backtrace_info("public.define");
-        if (typeof data === "object" && typeof data.__id === "string" && data.__dependencies instanceof Array) {
-            def = public.queue(data.__dependencies, {
-                id: id,
-                resolver: typeof data.__resolver === "function" ? data.__resolver.bind(data) : null,
-                backtrace: cs
-            });
+        data.backtrace = private.get_backtrace_info("public.define");
+        data.id = data.id || data.__id;
+        data.dependencies = data.dependencies || data.__dependencies;
+        data.resolver = data.resolver || data.__resolver;
+        data.resolver = typeof data.resolver === "function" ? data.resolver.bind(data) : null;
+        if (typeof data === "object" && typeof data.id === "string" && data.dependencies instanceof Array) {
+            def = public.queue(data.dependencies, data);
         } else {
-            def = public.deferred({
-                id: id,
-                backtrace: cs
-            });
-            def.resolve(data);
+            def = public.deferred(data);
+            if (data.resolver === null && (typeof data.autoresolve !== "boolean" || data.autoresolve === true)) {
+                def.resolve(data);
+            }
         }
         return def;
     };
-    public.get = function(id, options) {
+    public.get = function(id) {
         if (public.list[id]) {
             return public.list[id];
         } else {
@@ -346,7 +346,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return breadcrumb;
     };
-    private.deferred.convert_to_promise = function(obj) {
+    private.deferred.convert_to_promise = function(parent, obj) {
         if (!obj.id) {
             if (obj.type === "timer") {
                 obj.id = "timer-" + obj.timeout + "-" + ++public.i;
@@ -370,50 +370,57 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 }
             }
         }
-        var prom;
+        var def;
         switch (true) {
           case obj.type === "event":
-            prom = private.deferred._wrap_event(obj);
+            def = private.deferred._wrap_event(obj);
+            break;
+
+          case obj.type === "queue":
+            def = public.queue(obj.dependencies, obj);
             break;
 
           case obj.type === "deferred":
           case obj.type === "promise" || obj.then:
             switch (true) {
               case typeof obj.id === "string":
-                console.warn("Promise '" + obj.id + "': did not exist. Auto creating new deferred.");
-                prom = public.deferred({
+                console.warn("'" + obj.id + "': did not exist. Auto creating new deferred.");
+                def = public.deferred({
                     id: obj.id
                 });
                 break;
 
               case typeof obj.promise === "function":
                 if (obj.scope) {
-                    prom = obj.promise.call(obj.scope);
+                    def = obj.promise.call(obj.scope);
                 } else {
-                    prom = obj.promise();
+                    def = obj.promise();
                 }
                 break;
 
               case obj.then:
-                prom = obj;
+                def = obj;
                 break;
 
               default:            }
-            if (typeof prom !== "object" || !prom.then) {
+            if (typeof def !== "object" || !def.then) {
                 return public.debug("Dependency labeled as a promise did not return a promise.", obj);
             }
             break;
 
           case obj.type === "timer":
-            prom = private.deferred._wrap_timer(obj);
+            def = private.deferred._wrap_timer(obj);
             break;
 
           default:
             obj.type = obj.type || "default";
-            prom = private.deferred._wrap_xhr(obj);
+            if (parent.cwd) {
+                obj.cwd = parent.cwd;
+            }
+            def = private.deferred._wrap_xhr(obj);
         }
-        public.list[obj.id] = prom;
-        return prom;
+        public.list[obj.id] = def;
+        return def;
     };
     private.deferred._wrap_event = function(obj) {
         var def = public.deferred({
@@ -472,10 +479,10 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         if (public.list[dep.id]) {
             return public.list[dep.id];
         }
-        var deferred;
-        deferred = public.deferred(dep);
-        deferred = private.deferred.attach_xhr(deferred, dep);
-        return deferred;
+        var def;
+        def = public.deferred(dep);
+        def = private.deferred.attach_xhr(def, dep);
+        return def;
     };
     private.deferred.attach_xhr = function(deferred, dep) {
         if (typeof process !== "object" || process + "" !== "[object process]") {
@@ -491,7 +498,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 node.setAttribute("id", dep.id);
                 (function(node, dep, deferred) {
                     node.onload = node.onreadystatechange = function() {
-                        if (deferred.resolver === null) {
+                        if (typeof deferred.autoresolve !== "boolean" || deferred.autoresolve === true) {
                             deferred.resolve(typeof node.value !== "undefined" ? node.value : node);
                         }
                     };
@@ -574,19 +581,17 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     }
                 });
             } else {
-                var cwd = process.cwd();
-                var path = require("path");
-                dep.url = path.resolve(dep.url);
-                if (dep.type === "script") {
-                    var dd = dep.url.split("/");
-                    dd.pop();
-                    dd = dd.join("/");
-                    if (dd !== cwd) {
-                        process.chdir(dd);
-                    }
-                    var data = require(dep.url);
+                var owd = process.cwd(), cwd = deferred.cwd ? deferred.cwd : private.config.cwd ? private.config.cwd : false, dirchanged = false;
+                if (cwd) {
                     process.chdir(cwd);
-                    if (deferred.resolver === null) {
+                    dirchanged = true;
+                } else {
+                    cwd = process.cwd();
+                }
+                var path = cwd + "/" + dep.url;
+                if (dep.type === "script") {
+                    var data = require(path);
+                    if (typeof deferred.autoresolve !== "boolean" || deferred.autoresolve === true) {
                         deferred.resolve(data);
                     }
                 } else if (dep.type === "css") {
@@ -599,7 +604,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 } else {
                     var fs = require("fs");
                     (function(deferred, dep) {
-                        fs.readFile(dep.url, "utf8", function(err, data) {
+                        fs.readFile(path, "utf8", function(err, data) {
                             if (err) {
                                 public.debug([ "File " + dep.url + " not found @ local dep.url '" + dep.url + "'", "CWD: " + process.cwd() ], deferred);
                                 process.exit();
@@ -607,6 +612,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                             process_result(deferred, data, dep);
                         });
                     })(deferred, dep);
+                }
+                if (dirchanged) {
+                    process.chdir(owd);
                 }
             }
         }
@@ -700,7 +708,6 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
 
           case this.done_fired === 1:
             return public.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
-            break;
 
           default:
             this.callbacks.then.train.push(fn);
@@ -768,7 +775,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     break;
 
                   case typeof arr[a] === "object" && typeof arr[a].then !== "function":
-                    arr[a] = private.deferred.convert_to_promise(arr[a]);
+                    arr[a] = private.deferred.convert_to_promise(this, arr[a]);
                     break;
 
                   case typeof arr[a].then === "function":

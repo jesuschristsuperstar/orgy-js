@@ -20,7 +20,8 @@ module.exports = function(config) {
     files: [
       'dist/orgy.devel.js',
       'test/test.class.js',
-      {pattern: 'demos/data/*', included: false, served:true, watched:true},
+      'demos/node.queue.js',
+      {pattern: 'demos/data/*', included: false},
       {pattern: 'test/karma/*.js', included: true}
     ],
 

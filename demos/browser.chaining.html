@@ -26,26 +26,25 @@
     //FIRES WHEN RESOLVED
     q.then(function(r){
         console.log(r); //Result of dependencies
-        debugger;
         return 1;
     });
     
     //FIRES WHEN RESOLVED
-    q.then(function(a,b,c){
-        console.log(a,b,c);
-        debugger;
+    q.then(function(r,deferred,last){
+        console.log(last);
         return 2;
     });
     
     //FIRES WHEN RESOLVED
-    q.then(function(r){
-        console.log(r);
+    q.then(function(r,deferred,last){
+        console.log(last);
         return 3;
     });
 
-    q.done(function (r){
-        console.log("Final value:");
-        console.log(r);
+    q.done(function(r,deferred,last){
+      console.log("Chain end value:",last);
+      console.log("Dependency values:");
+      console.log(r);
     });
 </script>
 </head>

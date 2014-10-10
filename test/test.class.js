@@ -13,33 +13,6 @@
     
     var r = {};
     
-    r.deps = [
-      {
-          type : "timer"
-          ,timeout : 1000
-      }
-      ,{
-          url : "./data/data1.json"
-          ,type : "json"
-      }
-      ,{
-          url : "./data/data2.json"
-          ,type : "json"
-      }
-      ,{
-          url : "./data/data3.json"
-          ,type : "json"
-      }
-      ,{
-          url : "./data/sample.css"
-          ,type : "css"
-      }
-      ,{
-          type : "script"
-          ,url : "./data/subdir0/test-module.js"
-      }
-    ];
-    
     r.describe = function(q,deps){
       
       describe('then chain', function(){

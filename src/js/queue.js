@@ -85,7 +85,7 @@ private.queue.tpl = {
 
                //IF NOT, ATTEMPT TO CONVERT IT TO A PROMISE
                case(typeof arr[a] === 'object' && typeof arr[a].then !== 'function'):
-                   arr[a] = private.deferred.convert_to_promise(arr[a]);
+                   arr[a] = private.deferred.convert_to_promise(this,arr[a]);
                    break;
 
                //REF IS A PROMISE.
