@@ -120,16 +120,17 @@ public.define = function(id,data){
     
     //Aliases
     data.id = data.id || data.__id;
-    data.dependencies = data.dependencies || data.__dependencies;
+    var dependencies = data.dependencies || data.__dependencies;
     data.resolver = data.resolver || data.__resolver;
     data.resolver = (typeof data.resolver === 'function')
         ? data.resolver.bind(data) : null;
         
     if(typeof data === 'object' 
       && typeof data.id === 'string'
-      && data.dependencies instanceof Array){
-        
-        def = public.queue(data.dependencies,data);
+      && dependencies instanceof Array){
+        delete data.dependencies;
+        delete data.__dependencies;
+        def = public.queue(dependencies,data);
     }
     else{
 

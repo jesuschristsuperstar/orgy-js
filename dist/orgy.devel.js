@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.6.3 
-Built: 2014-10-10 01:46:52
+Built: 2014-10-10 13:20:18
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -43,11 +43,13 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         data.backtrace = private.get_backtrace_info("public.define");
         data.id = data.id || data.__id;
-        data.dependencies = data.dependencies || data.__dependencies;
+        var dependencies = data.dependencies || data.__dependencies;
         data.resolver = data.resolver || data.__resolver;
         data.resolver = typeof data.resolver === "function" ? data.resolver.bind(data) : null;
-        if (typeof data === "object" && typeof data.id === "string" && data.dependencies instanceof Array) {
-            def = public.queue(data.dependencies, data);
+        if (typeof data === "object" && typeof data.id === "string" && dependencies instanceof Array) {
+            delete data.dependencies;
+            delete data.__dependencies;
+            def = public.queue(dependencies, data);
         } else {
             def = public.deferred(data);
             if (data.resolver === null && (typeof data.autoresolve !== "boolean" || data.autoresolve === true)) {
