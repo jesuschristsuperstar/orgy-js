@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.6.3 
-Built: 2014-10-10 18:14:53
+Version: 1.7.0 
+Built: 2014-10-11 07:21:56
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -36,23 +36,32 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return private.config;
     };
-    public.define = function(id, data) {
-        var def;
+    public.define = function(arg1, data) {
+        var def, id, options;
+        if (typeof arg1 === "object") {
+            id = arg1.id;
+            options = arg1;
+        } else {
+            id = arg1;
+            options = {
+                id: id,
+                resolver: null
+            };
+        }
+        if (typeof id !== "string") {
+            public.debug("Must set id when defining an instance.");
+        }
         if (public.list[id] && public.list[id].settled === 1) {
             return public.debug("Can't define " + id + ". Already resolved.");
         }
-        data.backtrace = private.get_backtrace_info("public.define");
-        data.id = data.id || data.__id;
-        var dependencies = data.dependencies || data.__dependencies;
-        data.resolver = data.resolver || data.__resolver;
-        data.resolver = typeof data.resolver === "function" ? data.resolver.bind(data) : null;
-        if (typeof data === "object" && typeof data.id === "string" && dependencies instanceof Array) {
-            delete data.dependencies;
-            delete data.__dependencies;
-            def = public.queue(dependencies, data);
+        options.backtrace = private.get_backtrace_info("public.define");
+        if (options.dependencies && options.dependencies instanceof Array) {
+            var deps = options.dependencies;
+            delete options.dependencies;
+            def = public.queue(deps, options);
         } else {
-            def = public.deferred(data);
-            if (data.resolver === null && (typeof data.autoresolve !== "boolean" || data.autoresolve === true)) {
+            def = public.deferred(options);
+            if (options.resolver === null && (typeof options.autoresolve !== "boolean" || options.autoresolve === true)) {
                 def.resolve(data);
             }
         }
@@ -668,9 +677,13 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         this.value = value;
         if (!this.resolver_fired && typeof this.resolver === "function") {
             this.resolver_fired = 1;
-            this.callbacks.resolve.train.push(function() {
-                this.resolver(value, this);
-            });
+            try {
+                this.callbacks.resolve.train.push(function() {
+                    this.resolver(value, this);
+                });
+            } catch (e) {
+                debugger;
+            }
         } else {
             this.resolver_fired = 1;
             this.callbacks.resolve.hooks.onComplete.train.unshift(function() {

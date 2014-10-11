@@ -1,12 +1,19 @@
 (function(obj){
-    if(typeof process === 'object' && process + '' === '[object process]'){
-      obj.cwd = __dirname;
-      var def = Orgy.define(obj.__id,obj);
-      module.exports = def;
-    }
-    else{
-      Orgy.define(obj.__id,obj);
-    }
+  
+  var options = {
+    id : obj.__id
+    ,dependencies : obj.__dependencies
+    ,resolver : (obj.__resolver) ? obj.__resolver.bind(obj) : null
+  };
+  
+  if(typeof process==='object' && process+''==='[object process]'){
+    options.cwd = __dirname;
+    var def = Orgy.define(options);
+    module.exports = def;
+  }
+  else{
+    Orgy.define(options);
+  }
     
 }(function(){
     

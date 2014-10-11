@@ -102,49 +102,59 @@ public.config = function(obj){
 * Creates a new promise from a value and an id and automatically 
 * resolves it.
 * 
-* @param {string} id
+* @param {string | object} id | options
 * @param {mixed} data
 * @returns {object} resolved promise
 */
-public.define = function(id,data){
+public.define = function(arg1,data){
 
-    var def;
-
-    //MAKE SURE NOT TRYING TO RESOLVE EXISTING DEF
+    var def,
+        id,
+        options;
+ 
+    //arg1 can be a string or an object.
+    if(typeof arg1 === 'object'){
+      id = arg1.id;
+      options = arg1;
+    }
+    else{
+      id = arg1;
+      options = {
+        id : id
+        ,resolver : null
+      };
+    }
+    
+    //test for a valid id
+    if(typeof id !== 'string'){
+      public.debug("Must set id when defining an instance.");
+    }
+    
+    //Check no existing instance defined with same id
     if(public.list[id] && public.list[id].settled === 1){
         return public.debug("Can't define " + id + ". Already resolved.");
     }
     
-    //Get backtrace info, here - so origin points to callee
-    data.backtrace = private.get_backtrace_info('public.define');
-    
-    //Aliases
-    data.id = data.id || data.__id;
-    var dependencies = data.dependencies || data.__dependencies;
-    data.resolver = data.resolver || data.__resolver;
-    data.resolver = (typeof data.resolver === 'function')
-        ? data.resolver.bind(data) : null;
-        
-    if(typeof data === 'object' 
-      && typeof data.id === 'string'
-      && dependencies instanceof Array){
-        delete data.dependencies;
-        delete data.__dependencies;
-        def = public.queue(dependencies,data);
+    //Set backtrace info, here - so origin points to callee
+    options.backtrace = private.get_backtrace_info('public.define');
+         
+    if(options.dependencies && options.dependencies instanceof Array){
+      //Define as a queue - can't settle because we have deps
+      var deps = options.dependencies;
+      delete options.dependencies;
+      def = public.queue(deps,options);
     }
     else{
+      //Define as a deferred
+      def = public.deferred(options);
 
-        //CREATE/GET DEFERRED
-        def = public.deferred(data);
+      //Try to immediately settle [define]
+      if(options.resolver === null 
+        && (typeof options.autoresolve !== 'boolean' 
+        || options.autoresolve === true)){
 
-        //SETTLE 
-        if(data.resolver === null 
-          && (typeof data.autoresolve !== 'boolean' 
-          || data.autoresolve === true)){
-          
-          def.resolve(data);
-        }
-       
+        def.resolve(data);
+      }
     }
     
     return def;

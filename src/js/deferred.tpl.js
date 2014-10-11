@@ -143,9 +143,14 @@ private.deferred.tpl.resolve = function(value){
         this.resolver_fired = 1;   
         
         //Add resolver to resolve train
-        this.callbacks.resolve.train.push(function(){
-            this.resolver(value,this);
-        });
+        try{
+          this.callbacks.resolve.train.push(function(){
+              this.resolver(value,this);
+          });
+        }
+        catch(e){
+          debugger;
+        }
     }
     else{
         
