@@ -1,10 +1,6 @@
 var r = {};
 r.deps = [
     {
-        type : "timer"
-        ,timeout : 1000
-    }
-    ,{
         url : "./data/data1.json"
         ,type : "json"
     }
@@ -22,6 +18,8 @@ r.deps = [
 //if node
 if(typeof process === 'object' && process + '' === '[object process]'){
   
+  var t0 = new Date().getMilliseconds();
+  
   Orgy = require("../dist/orgy.devel.js");
 
   Orgy.config({
@@ -35,31 +33,51 @@ if(typeof process === 'object' && process + '' === '[object process]'){
       ,debug_mode : 1
   });
 
-  var q = Orgy.queue(r.deps,{
-    id : "q1" //Optional. Used to get instance outside of local scope.                //i.e. var q = Orgy.get("q1")
+  var q = Orgy.queue(r.deps);
+
+  //FIRES WHEN RESOLVED
+  q.then(function(r){
+      //console.log(r); //Result of dependencies
+      return 1;
   });
 
+  //FIRES WHEN RESOLVED
   q.then(function(r,deferred,last){
-    return 'foo';
+      console.log(last); //1
+      return 2;
   });
 
-  q.then(function(r,deferred,last){
-    $("body").append("Appended value: "+last); //'foo'
-    return 'bar';
-  });
-
+  console.log("Creating a deferred that will hold up the callback chain...");
+  var def = Orgy.deferred().resolve('foo');
+  
   /*
-  //Error example
-  q.then(function(value){
-      var d = Orgy.deferred();
-      return d;       
-  });
+  setTimeout(function(){
+    console.log("Resolving the example deferred to resume the chain...");
+    def.resolve('foo');
+  },'1000');
   */
 
-  q.done(function(value,deferred,last){
-      console.log("Done...");
-      //GET MODIFIED DOM CONTENT 
-      console.log($("body").html());
+  //FIRES WHEN RESOLVED
+  q.then(function(r,deferred,last){
+      console.log(last); //2
+      return def;
+  });
+  
+  //FIRES WHEN RESOLVED
+  q.then(function(r,deferred,last){
+    console.log(last.value); //foo
+    $("body").append("Appended value: "+last.value); //foo
+    return last.value;
+  });
+
+  q.done(function(r,deferred,last){
+    console.log("Chain end value:",last);
+    console.log("HTML:",$("body").html());
+    
+    var t1 = new Date().getMilliseconds();
+    console.log("This queue finished in..."+(t1-t0)+"ms");
+    //console.log("Dependency values:");
+    //console.log(r);
   });
   
   //Export the dependencies in this example so the same ones 

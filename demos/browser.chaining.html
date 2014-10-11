@@ -11,11 +11,6 @@
             comment : "Document ready."
             ,id : "DOMContentLoaded"
             ,type : "event"
-        },
-        {
-            id : "debugger-timer"
-            ,type : "timer"
-            ,timeout : 1000
         },{
             url : "data/data2.json"
             ,type : "json"
@@ -31,16 +26,30 @@
     
     //FIRES WHEN RESOLVED
     q.then(function(r,deferred,last){
-        console.log(last);
+        console.log(last); //1
         return 2;
     });
     
     //FIRES WHEN RESOLVED
     q.then(function(r,deferred,last){
-        console.log(last);
-        return 3;
+        console.log(last); //2
+        return def; //tricky - def declared before this but written in subsequent lines
     });
 
+    console.log("Creating a deferred that will hold up the callback chain...");
+    var def = Orgy.deferred();
+    setTimeout(function(){
+      console.log("Resolving the example deferred to resume the chain...");
+      def.resolve(1000);
+    },'1000');
+    
+    //FIRES WHEN RESOLVED
+    q.then(function(r,deferred,last){
+         //last is the deferred "def". to get its value, use .value
+        console.log(last.value);
+        return last.value;
+    });
+  
     q.done(function(r,deferred,last){
       console.log("Chain end value:",last);
       console.log("Dependency values:");

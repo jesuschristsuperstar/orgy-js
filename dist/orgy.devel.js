@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.7.0 
-Built: 2014-10-11 07:21:56
+Version: 1.7.2 
+Built: 2014-10-11 08:57:53
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -207,11 +207,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         while (obj.train.length > 0) {
             var last = obj.train.shift();
             def.execution_history.push(last);
-            r = last.call(def, def.value, def, r);
+            r = def.caboose = last.call(def, def.value, def, r);
             if (options.pause_on_deferred) {
                 if (r && r.then && r.settled !== 1) {
                     r.callbacks.resolve.hooks.onComplete.train.push(function() {
-                        private.deferred.run_train(def, obj, param, {
+                        private.deferred.run_train(def, obj, r, {
                             pause_on_deferred: true
                         });
                     });

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <!-- 
+    document.currentScript polyfill 
+    used by anonymous, self-naming module test-module.js
+    --> 
+    <script src="../dist/orgy.devel.js"></script>
+    
+<script>
+    
+var t0 = new Date().getMilliseconds();
+var q = Orgy.queue([]);
+
+//FIRES WHEN RESOLVED
+q.then(function(r){
+    //console.log(r); //Result of dependencies
+    return 1;
+});
+
+//FIRES WHEN RESOLVED
+q.then(function(r,deferred,last){
+    console.log(last); //1
+    return 2;
+});
+
+q.done(function(r,deferred,last){
+  console.log("Chain end value:",last);
+  var t1 = new Date().getMilliseconds();
+  console.log("This queue finished in..."+(t1-t0)+"ms");
+});
+
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>

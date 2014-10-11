@@ -22,7 +22,7 @@ Deferred / Queue library that yields to no spec.
 
 - When then() returns a value that value is passed down the execution chain.
 
-- When then() returns an unsettled thenable, it pauses further execution on the callback chain until the returned thenable is settled. The return value of the returned thenable is then pushed into the parent's value array.
+- When then() returns an unsettled instance (deferred/queue), further execution on the callback chain is halted until that instance resolves. The deferred is then passed to the next tick of the callback chain, where its return value can be accessed.
 
 - When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser. 
 

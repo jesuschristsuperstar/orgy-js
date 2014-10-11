@@ -160,7 +160,8 @@ private.deferred.run_train = function(def,obj,param,options){
         var last = obj.train.shift();
         def.execution_history.push(last);
   
-        r = last.call(def,def.value,def,r);
+        //def.caboose needed for then chain declared after resolved instance
+        r = def.caboose = last.call(def,def.value,def,r);
 
         //if result is an thenable, halt execution 
         //and run unfired arr when thenable settles
@@ -175,7 +176,7 @@ private.deferred.run_train = function(def,obj,param,options){
                     private.deferred.run_train(
                         def
                         ,obj
-                        ,param
+                        ,r
                         ,{pause_on_deferred : true}
                     );
                 });
