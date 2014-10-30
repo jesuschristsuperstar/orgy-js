@@ -102,28 +102,18 @@ public.config = function(obj){
 * Creates a new promise from a value and an id and automatically 
 * resolves it.
 * 
-* @param {string | object} id | options
+* @param {string} id
 * @param {mixed} data
+* @param {object} options
 * @returns {object} resolved promise
 */
-public.define = function(arg1,data){
+public.define = function(id,data,options){
 
-    var def,
-        id,
-        options;
- 
-    //arg1 can be a string or an object.
-    if(typeof arg1 === 'object'){
-      id = arg1.id;
-      options = arg1;
-    }
-    else{
-      id = arg1;
-      options = {
-        id : id
-        ,resolver : null
-      };
-    }
+    var def;
+    options = options || {
+      dependencies : null
+      ,resolver : null
+    };
     
     //test for a valid id
     if(typeof id !== 'string'){
@@ -132,14 +122,17 @@ public.define = function(arg1,data){
     
     //Check no existing instance defined with same id
     if(public.list[id] && public.list[id].settled === 1){
-        return public.debug("Can't define " + id + ". Already resolved.");
+      return public.debug("Can't define " + id + ". Already resolved.");
     }
+    
+    options.id = id;
     
     //Set backtrace info, here - so origin points to callee
     options.backtrace = private.get_backtrace_info('public.define');
          
-    if(options.dependencies && options.dependencies instanceof Array){
-      //Define as a queue - can't settle because we have deps
+    if(options.dependencies !== null 
+      && options.dependencies instanceof Array){
+      //Define as a queue - can't autoresolve because we have deps
       var deps = options.dependencies;
       delete options.dependencies;
       def = public.queue(deps,options);
@@ -251,7 +244,13 @@ public.naive_cloner = function(donors){
                 o[b] = donors[a][b].slice(0);
             }
             else if(typeof donors[a][b] === 'object'){
+              try{
                 o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+              }
+              catch(e){
+                console.error(e);
+                debugger;
+              }
             }
             else{
                 o[b] = donors[a][b];

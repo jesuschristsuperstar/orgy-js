@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.7.2 
-Built: 2014-10-11 08:57:53
+Version: 1.7.3 
+Built: 2014-10-30 19:03:25
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -36,26 +36,21 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return private.config;
     };
-    public.define = function(arg1, data) {
-        var def, id, options;
-        if (typeof arg1 === "object") {
-            id = arg1.id;
-            options = arg1;
-        } else {
-            id = arg1;
-            options = {
-                id: id,
-                resolver: null
-            };
-        }
+    public.define = function(id, data, options) {
+        var def;
+        options = options || {
+            dependencies: null,
+            resolver: null
+        };
         if (typeof id !== "string") {
             public.debug("Must set id when defining an instance.");
         }
         if (public.list[id] && public.list[id].settled === 1) {
             return public.debug("Can't define " + id + ". Already resolved.");
         }
+        options.id = id;
         options.backtrace = private.get_backtrace_info("public.define");
-        if (options.dependencies && options.dependencies instanceof Array) {
+        if (options.dependencies !== null && options.dependencies instanceof Array) {
             var deps = options.dependencies;
             delete options.dependencies;
             def = public.queue(deps, options);
@@ -112,7 +107,12 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 if (donors[a][b] instanceof Array) {
                     o[b] = donors[a][b].slice(0);
                 } else if (typeof donors[a][b] === "object") {
-                    o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+                    try {
+                        o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+                    } catch (e) {
+                        console.error(e);
+                        debugger;
+                    }
                 } else {
                     o[b] = donors[a][b];
                 }
