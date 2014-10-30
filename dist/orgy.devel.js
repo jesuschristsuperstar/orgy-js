@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.7.3 
-Built: 2014-10-30 19:03:25
+Version: 1.7.4 
+Built: 2014-10-30 19:29:48
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -38,10 +38,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     public.define = function(id, data, options) {
         var def;
-        options = options || {
-            dependencies: null,
-            resolver: null
-        };
+        options = options || {};
+        options.dependencies = options.dependencies || null;
+        options.resolver = options.resolver || null;
         if (typeof id !== "string") {
             public.debug("Must set id when defining an instance.");
         }
@@ -57,6 +56,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         } else {
             def = public.deferred(options);
             if (options.resolver === null && (typeof options.autoresolve !== "boolean" || options.autoresolve === true)) {
+                def.autoresolve = false;
                 def.resolve(data);
             }
         }

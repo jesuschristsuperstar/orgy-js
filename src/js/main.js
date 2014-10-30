@@ -110,10 +110,9 @@ public.config = function(obj){
 public.define = function(id,data,options){
 
     var def;
-    options = options || {
-      dependencies : null
-      ,resolver : null
-    };
+    options = options || {};
+    options.dependencies = options.dependencies || null;
+    options.resolver = options.resolver || null;
     
     //test for a valid id
     if(typeof id !== 'string'){
@@ -145,7 +144,8 @@ public.define = function(id,data,options){
       if(options.resolver === null 
         && (typeof options.autoresolve !== 'boolean' 
         || options.autoresolve === true)){
-
+        //prevent future autoresove attempts [i.e. from xhr response]
+        def.autoresolve = false;
         def.resolve(data);
       }
     }
