@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.7.4 
-Built: 2014-10-30 19:29:48
+Built: 2014-11-07 02:43:26
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -145,16 +145,20 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
     };
     private.get_backtrace_info = function(ss) {
-        var r = {}, l;
+        var r = {}, l, str;
         l = r.stack = new Error().stack;
         if (private.config.mode === "browser") {
-            l = l.split(ss)[1].trim().split("\n").pop();
-            l = window.location.protocol + "//" + l.split("//")[1];
+            l = l.split(ss)[1].trim().split("\n");
+            str = l.pop();
+            while (str.search("orgy") !== -1 && l.length > 0) {
+                str = l.pop();
+            }
+            str = window.location.protocol + "//" + str.split("//")[1];
         } else {
-            l = l.split(ss + " ")[1].split("\n")[1];
-            l = l.match(/\(([^)]+)\)/)[1];
+            str = l.split(ss + " ")[1].split("\n")[1];
+            str = str.match(/\(([^)]+)\)/)[1];
         }
-        r.origin = l;
+        r.origin = str;
         return r;
     };
     private.deferred = {};

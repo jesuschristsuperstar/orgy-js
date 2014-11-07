@@ -312,22 +312,28 @@ private.get_backtrace_info = function(ss){
 
     //Origin is the call immediately preceding"ss"
           
-    var r = {},
-    l;
+    var r = {}
+    ,l
+    ,str;
+    
     l = r.stack = new Error().stack;
     
-    
     if(private.config.mode === 'browser'){
-      l = l.split(ss)[1].trim().split("\n").pop();
-      l = window.location.protocol + "//" + l.split("//")[1];
+      l = l.split(ss)[1].trim().split("\n");
+      str = l.pop();
+      while(str.search("orgy") !== -1 && l.length > 0){
+        //iterate until outside of class
+        str = l.pop();
+      }
+      str = window.location.protocol + "//" + str.split("//")[1];
     }
     else{
-      l = l.split(ss + " ")[1].split("\n")[1];
-      l = l.match(/\(([^)]+)\)/)[1];
+      str = l.split(ss + " ")[1].split("\n")[1];
+      str = str.match(/\(([^)]+)\)/)[1];
     }
 
     //Set origin
-    r.origin = l;
+    r.origin = str;
     
     return r;
 };

@@ -110,7 +110,6 @@ private.queue.tpl = {
            this.upstream[arr[a].id] = arr[a];
            arr[a].downstream[this.id] = this;
            this.dependencies.push(arr[a]);
-
        }
 
        return this.upstream;
@@ -125,17 +124,17 @@ private.queue.tpl = {
     */
    ,remove : function(arr){
 
-       //IF NOT PENDING, DO NOT ALLOW REMOVAL
-       if(this.state !== 0){
-           return public.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
-       }
+      //IF NOT PENDING, DO NOT ALLOW REMOVAL
+      if(this.state !== 0){
+          return public.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+      }
 
-       for(var a in arr){
-           if(this.upstream[arr[a].id]){
-               delete this.upstream[arr[a].id];
-               delete arr[a].downstream[this.id];
-           }
-       }
+      for(var a in arr){
+         if(this.upstream[arr[a].id]){
+            delete this.upstream[arr[a].id];
+            delete arr[a].downstream[this.id];
+         }
+      }
    }
 
 
@@ -148,33 +147,33 @@ private.queue.tpl = {
    */
    ,reset : function(options){
 
-       if(this.settled !== 1 || this.state !== 1){
-           return public.debug("Can only reset a queue settled without errors.");
-       }
+      if(this.settled !== 1 || this.state !== 1){
+        return public.debug("Can only reset a queue settled without errors.");
+      }
 
-       options = options || {};
+      options = options || {};
 
-       this.settled = 0;
-       this.state = 0; 
-       this.resolver_fired = 0;
-       this.done_fired = 0;
+      this.settled = 0;
+      this.state = 0; 
+      this.resolver_fired = 0;
+      this.done_fired = 0;
 
-       //REMOVE AUTO TIMEOUT TIMER
-       if(this.timeout_id){
-           clearTimeout(this.timeout_id);
-       }
+      //REMOVE AUTO TIMEOUT TIMER
+      if(this.timeout_id){
+        clearTimeout(this.timeout_id);
+      }
 
-       //CLEAR OUT THE DOWNSTREAM
-       this.downstream = {};
-       this.dependencies = [];
+      //CLEAR OUT THE DOWNSTREAM
+      this.downstream = {};
+      this.dependencies = [];
 
-       //SET NEW AUTO TIMEOUT
-       private.deferred.auto_timeout.call(this,options.timeout);
+      //SET NEW AUTO TIMEOUT
+      private.deferred.auto_timeout.call(this,options.timeout);
 
-       //POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
-       //this.check_self()
+      //POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
+      //this.check_self()
 
-       return this;
+      return this;
    }
 
 
@@ -193,8 +192,8 @@ private.queue.tpl = {
     * @returns {int} State of the queue.
     */
    ,check_self : function(){
-       private.queue.receive_signal(this,this.id);
-       return this.state;
+      private.queue.receive_signal(this,this.id);
+      return this.state;
    }
 };
 
@@ -219,7 +218,7 @@ public.queue = function(deps,options){
 
     var _o;
     if(!(deps instanceof Array)){
-        return public.debug("Queue dependencies must be an array.");
+      return public.debug("Queue dependencies must be an array.");
     }
     
     options = options || {};
@@ -227,42 +226,42 @@ public.queue = function(deps,options){
     //DOES NOT ALREADY EXIST
     if(!public.list[options.id]){
         
-        //CREATE NEW QUEUE OBJECT
-        var _o = private.queue.factory(options);
+      //CREATE NEW QUEUE OBJECT
+      var _o = private.queue.factory(options);
 
-        //ACTIVATE QUEUE
-        _o = private.queue.activate(_o,options,deps);
+      //ACTIVATE QUEUE
+      _o = private.queue.activate(_o,options,deps);
 
     }
     //ALREADY EXISTS
     else {
         
-        _o = public.list[options.id];
-        
-        if(_o.model !== 'queue'){
-        //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
+      _o = public.list[options.id];
 
-            options.overwritable = 1;
+      if(_o.model !== 'queue'){
+      //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
 
-            _o = private.queue.upgrade(_o,options,deps);
+        options.overwritable = 1;
+
+        _o = private.queue.upgrade(_o,options,deps);
+      }
+      else{
+
+        //OVERWRITE ANY EXISTING OPTIONS
+        for(var i in options){
+            _o[i] = options[i];
         }
-        else{
-            
-            //OVERWRITE ANY EXISTING OPTIONS
-            for(var i in options){
-                _o[i] = options[i];
-            }
-            
-            //ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
-            if(deps.length > 0){
-                private.queue.tpl.add.call(_o,deps);
-            }
-            
+
+        //ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
+        if(deps.length > 0){
+            private.queue.tpl.add.call(_o,deps);
         }
-        
-        //RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
-        _o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
-        options.halt_resolution : 0;
+
+      }
+
+      //RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
+      _o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
+      options.halt_resolution : 0;
     }
     
     return _o;
@@ -276,24 +275,24 @@ public.queue = function(deps,options){
 
 private.queue.factory = function(options){
 
-    //CREATE A NEW QUEUE OBJECT
-    var _o = public.naive_cloner([
-        private.deferred.tpl
-        ,private.queue.tpl
-        ,options
-    ]);
+  //CREATE A NEW QUEUE OBJECT
+  var _o = public.naive_cloner([
+    private.deferred.tpl
+    ,private.queue.tpl
+    ,options
+  ]);
 
-    //Get backtrace info if none found [may be set @ public.define]
-    if(!_o.backtrace){
-      _o.backtrace = private.get_backtrace_info('public.queue');
-    }
-    
-    //if no id, use backtrace origin
-    if(!options.id){
-      _o.id = _o.backtrace.origin + '-' + (++public.i);
-    }
-    
-    return _o;
+  //Get backtrace info if none found [may be set @ public.define]
+  if(!_o.backtrace){
+    _o.backtrace = private.get_backtrace_info('public.queue');
+  }
+
+  //if no id, use backtrace origin
+  if(!options.id){
+    _o.id = _o.backtrace.origin + '-' + (++public.i);
+  }
+
+  return _o;
 };    
     
     
