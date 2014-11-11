@@ -78,7 +78,7 @@ private.queue.tpl = {
 
            switch(true){
 
-               //CHECK IF EXISTING PROMISE
+               //CHECK IF EXISTS
                case(typeof public.list[arr[a]['id']] === 'object'):
                    arr[a] = public.list[arr[a]['id']];
                    break;
@@ -309,18 +309,27 @@ private.queue.activate = function(o,options,deps){
     //ACTIVATE AS A DEFERRED
     o = private.deferred.activate(o);
     
-    //ADD DEPENDENCIES TO QUEUE
-    private.queue.tpl.add.call(o,deps);
+    //This timeout gives defined promises that are defined
+    //further down the same script a chance to define themselves
+    //and in case this queue is about to request them from a 
+    //remote source here.
+    //This is important in the case of compiled js files that contain
+    //multiple modules when depend on each other. 
+  
+    setTimeout(function(){
+      //ADD DEPENDENCIES TO QUEUE
+      private.queue.tpl.add.call(o,deps);
 
-    //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
-    private.queue.receive_signal(o,o.id);
+      //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
+      private.queue.receive_signal(o,o.id);
 
-    //ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
-    if(o.assign){
-        for(var a in o.assign){
-            public.assign(o.assign[a],[o],true);
-        }
-    }
+      //ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
+      if(o.assign){
+          for(var a in o.assign){
+              public.assign(o.assign[a],[o],true);
+          }
+      }
+    },1);
 
     return o;
 };

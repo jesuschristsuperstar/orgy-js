@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.7.4 
-Built: 2014-11-07 02:43:26
+Built: 2014-11-11 11:07:39
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -888,13 +888,15 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.queue.activate = function(o, options, deps) {
         o = private.deferred.activate(o);
-        private.queue.tpl.add.call(o, deps);
-        private.queue.receive_signal(o, o.id);
-        if (o.assign) {
-            for (var a in o.assign) {
-                public.assign(o.assign[a], [ o ], true);
+        setTimeout(function() {
+            private.queue.tpl.add.call(o, deps);
+            private.queue.receive_signal(o, o.id);
+            if (o.assign) {
+                for (var a in o.assign) {
+                    public.assign(o.assign[a], [ o ], true);
+                }
             }
-        }
+        }, 1);
         return o;
     };
     private.queue.receive_signal = function(target, from_id) {

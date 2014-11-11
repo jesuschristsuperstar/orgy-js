@@ -23,8 +23,8 @@
            ,type : "event"
        },
        {
-           type : "timer"
-           ,timeout : 1000
+           url : "should/never/be/called/because/defined/below/d0.js"
+           ,type : "script"
        }],{
             id : "q1"
              //QUEUE RESOLUTION CAN BE HELD BACK BY A RESOLVER
@@ -40,6 +40,16 @@
         console.timeEnd("q1-done");
         console.log(r);
     });
+
+    
+    //Create a deferred that mimics a module defined on the same
+    //page and after the queue which depends on it. 
+    //The queue will have a url to lookup this module but
+    //will not because a module by the same name is defined here.
+    var d0 = Orgy.deferred({
+        id : "d0"
+    });
+    d0.resolve(function(){console.log("hi from d0")});
 
 
     //CREATE DEFERREDS TO DEMONSTRATE CHAIN PAUSE-ON-RETURN-DEFERRED
