@@ -154,6 +154,32 @@ public.define = function(id,data,options){
 };
 
 
+public.define_module = function(obj){
+  
+  var options = {};
+  var id = obj.q.__id;
+  
+  if(typeof Orgy.list[id] === 'undefined' || Orgy.list[id].state === 0){
+    if(obj.q.__dependencies){
+      options.dependencies = obj.q.__dependencies;
+    }
+
+    if(obj.q.__resolver){
+      options.resolver = obj.q.__resolver.bind(obj);
+    };
+
+    if(typeof process==='object' && process+''==='[object process]'){
+      options.cwd = __dirname;
+      var def = Orgy.define(id,obj.public,options);
+      module.exports = def;
+    }
+    else{
+      Orgy.define(id,obj.public,options);
+    }
+  }
+};
+
+
 /**
  * Getter.
  * 

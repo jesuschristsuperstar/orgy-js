@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
-Version: 1.7.4 
-Built: 2014-11-11 11:07:39
+Version: 1.7.5 
+Built: 2014-11-21 10:46:42
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -61,6 +61,25 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             }
         }
         return def;
+    };
+    public.define_module = function(obj) {
+        var options = {};
+        var id = obj.q.__id;
+        if (typeof Orgy.list[id] === "undefined" || Orgy.list[id].state === 0) {
+            if (obj.q.__dependencies) {
+                options.dependencies = obj.q.__dependencies;
+            }
+            if (obj.q.__resolver) {
+                options.resolver = obj.q.__resolver.bind(obj);
+            }
+            if (typeof process === "object" && process + "" === "[object process]") {
+                options.cwd = __dirname;
+                var def = Orgy.define(id, obj.public, options);
+                module.exports = def;
+            } else {
+                Orgy.define(id, obj.public, options);
+            }
+        }
     };
     public.get = function(id) {
         if (public.list[id]) {
@@ -785,7 +804,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 public.debug(err);
             }
             if (this.state !== 0) {
-                return public.debug("Cannot add list to queue id:'" + this.id + "'. Queue settled/in the process of being settled.", this);
+                return public.debug([ "Cannot add dependency list to queue id:'" + this.id + "'. Queue settled/in the process of being settled." ], arr, this);
             }
             for (var a in arr) {
                 switch (true) {
@@ -808,7 +827,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                 }
                 for (var b in this.downstream) {
                     if (b === arr[a].id) {
-                        return public.debug("Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream.");
+                        return public.debug([ "Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream." ], this);
                     }
                 }
                 this.upstream[arr[a].id] = arr[a];
@@ -888,7 +907,9 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     };
     private.queue.activate = function(o, options, deps) {
         o = private.deferred.activate(o);
+        o.state = -1;
         setTimeout(function() {
+            o.state = 0;
             private.queue.tpl.add.call(o, deps);
             private.queue.receive_signal(o, o.id);
             if (o.assign) {

@@ -70,8 +70,10 @@ private.queue.tpl = {
 
        //IF NOT PENDING, DO NOT ALLOW TO ADD
        if(this.state !== 0){
-           return public.debug("Cannot add list to queue id:'"+this.id
-           +"'. Queue settled/in the process of being settled.",this);
+          return public.debug([
+            "Cannot add dependency list to queue id:'"+this.id
+            +"'. Queue settled/in the process of being settled."
+          ],arr,this);
        }
 
        for(var a in arr){
@@ -102,7 +104,14 @@ private.queue.tpl = {
            //must check the target to see if the dependency exists in its downstream
            for(var b in this.downstream){
                if(b === arr[a].id){
-                   return public.debug("Error adding upstream dependency '"+arr[a].id+"' to queue"+" '"+this.id+"'.\n Promise object for '"+arr[a].id+"' is scheduled to resolve downstream from queue '"+this.id+"' so it can't be added upstream.");
+                  return public.debug([
+                    "Error adding upstream dependency '"
+                    +arr[a].id+"' to queue"+" '"
+                    +this.id+"'.\n Promise object for '"
+                    +arr[a].id+"' is scheduled to resolve downstream from queue '"
+                    +this.id+"' so it can't be added upstream."
+                  ]
+                  ,this);
                }
            }
 
@@ -315,8 +324,14 @@ private.queue.activate = function(o,options,deps){
     //remote source here.
     //This is important in the case of compiled js files that contain
     //multiple modules when depend on each other. 
-  
+    
+    //temporarily change state to prevent outside resolution
+    o.state = -1;
     setTimeout(function(){
+      
+      //Restore state
+      o.state = 0;
+      
       //ADD DEPENDENCIES TO QUEUE
       private.queue.tpl.add.call(o,deps);
 
