@@ -85,9 +85,11 @@ private.queue.tpl = {
                    arr[a] = public.list[arr[a]['id']];
                    break;
 
-               //IF NOT, ATTEMPT TO CONVERT IT TO A PROMISE
-               case(typeof arr[a] === 'object' && typeof arr[a].then !== 'function'):
-                   arr[a] = private.deferred.convert_to_promise(this,arr[a]);
+               //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
+               case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
+                   arr[a] = private.deferred.convert_to_promise(arr[a],{
+                     parent : this
+                   });
                    break;
 
                //REF IS A PROMISE.
@@ -225,55 +227,55 @@ private.queue.tpl = {
  */
 public.queue = function(deps,options){
 
-    var _o;
-    if(!(deps instanceof Array)){
-      return public.debug("Queue dependencies must be an array.");
+  var _o;
+  if(!(deps instanceof Array)){
+    return public.debug("Queue dependencies must be an array.");
+  }
+
+  options = options || {};
+
+  //DOES NOT ALREADY EXIST
+  if(!public.list[options.id]){
+
+    //CREATE NEW QUEUE OBJECT
+    var _o = private.queue.factory(options);
+
+    //ACTIVATE QUEUE
+    _o = private.queue.activate(_o,options,deps);
+
+  }
+  //ALREADY EXISTS
+  else {
+
+    _o = public.list[options.id];
+
+    if(_o.model !== 'queue'){
+    //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
+
+      options.overwritable = 1;
+
+      _o = private.queue.upgrade(_o,options,deps);
     }
-    
-    options = options || {};
-    
-    //DOES NOT ALREADY EXIST
-    if(!public.list[options.id]){
-        
-      //CREATE NEW QUEUE OBJECT
-      var _o = private.queue.factory(options);
+    else{
 
-      //ACTIVATE QUEUE
-      _o = private.queue.activate(_o,options,deps);
-
-    }
-    //ALREADY EXISTS
-    else {
-        
-      _o = public.list[options.id];
-
-      if(_o.model !== 'queue'){
-      //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
-
-        options.overwritable = 1;
-
-        _o = private.queue.upgrade(_o,options,deps);
-      }
-      else{
-
-        //OVERWRITE ANY EXISTING OPTIONS
-        for(var i in options){
-            _o[i] = options[i];
-        }
-
-        //ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
-        if(deps.length > 0){
-            private.queue.tpl.add.call(_o,deps);
-        }
-
+      //OVERWRITE ANY EXISTING OPTIONS
+      for(var i in options){
+        _o[i] = options[i];
       }
 
-      //RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
-      _o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
-      options.halt_resolution : 0;
+      //ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
+      if(deps.length > 0){
+        private.queue.tpl.add.call(_o,deps);
+      }
+
     }
-    
-    return _o;
+
+    //RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
+    _o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
+    options.halt_resolution : 0;
+  }
+
+  return _o;
 };
 
 
@@ -318,6 +320,7 @@ private.queue.activate = function(o,options,deps){
     //ACTIVATE AS A DEFERRED
     o = private.deferred.activate(o);
     
+    //@todo rethink this
     //This timeout gives defined promises that are defined
     //further down the same script a chance to define themselves
     //and in case this queue is about to request them from a 
@@ -331,7 +334,7 @@ private.queue.activate = function(o,options,deps){
       
       //Restore state
       o.state = 0;
-      
+
       //ADD DEPENDENCIES TO QUEUE
       private.queue.tpl.add.call(o,deps);
 

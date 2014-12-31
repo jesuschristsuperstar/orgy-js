@@ -493,53 +493,46 @@ private.deferred.search_obj_recursively = function(obj,propName,fn,breadcrumb){
  * @param {type} obj
  * @returns {undefined}
  */
-private.deferred.convert_to_promise = function(parent,obj){
+private.deferred.convert_to_promise = function(obj,options){
 
-    //Return if instance already exists with this id
-    if(!obj.id){
+    obj.id = obj.id || options.id;
 
-        if(obj.type === 'timer'){
-            obj.id = "timer-" + obj.timeout + "-" + (++public.i);
+    //Autoname
+    if (!obj.id) {
+      if (obj.type === 'timer') {
+        obj.id = "timer-" + obj.timeout + "-" + (++public.i);
+      }
+      else if (typeof obj.url === 'string') {
+        obj.id = obj.url.split("/").pop();
+        //REMOVE .js FROM ID
+        if (obj.id.search(".js") !== -1) {
+          obj.id = obj.id.split(".");
+          obj.id.pop();
+          obj.id = obj.id.join(".");
         }
-        else if(typeof obj.url === 'string'){
-            obj.id = obj.url.split("/").pop();
-            //REMOVE .js FROM ID
-            if(obj.id.search(".js")!== -1){
-                obj.id = obj.id.split(".");
-                obj.id.pop();
-                obj.id = obj.id.join(".");
-            }
-        }
-        else{
-            return public.debug([
-                "Dependencies without a 'url' property require 'id' property be set."
-                ,"'"+obj.type+"' id undefined."
-                ,obj
-            ]);
-        }
+      }
     }
-
-    if(obj.type !== 'timer'){
-        //Return if already exists
-        if(typeof public.list[obj.id] !== 'undefined'){
-          //A previous promise of the same id exists. 
-          //Make sure this dependency object doesn't have a
-          //resolver - if it does error
-          if(obj.resolver){
-            public.debug([
-              "You can't set a resolver on a queue that has already been declared. You can only reference the original."
-              ,"Detected re-init of '" + obj.id + "'."
-              ,"Attempted:"
-              ,obj
-              ,"Existing:"
-              ,public.list[obj.id]
-            ]);
-          }
-          else{
-            return public.list[obj.id];
-          }
-        }
+    
+    //Return if already exists
+    if(public.list[obj.id] && obj.type !== 'timer'){
+      //A previous promise of the same id exists. 
+      //Make sure this dependency object doesn't have a
+      //resolver - if it does error
+      if(obj.resolver){
+        public.debug([
+          "You can't set a resolver on a queue that has already been declared. You can only reference the original."
+          ,"Detected re-init of '" + obj.id + "'."
+          ,"Attempted:"
+          ,obj
+          ,"Existing:"
+          ,public.list[obj.id]
+        ]);
+      }
+      else{
+        return public.list[obj.id];
+      }
     }
+    
 
     //Convert dependency to an instance
     var def;
@@ -554,9 +547,8 @@ private.deferred.convert_to_promise = function(parent,obj){
             def = public.queue(obj.dependencies,obj);
             break;
             
-        //Already an instance
-        case(obj.type === 'deferred'):
-        case(obj.type === 'promise' || obj.then):   
+        //Already a thenable
+        case(typeof obj.then === 'function'):   
 
             switch(true){
 
@@ -566,6 +558,13 @@ private.deferred.convert_to_promise = function(parent,obj){
                     def = public.deferred({
                         id : obj.id
                     });
+                    
+                    //If object was a thenable, resolve the new deferred when then called
+                    if(obj.then){
+                      obj.then(function(r){
+                        def.resolve(r);
+                      });
+                    }
                     break;
 
                 //OBJECT PROPERTY .promise EXPECTED TO RETURN A PROMISE
@@ -601,8 +600,8 @@ private.deferred.convert_to_promise = function(parent,obj){
         default:
             obj.type = obj.type || "default";
             //Inherit parent's current working directory
-            if(parent.cwd){
-              obj.cwd = parent.cwd;
+            if(options.parent && options.parent.cwd){
+              obj.cwd = options.parent.cwd;
             }
             def = private.deferred._wrap_xhr(obj);
     }

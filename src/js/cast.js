@@ -34,6 +34,15 @@ public.cast = function(obj){
     else if(obj.url){
         options.id = obj.url;
     }
+    else{
+      //Get backtrace info if none found [may be set @ public.define]
+      var backtrace = private.get_backtrace_info('public.cast');
+
+      //if no id, use backtrace origin
+      if(!options.id){
+        options.id = backtrace.origin + '-' + (++public.i);
+      }
+    }
 
     //Create a deferred
     var def = public.deferred(options);

@@ -15,6 +15,8 @@
 
 private.deferred.tpl = {};
 
+private.deferred.tpl.is_orgy = true;
+
 private.deferred.tpl.id = null;
 
 //A COUNTER FOR AUT0-GENERATED PROMISE ID'S

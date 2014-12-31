@@ -49,7 +49,7 @@ private.config = {
     
     autopath : ''
     ,document : null
-    ,debug_mode : 0
+    ,debug_mode : 1
     //set the current working directory of the callee script,
     //because node has no constant for this
     ,cwd : false

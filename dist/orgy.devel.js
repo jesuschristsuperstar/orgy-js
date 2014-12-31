@@ -1,7 +1,7 @@
 /** 
 orgy: Globally accessible queues [of deferreds] that wait for an array of dependencies [i.e. files,rpcs,timers,events] and an optional resolver function before settling. Returns a thenable. 
 Version: 1.7.5 
-Built: 2014-11-21 10:46:42
+Built: 2014-12-30 20:58:24
 Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)  
 */
 
@@ -16,7 +16,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
     private.config = {
         autopath: "",
         document: null,
-        debug_mode: 0,
+        debug_mode: 1,
         cwd: false,
         mode: function() {
             if (typeof process === "object" && process + "" === "[object process]") {
@@ -380,7 +380,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         }
         return breadcrumb;
     };
-    private.deferred.convert_to_promise = function(parent, obj) {
+    private.deferred.convert_to_promise = function(obj, options) {
+        obj.id = obj.id || options.id;
         if (!obj.id) {
             if (obj.type === "timer") {
                 obj.id = "timer-" + obj.timeout + "-" + ++public.i;
@@ -391,17 +392,13 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     obj.id.pop();
                     obj.id = obj.id.join(".");
                 }
-            } else {
-                return public.debug([ "Dependencies without a 'url' property require 'id' property be set.", "'" + obj.type + "' id undefined.", obj ]);
             }
         }
-        if (obj.type !== "timer") {
-            if (typeof public.list[obj.id] !== "undefined") {
-                if (obj.resolver) {
-                    public.debug([ "You can't set a resolver on a queue that has already been declared. You can only reference the original.", "Detected re-init of '" + obj.id + "'.", "Attempted:", obj, "Existing:", public.list[obj.id] ]);
-                } else {
-                    return public.list[obj.id];
-                }
+        if (public.list[obj.id] && obj.type !== "timer") {
+            if (obj.resolver) {
+                public.debug([ "You can't set a resolver on a queue that has already been declared. You can only reference the original.", "Detected re-init of '" + obj.id + "'.", "Attempted:", obj, "Existing:", public.list[obj.id] ]);
+            } else {
+                return public.list[obj.id];
             }
         }
         var def;
@@ -414,14 +411,18 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             def = public.queue(obj.dependencies, obj);
             break;
 
-          case obj.type === "deferred":
-          case obj.type === "promise" || obj.then:
+          case typeof obj.then === "function":
             switch (true) {
               case typeof obj.id === "string":
                 console.warn("'" + obj.id + "': did not exist. Auto creating new deferred.");
                 def = public.deferred({
                     id: obj.id
                 });
+                if (obj.then) {
+                    obj.then(function(r) {
+                        def.resolve(r);
+                    });
+                }
                 break;
 
               case typeof obj.promise === "function":
@@ -448,8 +449,8 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
 
           default:
             obj.type = obj.type || "default";
-            if (parent.cwd) {
-                obj.cwd = parent.cwd;
+            if (options.parent && options.parent.cwd) {
+                obj.cwd = options.parent.cwd;
             }
             def = private.deferred._wrap_xhr(obj);
         }
@@ -655,6 +656,7 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
         return deferred;
     };
     private.deferred.tpl = {};
+    private.deferred.tpl.is_orgy = true;
     private.deferred.tpl.id = null;
     private.deferred.tpl.settled = 0;
     private.deferred.tpl.state = 0;
@@ -812,8 +814,10 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
                     arr[a] = public.list[arr[a]["id"]];
                     break;
 
-                  case typeof arr[a] === "object" && typeof arr[a].then !== "function":
-                    arr[a] = private.deferred.convert_to_promise(this, arr[a]);
+                  case typeof arr[a] === "object" && !arr[a].is_orgy:
+                    arr[a] = private.deferred.convert_to_promise(arr[a], {
+                        parent: this
+                    });
                     break;
 
                   case typeof arr[a].then === "function":
@@ -969,6 +973,11 @@ Author: tecfu.com <help@tecfu.com> (http://github.com/tecfu)
             options.id = obj.id;
         } else if (obj.url) {
             options.id = obj.url;
+        } else {
+            var backtrace = private.get_backtrace_info("public.cast");
+            if (!options.id) {
+                options.id = backtrace.origin + "-" + ++public.i;
+            }
         }
         var def = public.deferred(options);
         var resolver = function() {

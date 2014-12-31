@@ -21,10 +21,8 @@
         }
     };
     
-    var castable1 = $.ajax(options);
-
     //Cast
-    var c1 = Orgy.cast(castable1);
+    var c1 = Orgy.cast($.ajax(options));
 
     //Then and done don't need to be entered in correct order
     c1.done(function(r){
