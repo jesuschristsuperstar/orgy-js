@@ -1,24 +1,19 @@
 /**
- * To debug gruntfile: 
+ * To debug gruntfile:
  * node-debug $(which grunt) task
  */
 
+ var brfs = require('brfs'),
+     es6ify = require('es6ify'),
+     babelify = require('babelify');
+
 module.exports = function(grunt) {
-    
-    var _src = [
-        'src/js/main.js'
-        ,'src/js/deferred.js'
-        ,'src/js/deferred.tpl.js'
-        ,'src/js/queue.js'
-        ,'src/js/cast.js'
-        ,'src/js/build.js'
-    ];
-    
+
     // Project configuration.
     grunt.initConfig({
-        
+
         pkg: grunt.file.readJSON('package.json')
-        
+
         ,options : {
             timestamp : (function(){
 
@@ -31,10 +26,45 @@ module.exports = function(grunt) {
                 return dstr;
 
             }())
-        }
-        
-        ,uglify: {
-            all: {
+        },
+
+        browserify: {
+          dist: {
+            files: {
+              'dist/orgy.js': [
+                'src/js/*.js'
+              ],
+            },
+            options: {
+              //brfs:  inline fs.readFileSync() calls with file contents
+              //transform: ['brfs','es6ify'],
+              transform: ['brfs',["babelify", { "experimental": true }]],
+              browserifyOptions : {
+                //debug : true
+              },
+              exclude: ['http','fs','vm','process','lodash']
+            }
+          }
+          ,debug: {
+            files: {
+              'dist/orgy-debug.js': [
+                'src/js/*.js'
+              ],
+            },
+            options: {
+              //brfs:  inline fs.readFileSync() calls with file contents
+              //transform: ['brfs','es6ify'],
+              transform: ['brfs',["babelify", { "experimental": true }]],
+              browserifyOptions : {
+                debug : true
+              },
+              exclude: ['http','fs','vm','process','lodash']
+            }
+          }
+        },
+
+        uglify: {
+            dist: {
                 options: {
                     banner: '/** \n<%= pkg.name %>: <%= pkg.description %> \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> <%= options.timestamp %>\nAuthor: <%= pkg.author %>  \n*/\n'
                     ,mangle : true
@@ -43,27 +73,11 @@ module.exports = function(grunt) {
                     ,wrap : true
                 }
                 ,files: {
-                    'dist/<%= pkg.name %>.min.js': _src
-                }
-            }
-            ,devel: {
-                options: {
-                    banner: '/** \n<%= pkg.name %>: <%= pkg.description %> \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> <%= options.timestamp %>\nAuthor: <%= pkg.author %>  \n*/\n'
-                    ,sourceMap : true
-                    ,sourceMapIncludeSources : true
-                    /*MANGLED VARIABLES WILL NOT MAP CORRECTLY TO SOURCE MAP*/
-                    ,mangle : false
-                    ,compress : false
-                    ,beautify: true
-                    ,drop_debugger : false
-                    ,wrap : true
-                },
-                files: {
-                    'dist/<%= pkg.name %>.devel.js': _src
+                    'dist/<%= pkg.name %>.min.js': "./dist/orgy.js"
                 }
             }
         },
-        
+
         karma: {
             dsk: {
                 configFile: 'karma.conf.js',
@@ -84,11 +98,11 @@ module.exports = function(grunt) {
                 ,proxies: {
                   '/data' : "http://localhost:9876/base/demos/data"
                 }
-                
+
                 //browsers: ["PhantomJS"]
             }
         },
-        
+
         mochaTest: {
             test: {
               options: {
@@ -97,11 +111,11 @@ module.exports = function(grunt) {
               src: ['test/mocha/*.js']
             }
         },
-        
+
         watch: {
             src: {
                 files: ['src/js/*.js'],
-                tasks: ['uglify'],
+                tasks: ['browserify'],
                 options: {
                   //spawn: false,
                   interrupt: true,
@@ -111,20 +125,21 @@ module.exports = function(grunt) {
                 }
             }
         }
-        
-        
+
+
     });
 
+    grunt.loadNpmTasks('grunt-browserify');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
     grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.registerTask('default', ['uglify']);
-    grunt.registerTask('t', ['uglify','test-dsk']);
-    grunt.registerTask('k', ['uglify','karma:dsk']);
-    grunt.registerTask('m', ['uglify','mochaTest:test']);
+    grunt.registerTask('default', ['browserify','uglify']);
+    grunt.registerTask('t', ['browserify','test-dsk']);
+    grunt.registerTask('k', ['browserify','karma:dsk']);
+    grunt.registerTask('m', ['browserify','mochaTest:test']);
 
 };

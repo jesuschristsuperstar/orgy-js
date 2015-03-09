@@ -1,23 +1,26 @@
-public.queue = {};
-private.queue = {};
+var _ = require('lodash'),
+    Main = require('./main.js'),
+    Deferred = require('./deferred.js'),
+    _public = {},
+    _private = {};
 
 
 //////////////////////////////////////////
-//  PUBLIC VARIABLES
+//  _public VARIABLES
 //////////////////////////////////////////
 
 
 //////////////////////////////////////////
-//  PRIVATE VARIABLES
+//  _private VARIABLES
 //////////////////////////////////////////
 
 
 /**
 * Template object for all queues
-* 
+*
 * @type object
 */
-private.queue.tpl = {
+_private.tpl = {
 
    model : 'queue'
 
@@ -27,7 +30,7 @@ private.queue.tpl = {
 
 
    //PREVENTS A QUEUE FROM RESOLVING EVEN IF ALL DEPENDENCIES MET
-   //PURPOSE: PREVENTS QUEUES CREATED BY ASSIGNMENT FROM RESOLVING 
+   //PURPOSE: PREVENTS QUEUES CREATED BY ASSIGNMENT FROM RESOLVING
    //BEFORE THEY ARE FORMALLY INSTANTIATED
    ,halt_resolution : 0
 
@@ -47,15 +50,15 @@ private.queue.tpl = {
 
    /**
     * Add list of dependencies to a queue's upstream array.
-    * 
-    * The queue will resolve once all the promises in its 
+    *
+    * The queue will resolve once all the promises in its
     * upstream array are resolved.
-    * 
-    * When public.config.debug == 1, method will test each 
-    * dependency is not previously scheduled to resolve 
-    * downstream from the target, in which 
+    *
+    * When _public.config.debug == 1, method will test each
+    * dependency is not previously scheduled to resolve
+    * downstream from the target, in which
     * case it would never resolve because its upstream depends on it.
-    * 
+    *
     * @param {array} arr  /array of dependencies to add
     * @returns {array} upstream
     */
@@ -65,12 +68,12 @@ private.queue.tpl = {
            if(arr.length === 0) return this.upstream;
        }
        catch(err){
-           public.debug(err);
+           Main.debug(err);
        }
 
        //IF NOT PENDING, DO NOT ALLOW TO ADD
        if(this.state !== 0){
-          return public.debug([
+          return Main.debug([
             "Cannot add dependency list to queue id:'"+this.id
             +"'. Queue settled/in the process of being settled."
           ],arr,this);
@@ -81,13 +84,13 @@ private.queue.tpl = {
            switch(true){
 
                //CHECK IF EXISTS
-               case(typeof public.list[arr[a]['id']] === 'object'):
-                   arr[a] = public.list[arr[a]['id']];
+               case(typeof Main.list[arr[a]['id']] === 'object'):
+                   arr[a] = Main.list[arr[a]['id']];
                    break;
 
                //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
                case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
-                   arr[a] = private.deferred.convert_to_promise(arr[a],{
+                   arr[a] = Deferred.convert_to_promise(arr[a],{
                      parent : this
                    });
                    break;
@@ -106,7 +109,7 @@ private.queue.tpl = {
            //must check the target to see if the dependency exists in its downstream
            for(var b in this.downstream){
                if(b === arr[a].id){
-                  return public.debug([
+                  return Main.debug([
                     "Error adding upstream dependency '"
                     +arr[a].id+"' to queue"+" '"
                     +this.id+"'.\n Promise object for '"
@@ -129,7 +132,7 @@ private.queue.tpl = {
 
    /**
     * Remove list from a queue.
-    * 
+    *
     * @param {array} arr
     * @returns {array} array of list the queue is upstream
     */
@@ -137,7 +140,7 @@ private.queue.tpl = {
 
       //IF NOT PENDING, DO NOT ALLOW REMOVAL
       if(this.state !== 0){
-          return public.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+          return Main.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
       }
 
       for(var a in arr){
@@ -154,18 +157,18 @@ private.queue.tpl = {
    * Clears out the downstream.
    * Fails if not settled.
    * @param {object} options
-   * @returns {private.queue.tpl|Boolean}
+   * @returns {_private.tpl|Boolean}
    */
    ,reset : function(options){
 
       if(this.settled !== 1 || this.state !== 1){
-        return public.debug("Can only reset a queue settled without errors.");
+        return Main.debug("Can only reset a queue settled without errors.");
       }
 
       options = options || {};
 
       this.settled = 0;
-      this.state = 0; 
+      this.state = 0;
       this.resolver_fired = 0;
       this.done_fired = 0;
 
@@ -179,7 +182,7 @@ private.queue.tpl = {
       this.dependencies = [];
 
       //SET NEW AUTO TIMEOUT
-      private.deferred.auto_timeout.call(this,options.timeout);
+      Deferred.auto_timeout.call(this,options.timeout);
 
       //POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
       //this.check_self()
@@ -189,72 +192,72 @@ private.queue.tpl = {
 
 
    /**
-    * Cauaes a queue to look over its dependencies and see if it 
+    * Cauaes a queue to look over its dependencies and see if it
     * can be resolved.
-    * 
+    *
     * This is done automatically by each dependency that loads,
     * so is not needed unless:
-    * 
+    *
     * -debugging
-    * 
+    *
     * -the queue has been reset and no new
     * dependencies were since added.
-    * 
+    *
     * @returns {int} State of the queue.
     */
    ,check_self : function(){
-      private.queue.receive_signal(this,this.id);
+      _public.receive_signal(this,this.id);
       return this.state;
    }
 };
 
 
 //////////////////////////////////////////
-//  PUBLIC METHODS
+//  _public METHODS
 //////////////////////////////////////////
 
 
 /**
  * Creates a new queue object.
- * 
+ *
  * @param {array} deps
  * @param {object} options
  *          {string}  id  /Optional. Use the id with Orgy.get(id). Defaults to line number of instantiation, plus an iterator.
- *          {callback(result,deferred)} resolver /Callback function to execute after all dependencies have resolved. Arg1 is an array of the dependencies' resolved values. Arg2 is the deferred object. The queue will only resolve when Arg2.resolve() is called. If not, it will timeout to options.timeout || Orgy.config.timeout. 
+ *          {callback(result,deferred)} resolver /Callback function to execute after all dependencies have resolved. Arg1 is an array of the dependencies' resolved values. Arg2 is the deferred object. The queue will only resolve when Arg2.resolve() is called. If not, it will timeout to options.timeout || Orgy.config.timeout.
  *          {number} timeout /time in ms after which reject is called. Defaults to Orgy.config().timeout [5000]. Note the timeout is only affected by dependencies and/or the resolver callback. Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
- *          
+ *
  * @returns {object}
  */
-public.queue = function(deps,options){
+_public.queue = function(deps,options){
 
   var _o;
   if(!(deps instanceof Array)){
-    return public.debug("Queue dependencies must be an array.");
+    return Main.debug("Queue dependencies must be an array.");
   }
 
   options = options || {};
 
   //DOES NOT ALREADY EXIST
-  if(!public.list[options.id]){
+  if(!Main.list[options.id]){
 
     //CREATE NEW QUEUE OBJECT
-    var _o = private.queue.factory(options);
+    var _o = _private.factory(options);
 
     //ACTIVATE QUEUE
-    _o = private.queue.activate(_o,options,deps);
+    _o = _private.activate(_o,options,deps);
 
   }
   //ALREADY EXISTS
   else {
 
-    _o = public.list[options.id];
+    _o = Main.list[options.id];
 
     if(_o.model !== 'queue'){
     //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
 
       options.overwritable = 1;
 
-      _o = private.queue.upgrade(_o,options,deps);
+      _o = _private.upgrade(_o,options,deps);
     }
     else{
 
@@ -265,7 +268,7 @@ public.queue = function(deps,options){
 
       //ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
       if(deps.length > 0){
-        private.queue.tpl.add.call(_o,deps);
+        _private.tpl.add.call(_o,deps);
       }
 
     }
@@ -279,99 +282,26 @@ public.queue = function(deps,options){
 };
 
 
-//////////////////////////////////////////
-//  PRIVATE METHODS
-//////////////////////////////////////////
 
-
-private.queue.factory = function(options){
-
-  //CREATE A NEW QUEUE OBJECT
-  var _o = public.naive_cloner([
-    private.deferred.tpl
-    ,private.queue.tpl
-    ,options
-  ]);
-
-  //Get backtrace info if none found [may be set @ public.define]
-  if(!_o.backtrace){
-    _o.backtrace = private.get_backtrace_info('public.queue');
-  }
-
-  //if no id, use backtrace origin
-  if(!options.id){
-    _o.id = _o.backtrace.origin + '-' + (++public.i);
-  }
-
-  return _o;
-};    
-    
-    
 /**
- * Activates a queue object.
- * 
- * @param {object} o
- * @param {object} options
- * @param {array} deps
- * @returns {object} queue
- */
-private.queue.activate = function(o,options,deps){
-
-    //ACTIVATE AS A DEFERRED
-    o = private.deferred.activate(o);
-    
-    //@todo rethink this
-    //This timeout gives defined promises that are defined
-    //further down the same script a chance to define themselves
-    //and in case this queue is about to request them from a 
-    //remote source here.
-    //This is important in the case of compiled js files that contain
-    //multiple modules when depend on each other. 
-    
-    //temporarily change state to prevent outside resolution
-    o.state = -1;
-    setTimeout(function(){
-      
-      //Restore state
-      o.state = 0;
-
-      //ADD DEPENDENCIES TO QUEUE
-      private.queue.tpl.add.call(o,deps);
-
-      //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
-      private.queue.receive_signal(o,o.id);
-
-      //ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
-      if(o.assign){
-          for(var a in o.assign){
-              public.assign(o.assign[a],[o],true);
-          }
-      }
-    },1);
-
-    return o;
-};
-    
-    
-/**
-* A "signal" here causes a queue to look through each item 
-* in its upstream and check to see if all are resolved. 
-* 
+* A "signal" here causes a queue to look through each item
+* in its upstream and check to see if all are resolved.
+*
 * Signals can only be received by a queue itself or an instance
 * in its upstream.
-* 
+*
 * @param {object} target
 * @param {string} from_id
 * @returns {void}
 */
-private.queue.receive_signal = function(target,from_id){
+_public.receive_signal = function(target,from_id){
 
     if(target.halt_resolution === 1) return;
 
    //MAKE SURE THE SIGNAL WAS FROM A PROMISE BEING LISTENED TO
    //BUT ALLOW SELF STATUS CHECK
    if(from_id !== target.id && !target.upstream[from_id]){
-       return public.debug(from_id + " can't signal " + target.id + " because not in upstream.");
+       return Main.debug(from_id + " can't signal " + target.id + " because not in upstream.");
    }
    //RUN THROUGH QUEUE OF OBSERVING PROMISES TO SEE IF ALL DONE
    else{
@@ -388,14 +318,14 @@ private.queue.receive_signal = function(target,from_id){
    //RESOLVE QUEUE IF UPSTREAM FINISHED
    if(status === 1){
 
-        //GET RETURN VALUES PER DEPENDENCIES, WHICH SAVES ORDER AND 
+        //GET RETURN VALUES PER DEPENDENCIES, WHICH SAVES ORDER AND
         //REPORTS DUPLICATES
         var values = [];
         for(var i in target.dependencies){
             values.push(target.dependencies[i].value);
         }
 
-        private.deferred.tpl.resolve.call(target,values);
+        Deferred.tpl.resolve.call(target,values);
    }
 
    if(status === 2){
@@ -403,28 +333,102 @@ private.queue.receive_signal = function(target,from_id){
            target.id+" dependency '"+target.upstream[i].id + "' was rejected."
            ,target.upstream[i].arguments
        ];
-       private.deferred.tpl.reject.apply(target,err);
+       Deferred.tpl.reject.apply(target,err);
    }
+};
+
+
+//////////////////////////////////////////
+//  _private METHODS
+//////////////////////////////////////////
+
+
+_private.factory = function(options){
+
+  //CREATE A NEW QUEUE OBJECT
+  var _o = _.assign({},[
+    Deferred.tpl
+    ,_private.tpl
+    ,options
+  ]);
+
+  //Get backtrace info if none found [may be set @ Main.define]
+  if(!_o.backtrace){
+    _o.backtrace = Main.get_backtrace_info('queue');
+  }
+
+  //if no id, use backtrace origin
+  if(!options.id){
+    _o.id = _o.backtrace.origin + '-' + (++Main[i]);
+  }
+
+  return _o;
+};
+
+
+/**
+ * Activates a queue object.
+ *
+ * @param {object} o
+ * @param {object} options
+ * @param {array} deps
+ * @returns {object} queue
+ */
+_private.activate = function(o,options,deps){
+
+    //ACTIVATE AS A DEFERRED
+    o = Deferred.activate(o);
+
+    //@todo rethink this
+    //This timeout gives defined promises that are defined
+    //further down the same script a chance to define themselves
+    //and in case this queue is about to request them from a
+    //remote source here.
+    //This is important in the case of compiled js files that contain
+    //multiple modules when depend on each other.
+
+    //temporarily change state to prevent outside resolution
+    o.state = -1;
+    setTimeout(function(){
+
+      //Restore state
+      o.state = 0;
+
+      //ADD DEPENDENCIES TO QUEUE
+      _private.tpl.add.call(o,deps);
+
+      //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
+      _public.receive_signal(o,o.id);
+
+      //ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
+      if(o.assign){
+          for(var a in o.assign){
+              _public.assign(o.assign[a],[o],true);
+          }
+      }
+    },1);
+
+    return o;
 };
 
 
 /**
 * Upgrades a promise object to a queue.
-* 
+*
 * @param {object} obj
 * @param {object} options
 * @param {array} deps \dependencies
 * @returns {object} queue object
 */
-private.queue.upgrade = function(obj,options,deps){
+_private.upgrade = function(obj,options,deps){
 
     if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
-        return public.debug('Can only upgrade unsettled promise or deferred into a queue.');
+        return Main.debug('Can only upgrade unsettled promise or deferred into a queue.');
     }
 
    //GET A NEW QUEUE OBJECT AND MERGE IN
-    var _o = public.naive_cloner([
-        private.queue.tpl
+    var _o = _.assign({},[
+        _private.tpl
         ,options
     ]);
 
@@ -432,11 +436,13 @@ private.queue.upgrade = function(obj,options,deps){
        obj[i] = _o[i];
     }
 
-    delete _o;
+    //delete _o;
 
     //CREATE NEW INSTANCE OF QUEUE
-    obj = private.queue.activate(obj,options,deps);
+    obj = _private.activate(obj,options,deps);
 
     //RETURN QUEUE OBJECT
     return obj;
 };
+
+module.exports = _public;

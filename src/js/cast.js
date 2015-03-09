@@ -1,28 +1,34 @@
+var Main = require('./main.js'),
+    Deferred = require('./deferred.js'),
+    _public = {},
+    _private = {};
+
+
 ////////////////////////////////////////
-//  PUBLIC METHODS
+//  _public METHODS
 ////////////////////////////////////////
 
 
 /**
  * Casts an object into an Orgy deferred.
- * 
+ *
  * > Object to be casted must have the following properties:
  *  - then()
- *  - error() 
- * 
+ *  - error()
+ *
  * > If the casted object has an id or url property set, the id or url
  * [in that order] will become the id of the deferred for referencing
  * with Orgy.get(id)
- *  
+ *
  * @param {object} obj  /thenable
  * @returns {object}
  */
-public.cast = function(obj){
-            
+_public.cast = function(obj){
+
     var required = ["then","error"];
     for(var i in required){
         if(!obj[required[i]]){
-            return public.debug("Castable objects require: " 
+            return Main.debug("Castable objects require the following properties: "
                 + required[i]);
         }
     }
@@ -35,17 +41,17 @@ public.cast = function(obj){
         options.id = obj.url;
     }
     else{
-      //Get backtrace info if none found [may be set @ public.define]
-      var backtrace = private.get_backtrace_info('public.cast');
+      //Get backtrace info if none found [may be set @ _public.define]
+      var backtrace = Main.get_backtrace_info('cast');
 
       //if no id, use backtrace origin
       if(!options.id){
-        options.id = backtrace.origin + '-' + (++public.i);
+        options.id = backtrace.origin + '-' + (++Main[i]);
       }
     }
 
     //Create a deferred
-    var def = public.deferred(options);
+    var def = Deferred(options);
 
     //Create resolver
     var resolver = function(){
@@ -65,4 +71,6 @@ public.cast = function(obj){
 
     //Return deferred
     return def;
-};      
+};
+
+module.exports = _public;
