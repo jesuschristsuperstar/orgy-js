@@ -61,7 +61,7 @@ process.umask = function() { return 0; };
 },{}],2:[function(require,module,exports){
 "use strict";
 
-var Main = require("./main.js"),
+var Config = require("./config.js"),
     Deferred = require("./deferred.js"),
     _public = {},
     _private = {};
@@ -89,7 +89,7 @@ _public.cast = function (obj) {
     var required = ["then", "error"];
     for (var i in required) {
         if (!obj[required[i]]) {
-            return Main.debug("Castable objects require the following properties: " + required[i]);
+            return Config.debug("Castable objects require the following properties: " + required[i]);
         }
     }
 
@@ -100,11 +100,11 @@ _public.cast = function (obj) {
         options.id = obj.url;
     } else {
         //Get backtrace info if none found [may be set @ _public.define]
-        var backtrace = Main.get_backtrace_info("cast");
+        var backtrace = Config.get_backtrace_info("cast");
 
         //if no id, use backtrace origin
         if (!options.id) {
-            options.id = backtrace.origin + "-" + ++Main[i];
+            options.id = backtrace.origin + "-" + ++Config.i;
         }
     }
 
@@ -143,13 +143,158 @@ _public.cast = function (obj) {
 
 module.exports = _public;
 
-},{"./deferred.js":3,"./main.js":6}],3:[function(require,module,exports){
+},{"./config.js":3,"./deferred.js":4}],3:[function(require,module,exports){
+(function (process){
+"use strict";
+
+var _public = {};
+var _private = {};
+
+////////////////////////////////////////
+//  _public VARIABLES
+////////////////////////////////////////
+
+/**
+ * A directory of all promises, deferreds, and queues.
+ * @type object
+ */
+_public.list = {};
+
+/**
+ * iterator for ids
+ * @type integer
+ */
+_public.i = 0;
+
+/**
+ * Configuration values.
+ *
+ * @type object
+ */
+_public.settings = {
+
+    debug_mode: 1
+    //set the current working directory of the callee script,
+    //because node has no constant for this
+    , cwd: false,
+    mode: (function () {
+        if (typeof process === "object" && process + "" === "[object process]") {
+            // is node
+            return "native";
+        } else {
+            // not node
+            return "browser";
+        }
+    })(),
+    /**
+     * - onActivate /when each instance activated
+     * - onSettle   /when each instance settles
+     *
+     * @type object
+     */
+    hooks: {},
+    timeout: 5000 //default timeout
+};
+
+////////////////////////////////////////
+//  _private VARIABLES
+////////////////////////////////////////
+
+////////////////////////////////////////
+//  _public METHODS
+////////////////////////////////////////
+
+/**
+ * Configuration setter.
+ *
+ * @param {object} obj
+ * @returns {object}
+ */
+_public.config = function (obj) {
+
+    if (typeof obj === "object") {
+        for (var i in obj) {
+            _public.settings[i] = obj[i];
+        }
+    }
+
+    return _public.settings;
+};
+
+/**
+ * Debugging method.
+ *
+ * @param {string|array} msg
+ * @param {object} def
+ * @returns {Boolean}
+ */
+_public.debug = function (msg, def) {
+
+    if (!(msg instanceof Array)) {
+        msg = [msg];
+    }
+
+    for (var i in msg) {
+        if (typeof msg[i] === "string") {
+            console.error("ERROR-" + i + ": " + msg[i]);
+        } else {
+            console.error(msg[i]);
+        }
+    }
+
+    //if we saved a stack trace to connect async, push it
+    if (def) {
+        console.log("Backtrace:");
+        console.log(def.backtrace.stack);
+    }
+
+    if (this.settings.debug_mode) {
+        //turn off debug_mode to avoid hitting debugger
+        debugger;
+    }
+
+    if (_public.settings.mode === "browser") {
+        return false;
+    } else {
+        process.exit();
+    }
+};
+
+_public.get_backtrace_info = function (ss) {
+
+    var r = {},
+        l,
+        str;
+
+    l = r.stack = new Error().stack;
+
+    if (this.settings.mode === "browser") {
+        l = l.split(ss)[1].trim().split("\n");
+        str = l.pop();
+        while (str.search("orgy") !== -1 && l.length > 0) {
+            //iterate until outside of class
+            str = l.pop();
+        }
+        str = window.location.protocol + "//" + str.split("//")[1];
+    } else {
+        str = l.split(ss + " ")[1].split("\n")[1];
+        str = str.match(/\(([^)]+)\)/)[1];
+    }
+
+    //Set origin
+    r.origin = str;
+
+    return r;
+};
+
+module.exports = _public;
+
+}).call(this,require('_process'))
+},{"_process":1}],4:[function(require,module,exports){
 "use strict";
 
 var _ = require("lodash");
-debugger;
-var Main = require("./main.js");
-var Config = Main.config();
+var Config = require("./config.js");
 var Queue = require("./queue.js");
 var Tpl = require("./deferred.tpl.js");
 var File_loader = require("./file_loader.js");
@@ -182,8 +327,8 @@ _public.deferred = function (options) {
     var _o;
     options = options || {};
 
-    if (options.id && Main.list[options.id]) {
-        _o = Main.list[options.id];
+    if (options.id && Config.list[options.id]) {
+        _o = Config.list[options.id];
     } else {
         //CREATE NEW INSTANCE OF DEFERRED CLASS
         _o = _private.factory(options);
@@ -205,12 +350,12 @@ _private.factory = function (options) {
 
     //Get backtrace info if none found [may be set @ _public.define]
     if (!_o.backtrace) {
-        _o.backtrace = Main.get_backtrace_info("deferred");
+        _o.backtrace = Config.get_backtrace_info("deferred");
     }
 
     //if no id, use backtrace origin
     if (!options.id) {
-        _o.id = _o.backtrace.origin + "-" + ++Main[i];
+        _o.id = _o.backtrace.origin + "-" + ++Config.i;
     }
 
     return _o;
@@ -227,8 +372,8 @@ _private.settle = function (def) {
     _private.set_state(def, 1);
 
     //Call hook
-    if (Config.hooks.onSettle) {
-        Config.hooks.onSettle(def);
+    if (Config.settings.hooks.onSettle) {
+        Config.settings.hooks.onSettle(def);
     }
 
     //Add done as a callback to then chain completion.
@@ -378,20 +523,20 @@ _private.get_state = function (def) {
 _private.activate = function (obj) {
 
     //MAKE SURE NAMING CONFLICT DOES NOT EXIST
-    if (Main.list[obj.id] && !Main.list[obj.id].overwritable) {
-        Main.debug("Tried to overwrite " + obj.id + " without overwrite permissions.");
-        return Main.list[obj.id];
+    if (Config.list[obj.id] && !Config.list[obj.id].overwritable) {
+        Config.debug("Tried to overwrite " + obj.id + " without overwrite permissions.");
+        return Config.list[obj.id];
     }
 
     //SAVE TO MASTER LIST
-    Main.list[obj.id] = obj;
+    Config.list[obj.id] = obj;
 
     //AUTO TIMEOUT
     _private.auto_timeout.call(obj);
 
     //Call hook
-    if (Config.hooks.onActivate) {
-        Config.hooks.onActivate(obj);
+    if (Config.settings.hooks.onActivate) {
+        Config.settings.hooks.onActivate(obj);
     }
 
     return obj;
@@ -416,7 +561,7 @@ _private.auto_timeout = function (timeout) {
         }
 
         if (typeof this.timeout === "undefined") {
-            Main.debug(["Auto timeout this.timeout cannot be undefined.", this.id]);
+            Config.debug(["Auto timeout this.timeout cannot be undefined.", this.id]);
         } else if (this.timeout === -1) {
             //NO AUTO TIMEOUT SET
             return false;
@@ -457,7 +602,7 @@ _private.auto_timeout_cb = function () {
          * applying callback until
          * callback returns a non-false value.
          */
-        if (Config.debug_mode) {
+        if (Config.settings.debug_mode) {
             var r = _private.search_obj_recursively(this, "upstream", fn);
             msgs.push(scope.id + ": rejected by auto timeout after " + this.timeout + "ms");
             msgs.push("Cause:");
@@ -503,7 +648,7 @@ _private.signal_downstream = function (target) {
                 continue;
             } else {
                 //tried to settle a successfully settled downstream
-                Main.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
+                Config.debug(target.id + " tried to settle promise " + "'" + target.downstream[i].id + "' that has already been settled.");
             }
         }
     }
@@ -544,7 +689,7 @@ _private.search_obj_recursively = function (obj, propName, fn, breadcrumb) {
             //MATCH RETURNED. RECURSE INTO MATCH IF HAS PROPERTY OF SAME NAME TO SEARCH
             //CHECK THAT WE AREN'T CAUGHT IN A CIRCULAR LOOP
             if (breadcrumb.indexOf(r1) !== -1) {
-                return Main.debug(["Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, (function () {
+                return Config.debug(["Circular condition in recursive search of obj property '" + propName + "' of object " + (typeof obj.id !== "undefined" ? "'" + obj.id + "'" : "") + ". Offending value: " + r1, (function () {
                     breadcrumb.push(r1);
                     return breadcrumb.join(" [depends on]=> ");
                 })()]);
@@ -576,7 +721,7 @@ _private.convert_to_promise = function (obj, options) {
     //Autoname
     if (!obj.id) {
         if (obj.type === "timer") {
-            obj.id = "timer-" + obj.timeout + "-" + ++Main[i];
+            obj.id = "timer-" + obj.timeout + "-" + ++Config.i;
         } else if (typeof obj.url === "string") {
             obj.id = obj.url.split("/").pop();
             //REMOVE .js FROM ID
@@ -589,14 +734,14 @@ _private.convert_to_promise = function (obj, options) {
     }
 
     //Return if already exists
-    if (Main.list[obj.id] && obj.type !== "timer") {
+    if (Config.list[obj.id] && obj.type !== "timer") {
         //A previous promise of the same id exists.
         //Make sure this dependency object doesn't have a
         //resolver - if it does error
         if (obj.resolver) {
-            Main.debug(["You can't set a resolver on a queue that has already been declared. You can only reference the original.", "Detected re-init of '" + obj.id + "'.", "Attempted:", obj, "Existing:", Main.list[obj.id]]);
+            Config.debug(["You can't set a resolver on a queue that has already been declared. You can only reference the original.", "Detected re-init of '" + obj.id + "'.", "Attempted:", obj, "Existing:", Config.list[obj.id]]);
         } else {
-            return Main.list[obj.id];
+            return Config.list[obj.id];
         }
     }
 
@@ -653,7 +798,7 @@ _private.convert_to_promise = function (obj, options) {
 
             //Check if is a thenable
             if (typeof def !== "object" || !def.then) {
-                return Main.debug("Dependency labeled as a promise did not return a promise.", obj);
+                return Config.debug("Dependency labeled as a promise did not return a promise.", obj);
             }
             break;
 
@@ -672,7 +817,7 @@ _private.convert_to_promise = function (obj, options) {
     }
 
     //Index promise by id for future referencing
-    Main.list[obj.id] = def;
+    Config.list[obj.id] = def;
 
     return def;
 };
@@ -755,22 +900,22 @@ _private.wrap_xhr = function (dep) {
     var required = ["id", "url"];
     for (var i in required) {
         if (!dep[required[i]]) {
-            return Main.debug(["File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream.", dep]);
+            return Config.debug(["File requests converted to promises require: " + required[i], "Make sure you weren't expecting dependency to already have been resolved upstream.", dep]);
         }
     }
 
     //IF PROMISE FOR THIS URL ALREADY EXISTS, RETURN IT
-    if (Main.list[dep.id]) {
-        return Main.list[dep.id];
+    if (Config.list[dep.id]) {
+        return Config.list[dep.id];
     }
 
     //CONVERT TO DEFERRED:
     var def = _public.deferred(dep);
 
-    if (typeof File_loader[Config.mode][dep.type] !== "undefined") {
-        File_loader[Config.mode][dep.type](dep.url, def, dep);
+    if (typeof File_loader[Config.settings.mode][dep.type] !== "undefined") {
+        File_loader[Config.settings.mode][dep.type](dep.url, def, dep);
     } else {
-        File_loader[Config.mode]["default"](dep.url, def, dep);
+        File_loader[Config.settings.mode]["default"](dep.url, def, dep);
     }
 
     return def;
@@ -780,16 +925,14 @@ module.exports = _public;
 
 //@todo WHEN A TIMER, ADD DURATION TO ALL UPSTREAM AND LATERAL?
 
-},{"./deferred.tpl.js":4,"./file_loader.js":5,"./main.js":6,"./queue.js":7,"lodash":undefined}],4:[function(require,module,exports){
+},{"./config.js":3,"./deferred.tpl.js":5,"./file_loader.js":6,"./queue.js":8,"lodash":undefined}],5:[function(require,module,exports){
 "use strict";
 
 /**
  * Default properties for all deferred objects.
  *
  */
-var Main = require("./main.js"),
-    Config = Main.config();
-
+var Config = require("./config.js");
 var tpl = {};
 
 tpl.is_orgy = true;
@@ -870,7 +1013,7 @@ tpl.overwritable = 0;
  * Default timeout for a deferred
  * @type number
  */
-tpl.timeout = Config.timeout;
+tpl.timeout = Config.settings.timeout;
 
 /**
  * REMOTE
@@ -900,7 +1043,7 @@ tpl.list = 1;
 tpl.resolve = function (value) {
 
   if (this.settled === 1) {
-    Main.debug([this.id + " can't resolve.", "Only unsettled deferreds are resolvable."]);
+    Config.debug([this.id + " can't resolve.", "Only unsettled deferreds are resolvable."]);
   }
 
   //SET STATE TO SETTLEMENT IN PROGRESS
@@ -950,9 +1093,9 @@ tpl.reject = function (err) {
 
   var msg = "Rejected " + this.model + ": '" + this.id + "'.";
 
-  if (Config.debug_mode) {
+  if (Config.settings.debug_mode) {
     err.unshift(msg);
-    Main.debug(err, this);
+    Config.debug(err, this);
   } else {
     msg = msg + "\n Turn debug mode on for more info.";
     console.log(msg);
@@ -982,7 +1125,7 @@ tpl.then = function (fn, rejector) {
 
     //Execution chain already finished. Bail out.
     case this.done_fired === 1:
-      return Main.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+      return Config.debug(this.id + " can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
 
     default:
 
@@ -1037,23 +1180,24 @@ tpl.done = function (fn, rejector) {
       //Unsettled, train will be run when settled
       else {}
     } else {
-      return Main.debug("done() must be passed a function.");
+      return Config.debug("done() must be passed a function.");
     }
   } else {
-    return Main.debug("done() can only be called once.");
+    return Config.debug("done() can only be called once.");
   }
 };
 
 module.exports = tpl;
 
-},{"./main.js":6}],5:[function(require,module,exports){
+},{"./config.js":3}],6:[function(require,module,exports){
 "use strict";
 
-var Main = require("./main.js");
+var Config = require("./config.js");
 
 var Http = require("http");
 var Vm = require("vm");
 var _public = {};
+_private = {};
 
 _public.browser = {}, _public.native = {},
 
@@ -1156,9 +1300,9 @@ _public.native.script = function (path, deferred) {
 
     //Check that we have configured the environment to allow this,
     //as it represents a security threat and should only be used for debugging
-    if (!Main.config.debug_mode) {
+    if (!Config.settings.debug_mode) {
       _;
-      Main.debug("Set Main.config.debug_mode=1 to run remote scripts outside of debug mode.");
+      Config.debug("Set config.debug_mode=1 to run remote scripts outside of debug mode.");
     } else {
       _private.native.get(path, deferred, function (data) {
         r = Vm.runInThisContext(data);
@@ -1203,102 +1347,21 @@ _private.native.get = function (path, deferred, callback) {
 
 module.exports = _public;
 
-},{"./main.js":6,"http":undefined,"vm":undefined}],6:[function(require,module,exports){
-(function (process,__dirname){
+},{"./config.js":3,"http":undefined,"vm":undefined}],7:[function(require,module,exports){
+(function (__dirname){
 "use strict";
 
-var Queue = require("./queue.js"),
+var Config = require("./config.js"),
+    Queue = require("./queue.js"),
     Deferred = require("./deferred.js"),
     Cast = require("./cast.js");
 
 var _public = {};
 var _private = {};
 
-debugger;
-////////////////////////////////////////
-//  _public VARIABLES
-////////////////////////////////////////
-
-/**
- * A directory of all promises, deferreds, and queues.
- * @type object
- */
-_public.list = {};
-
-/**
- * Array of all exported modules
- * @type Array
- */
-_public.modules_exported = [];
-
-/**
- * Index number of last module loaded in _public.modules_exported
- * @type Number
- */
-_public.modules_loaded = 0;
-
-/**
- * iterator for ids
- * @type integer
- */
-_public.i = 0;
-
-////////////////////////////////////////
-//  _private VARIABLES
-////////////////////////////////////////
-
-/**
- * Configuration values.
- *
- * @type object
- */
-_private.config = {
-
-    autopath: "",
-    document: null,
-    debug_mode: 1
-    //set the current working directory of the callee script,
-    //because node has no constant for this
-    , cwd: false,
-    mode: (function () {
-        if (typeof process === "object" && process + "" === "[object process]") {
-            // is node
-            return "native";
-        } else {
-            // not node
-            return "browser";
-        }
-    })(),
-    /**
-     * - onActivate /when each instance activated
-     * - onSettle   /when each instance settles
-     *
-     * @type object
-     */
-    hooks: {},
-    timeout: 5000 //default timeout
-};
-
 ////////////////////////////////////////
 //  _public METHODS
 ////////////////////////////////////////
-
-/**
- * Configuration setter.
- *
- * @param {object} obj
- * @returns {object}
- */
-_public.config = function (obj) {
-
-    if (typeof obj === "object") {
-        for (var i in obj) {
-            _private.config[i] = obj[i];
-        }
-    }
-
-    return _private.config;
-};
 
 /**
 * Creates a new promise from a value and an id and automatically
@@ -1311,68 +1374,68 @@ _public.config = function (obj) {
 */
 _public.define = function (id, data, options) {
 
-    var def;
-    options = options || {};
-    options.dependencies = options.dependencies || null;
-    options.resolver = options.resolver || null;
+  var def;
+  options = options || {};
+  options.dependencies = options.dependencies || null;
+  options.resolver = options.resolver || null;
 
-    //test for a valid id
-    if (typeof id !== "string") {
-        _public.debug("Must set id when defining an instance.");
+  //test for a valid id
+  if (typeof id !== "string") {
+    Config.debug("Must set id when defining an instance.");
+  }
+
+  //Check no existing instance defined with same id
+  if (Config.list[id] && Config.list[id].settled === 1) {
+    return Config.debug("Can't define " + id + ". Already resolved.");
+  }
+
+  options.id = id;
+
+  //Set backtrace info, here - so origin points to callee
+  options.backtrace = this.get_backtrace_info("define");
+
+  if (options.dependencies !== null && options.dependencies instanceof Array) {
+    //Define as a queue - can't autoresolve because we have deps
+    var deps = options.dependencies;
+    delete options.dependencies;
+    def = Queue(deps, options);
+  } else {
+    //Define as a deferred
+    def = Deferred(options);
+
+    //Try to immediately settle [define]
+    if (options.resolver === null && (typeof options.autoresolve !== "boolean" || options.autoresolve === true)) {
+      //prevent future autoresove attempts [i.e. from xhr response]
+      def.autoresolve = false;
+      def.resolve(data);
     }
+  }
 
-    //Check no existing instance defined with same id
-    if (_public.list[id] && _public.list[id].settled === 1) {
-        return _public.debug("Can't define " + id + ". Already resolved.");
-    }
-
-    options.id = id;
-
-    //Set backtrace info, here - so origin points to callee
-    options.backtrace = this.get_backtrace_info("define");
-
-    if (options.dependencies !== null && options.dependencies instanceof Array) {
-        //Define as a queue - can't autoresolve because we have deps
-        var deps = options.dependencies;
-        delete options.dependencies;
-        def = Queue(deps, options);
-    } else {
-        //Define as a deferred
-        def = Deferred(options);
-
-        //Try to immediately settle [define]
-        if (options.resolver === null && (typeof options.autoresolve !== "boolean" || options.autoresolve === true)) {
-            //prevent future autoresove attempts [i.e. from xhr response]
-            def.autoresolve = false;
-            def.resolve(data);
-        }
-    }
-
-    return def;
+  return def;
 };
 
 _public.define_module = function (obj) {
 
-    var options = {};
-    var id = obj.q.__id;
+  var options = {};
+  var id = obj.q.__id;
 
-    if (typeof Orgy.list[id] === "undefined" || Orgy.list[id].state === 0) {
-        if (obj.q.__dependencies) {
-            options.dependencies = obj.q.__dependencies;
-        }
-
-        if (obj.q.__resolver) {
-            options.resolver = obj.q.__resolver.bind(obj);
-        };
-
-        if (_private.config.mode === "native") {
-            options.cwd = __dirname;
-            var def = this.define(id, obj._public, options);
-            return def;
-        } else {
-            this.define(id, obj._public, options);
-        }
+  if (typeof Orgy.list[id] === "undefined" || Orgy.list[id].state === 0) {
+    if (obj.q.__dependencies) {
+      options.dependencies = obj.q.__dependencies;
     }
+
+    if (obj.q.__resolver) {
+      options.resolver = obj.q.__resolver.bind(obj);
+    };
+
+    if (_private.config.mode === "native") {
+      options.cwd = __dirname;
+      var def = this.define(id, obj._public, options);
+      return def;
+    } else {
+      this.define(id, obj._public, options);
+    }
+  }
 };
 
 /**
@@ -1382,11 +1445,11 @@ _public.define_module = function (obj) {
  * @returns {object}
  */
 _public.get = function (id) {
-    if (_public.list[id]) {
-        return _public.list[id];
-    } else {
-        return _public.debug(["No instance exists: " + id]);
-    }
+  if (Config.list[id]) {
+    return Config.list[id];
+  } else {
+    return Config.debug(["No instance exists: " + id]);
+  }
 };
 
 /**
@@ -1402,112 +1465,46 @@ _public.get = function (id) {
  */
 _public.assign = function (tgt, arr, add) {
 
-    add = typeof add === "boolean" ? add : 1;
+  add = typeof add === "boolean" ? add : 1;
 
-    var id, q;
-    switch (true) {
-        case typeof tgt === "object" && typeof tgt.then === "function":
-            id = tgt.id;
-            break;
-        case typeof tgt === "string":
-            id = tgt;
-            break;
-        default:
-            return _public.debug("Assign target must be a queue object or the id of a queue.", this);
+  var id, q;
+  switch (true) {
+    case typeof tgt === "object" && typeof tgt.then === "function":
+      id = tgt.id;
+      break;
+    case typeof tgt === "string":
+      id = tgt;
+      break;
+    default:
+      return Config.debug("Assign target must be a queue object or the id of a queue.", this);
+  }
+
+  //IF TARGET ALREADY LISTED
+  if (Config.list[id] && Config.list[id].model === "queue") {
+    q = Config.list[id];
+
+    //=> ADD TO QUEUE'S UPSTREAM
+    if (add) {
+      q.add(arr);
     }
-
-    //IF TARGET ALREADY LISTED
-    if (this.list[id] && this.list[id].model === "queue") {
-        q = this.list[id];
-
-        //=> ADD TO QUEUE'S UPSTREAM
-        if (add) {
-            q.add(arr);
-        }
-        //=> REMOVE FROM QUEUE'S UPSTREAM
-        else {
-            q.remove(arr);
-        }
-    }
-    //CREATE NEW QUEUE AND ADD DEPENDENCIES
-    else if (add) {
-
-        q = Queue(arr, {
-            id: id
-        });
-    }
-    //ERROR: CAN'T REMOVE FROM A QUEUE THAT DOES NOT EXIST
+    //=> REMOVE FROM QUEUE'S UPSTREAM
     else {
-        return _public.debug("Cannot remove dependencies from a queue that does not exist.", this);
+      q.remove(arr);
     }
+  }
+  //CREATE NEW QUEUE AND ADD DEPENDENCIES
+  else if (add) {
 
-    return q;
-};
+    q = Queue(arr, {
+      id: id
+    });
+  }
+  //ERROR: CAN'T REMOVE FROM A QUEUE THAT DOES NOT EXIST
+  else {
+    return Config.debug("Cannot remove dependencies from a queue that does not exist.", this);
+  }
 
-/**
- * Debugging method.
- *
- * @param {string|array} msg
- * @param {object} def
- * @returns {Boolean}
- */
-_public.debug = function (msg, def) {
-
-    if (!(msg instanceof Array)) {
-        msg = [msg];
-    }
-
-    for (var i in msg) {
-        if (typeof msg[i] === "string") {
-            console.error("ERROR-" + i + ": " + msg[i]);
-        } else {
-            console.error(msg[i]);
-        }
-    }
-
-    //if we saved a stack trace to connect async, push it
-    if (def) {
-        console.log("Backtrace:");
-        console.log(def.backtrace.stack);
-    }
-
-    if (_private.config.debug_mode) {
-        //turn off debug_mode to avoid hitting debugger
-        debugger;
-    }
-
-    if (_private.config.mode === "browser") {
-        return false;
-    } else {
-        process.exit();
-    }
-};
-
-_public.get_backtrace_info = function (ss) {
-
-    var r = {},
-        l,
-        str;
-
-    l = r.stack = new Error().stack;
-
-    if (_private.config.mode === "browser") {
-        l = l.split(ss)[1].trim().split("\n");
-        str = l.pop();
-        while (str.search("orgy") !== -1 && l.length > 0) {
-            //iterate until outside of class
-            str = l.pop();
-        }
-        str = window.location.protocol + "//" + str.split("//")[1];
-    } else {
-        str = l.split(ss + " ")[1].split("\n")[1];
-        str = str.match(/\(([^)]+)\)/)[1];
-    }
-
-    //Set origin
-    r.origin = str;
-
-    return r;
+  return q;
 };
 
 _public.deferred = Deferred.deferred;
@@ -1516,12 +1513,12 @@ _public.cast = Cast.cast;
 
 module.exports = _public;
 
-}).call(this,require('_process'),"/src/js")
-},{"./cast.js":2,"./deferred.js":3,"./queue.js":7,"_process":1}],7:[function(require,module,exports){
+}).call(this,"/src/js")
+},{"./cast.js":2,"./config.js":3,"./deferred.js":4,"./queue.js":8}],8:[function(require,module,exports){
 "use strict";
 
 var _ = require("lodash"),
-    Main = require("./main.js"),
+    Config = require("./config.js"),
     Deferred = require("./deferred.js"),
     _public = {},
     _private = {};
@@ -1580,12 +1577,12 @@ _private.tpl = {
         try {
             if (arr.length === 0) return this.upstream;
         } catch (err) {
-            Main.debug(err);
+            Config.debug(err);
         }
 
         //IF NOT PENDING, DO NOT ALLOW TO ADD
         if (this.state !== 0) {
-            return Main.debug(["Cannot add dependency list to queue id:'" + this.id + "'. Queue settled/in the process of being settled."], arr, this);
+            return Config.debug(["Cannot add dependency list to queue id:'" + this.id + "'. Queue settled/in the process of being settled."], arr, this);
         }
 
         for (var a in arr) {
@@ -1593,8 +1590,8 @@ _private.tpl = {
             switch (true) {
 
                 //CHECK IF EXISTS
-                case typeof Main.list[arr[a].id] === "object":
-                    arr[a] = Main.list[arr[a].id];
+                case typeof Config.list[arr[a].id] === "object":
+                    arr[a] = Config.list[arr[a].id];
                     break;
 
                 //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
@@ -1618,7 +1615,7 @@ _private.tpl = {
             //must check the target to see if the dependency exists in its downstream
             for (var b in this.downstream) {
                 if (b === arr[a].id) {
-                    return Main.debug(["Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream."], this);
+                    return Config.debug(["Error adding upstream dependency '" + arr[a].id + "' to queue" + " '" + this.id + "'.\n Promise object for '" + arr[a].id + "' is scheduled to resolve downstream from queue '" + this.id + "' so it can't be added upstream."], this);
                 }
             }
 
@@ -1641,7 +1638,7 @@ _private.tpl = {
 
         //IF NOT PENDING, DO NOT ALLOW REMOVAL
         if (this.state !== 0) {
-            return Main.debug("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
+            return Config.debug("Cannot remove list from queue id:'" + this.id + "'. Queue settled/in the process of being settled.");
         }
 
         for (var a in arr) {
@@ -1662,7 +1659,7 @@ _private.tpl = {
     , reset: function reset(options) {
 
         if (this.settled !== 1 || this.state !== 1) {
-            return Main.debug("Can only reset a queue settled without errors.");
+            return Config.debug("Can only reset a queue settled without errors.");
         }
 
         options = options || {};
@@ -1729,13 +1726,13 @@ _public.queue = function (deps, options) {
 
     var _o;
     if (!(deps instanceof Array)) {
-        return Main.debug("Queue dependencies must be an array.");
+        return Config.debug("Queue dependencies must be an array.");
     }
 
     options = options || {};
 
     //DOES NOT ALREADY EXIST
-    if (!Main.list[options.id]) {
+    if (!Config.list[options.id]) {
 
         //CREATE NEW QUEUE OBJECT
         var _o = _private.factory(options);
@@ -1746,7 +1743,7 @@ _public.queue = function (deps, options) {
     //ALREADY EXISTS
     else {
 
-        _o = Main.list[options.id];
+        _o = Config.list[options.id];
 
         if (_o.model !== "queue") {
             //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
@@ -1792,7 +1789,7 @@ _public.receive_signal = function (target, from_id) {
     //MAKE SURE THE SIGNAL WAS FROM A PROMISE BEING LISTENED TO
     //BUT ALLOW SELF STATUS CHECK
     if (from_id !== target.id && !target.upstream[from_id]) {
-        return Main.debug(from_id + " can't signal " + target.id + " because not in upstream.");
+        return Config.debug(from_id + " can't signal " + target.id + " because not in upstream.");
     }
     //RUN THROUGH QUEUE OF OBSERVING PROMISES TO SEE IF ALL DONE
     else {
@@ -1836,12 +1833,12 @@ _private.factory = function (options) {
 
     //Get backtrace info if none found [may be set @ Main.define]
     if (!_o.backtrace) {
-        _o.backtrace = Main.get_backtrace_info("queue");
+        _o.backtrace = Config.get_backtrace_info("queue");
     }
 
     //if no id, use backtrace origin
     if (!options.id) {
-        _o.id = _o.backtrace.origin + "-" + ++Main[i];
+        _o.id = _o.backtrace.origin + "-" + ++Config.i;
     }
 
     return _o;
@@ -1903,7 +1900,7 @@ _private.activate = function (o, options, deps) {
 _private.upgrade = function (obj, options, deps) {
 
     if (obj.settled !== 0 || obj.model !== "promise" && obj.model !== "deferred") {
-        return Main.debug("Can only upgrade unsettled promise or deferred into a queue.");
+        return Config.debug("Can only upgrade unsettled promise or deferred into a queue.");
     }
 
     //GET A NEW QUEUE OBJECT AND MERGE IN
@@ -1924,4 +1921,4 @@ _private.upgrade = function (obj, options, deps) {
 
 module.exports = _public;
 
-},{"./deferred.js":3,"./main.js":6,"lodash":undefined}]},{},[2,3,4,5,6,7]);
+},{"./config.js":3,"./deferred.js":4,"lodash":undefined}]},{},[2,3,4,5,6,7,8]);

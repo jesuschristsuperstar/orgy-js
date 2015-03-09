@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<head>
+
+    <script src="../js/jquery-1.11.1.min.js"></script>
+    <!--
+    document.currentScript polyfill
+    used by anonymous, self-naming module test-module.js
+    -->
+    <script src="../dist/orgy.devel.js"></script>
+
+<script>
+
+  /**
+   * Class to display header
+   *
+   * */
+  (function(obj){
+    Orgy.define_module(obj.q.__id,obj.public,obj.q.__dependencies);
+  }(function(id){
+
+    var cls = {};
+    public = {},
+    cls.private = {};
+    cls.q = {};
+
+
+    ///////////////////////
+    //  QUEUE
+    ///////////////////////
+    cls.q.__id = "header.base";
+    cls.q.__dependencies = [
+      {
+        comment : "All core modules"
+        ,id : "utils.core"
+        ,type : "promise"
+      }
+    ];
+    cls.q.__resolver = function(r,deferred){
+
+      cls.private.bind_events();
+
+      //because this is in header container it is not reloaded
+      //automatically on hashchange. make it so.
+      CoreHooks.onAfterHashLoad[cls.q.__id] = function(){
+
+        //resolve after the first hash load,
+        //because only then will a menu load
+        if(deferred.settled !== 1){
+          deferred.resolve(public);
+        }
+
+        public.load();
+
+      };
+    };
+
+
+    ///////////////////////
+    //  VARIABLES
+    ///////////////////////
+    public.data = {};
+    cls.private.loaded_config = null;
+    cls.private.runs = 0;
+    cls.private.onRenderQueue = [];
+
+
+    ///////////////////////
+    //  METHODS
+    ///////////////////////
+    public.load = function(deferred){
+      cls.private.fetch(function(data,cc){
+        cls.private.display(data,cc);
+        if(deferred){
+          deferred.resolve(public);
+        }
+      });
+    };
+
+    public.format = function(obj){
+
+      var __html = '';
+
+      //DETERMINE THE FORMAT TYPE OF EACH PROPERTY, FORMAT, ADD RESULT TO HTML
+      if(typeof this.formats[obj['type']] !== 'undefined'){
+        __html += this.formats[obj['type']](obj);
+      }
+      else{
+        //DEFAULT
+        __html += this.formats.def(obj);
+      }
+
+      return __html;
+    };
+
+    public.formats = {
+
+      btn_group : function(o){
+
+        var default_child = {
+          anchor_classes:"btn btn-default icon"
+          ,anchor_title:""
+          ,href:null
+          ,icon_classes:null
+          ,label:null
+          ,label_title:""
+          ,label_classes:""
+        };
+
+        var __html = '';
+
+        for(var i in o.fields){
+
+          //IF HREF OF LINK === SAME AS THIS PAGE, SKIP
+          if(o.fields[i].href){
+            var hpathname = "/"+o.fields[i].href.split("/").pop();
+            if(hpathname === window.location.pathname){
+              continue;
+            }
+          }
+
+          //GIVE DEFORMED CHILDREN NEW HOPE
+          o.fields[i] = $.extend({},default_child,o.fields[i]);
+
+          __html  += '<a class="'+o.fields[i]['anchor_classes']
+                  + '" title="'+o.fields[i]['anchor_title']+'" ';
+          __html  += (o.fields[i]['href']!==null) ? 'href="'+o.fields[i]['href']+'"' : "";
+          __html  += '>';
+
+          if(o.fields[i]['icon']!==null){
+              __html += '<i class="'+o.fields[i]['icon_classes']+'"></i>&nbsp;';
+          }
+
+          if(o.fields[i]['label']!==null){
+            __html += '<span class="'+o.fields[i]['label_classes']
+                  + '" title="'+o.fields[i]['label_title']+'">'
+                  + o.fields[i]['label']+'</span>';
+          }
+
+          __html += "</a>";
+
+          //queue onRender if exists
+          if(o.fields[i].onRender){
+            cls.private.onRenderQueue.push(o.fields[i].onRender);
+          }
+        }
+
+        return __html;
+      }
+
+      ,divider : function(o){
+        return '<li class="divider dynamic"></li>';
+      }
+
+      ,dropdown : function(o){
+
+        var __html = '';
+
+        //RECURSIVELY BUILD FIELDS
+        var fields = '';
+        for(var z in o['fields']){
+          fields += modules.header_nav.format(o['fields'][z]);
+        }
+
+        //BUILD DROPDOWN CONTAINER
+        __html +='<li class="dropdown dynamic">'
+        +'<a data-toggle="dropdown" class="dropdown-toggle theme-text" href="#">'
+        +o['label'] + ' <b class="caret"></b></a>'
+        +'<ul name="'+o['label']+'" class="dropdown-menu">'
+        +fields
+        +'</ul></li></ul>';
+
+        return __html;
+      }
+
+      ,link : function(field){
+
+          var defaults = {
+            title : ""
+            ,icon : ""
+            ,"class" : ""
+          };
+
+          for(var i in defaults){
+            if(typeof field[i] ==='undefined'){
+              field[i]=defaults[i];
+            }
+          }
+
+          var icon_spacer = (field.icon !== '') ? "&nbsp;" : "";
+
+          var html = '';
+          html += '<li class="dynamic">'
+              +'<a class="theme-text" title="'+field.title+'" href="'+field['href']+'">'
+              +'<i class="'+field.icon+'"></i>'+icon_spacer
+              +'<span class="'+field['class']+'">'+field['label']+'</span>'
+              +'</a>'
+              +'</li>';
+
+          //run onRender if exists
+          if(field.onRender){
+            cls.private.onRenderQueue.push(field.onRender);
+          }
+
+          return html;
+      }
+
+      ,label : function(o){
+
+        var __html = '';
+
+        var title = '';
+        if(typeof(o['title'])!=='undefined'){
+          title = 'title = "'+ o['title'] +'"';
+        }
+        var href = (typeof(o['href'])!=='undefined') ? 'href="'+o['href']+'"' : "";
+        var clss = (o.class) ? o.class : "label-default";
+
+        var icon = (o.icon) ? '<i class="'+o.icon+'"></i>&nbsp;' : "";
+
+        __html += '<p '+title+' class="navbar-text dynamic"><a '+href+'>'+icon+'<span class="label '+clss+'">'+o['label']+'</span></a></p>';
+
+        //run onRender if exists
+        if(o.onRender){
+          cls.private.onRenderQueue.push(o.onRender);
+        }
+
+        return __html;
+      }
+
+      //DEFAULT
+      ,def : function(field){
+        console.error("Menu field does not have a matching type.",field);
+        debugger;
+      }
+    };
+
+    cls.private.fetch = function(_callback){
+
+      //Get the current config
+      var cc = Orgy.get("utils.rpc").value.last_tf_headers['X-TF-SESSION-ACCESS_ZONE'];
+      if(typeof cc === 'undefined'){
+        console.error("No session access zone sent in headers...aborting.")
+        debugger;
+        return;
+      }
+
+      //Re-fetch only if config changed
+      if(cls.private.loaded_config !== cc){
+        //Use saved config when possible
+        if(typeof public.data[cc] === 'object'){
+          _callback(public.data[cc],cc);
+        }
+        else{
+          var ajaxOptions = {
+            data:{
+              route:'Tecfu/header/api/fetch_header_data',
+              params:[]
+            }
+            ,callback:function(r){
+              //Save config
+              public.data[cc] = r;
+              _callback(r,cc);
+            }
+          };
+
+          Orgy.get('utils.rpc').value.queue(ajaxOptions);
+        }
+      }
+      else{
+        //Reload
+        _callback(public.data[cc],cc);
+      }
+    };
+
+    cls.private.display = function(data,cc){
+
+      //Clear onRenderQueue
+      cls.private.onRenderQueue = [];
+
+      cls.private.loaded_config = cc;
+
+  console.warn("RUNNING HEADER MENU...");
+
+      //MENU
+
+      //HORIZONTAL MENU [DISPLAYED AT WIDE SCREEN]
+      var __links = '',__btn_group = '';
+
+      for(var i in data){
+        if(data[i].type === 'btn_group'){
+          __btn_group += public.format(data[i]);
+        }
+        else{
+
+        //Do not show link to self
+        if(data[i].href
+          && (data[i].href === "/" + document.location.hash
+          || data[i].href === document.location.hash)){
+          continue;
+        }
+
+          __links += public.format(data[i]);
+        }
+      }
+
+      var sel1 = $("div.navbar-collapse ul.header-links")
+      //Remove any previous menu links
+      sel1.find(".dynamic").remove();
+      //Append
+      sel1.prepend(__links)
+
+      var sel2 = $("nav.navbar").find("div.btn-group.dynamic");
+
+      //Append button group [ALWAYS VISIBILE]
+      sel2.html(__btn_group);
+
+      //Run onRenderQueue
+      for(var i in cls.private.onRenderQueue){
+        cls.private.run_item_callback(cls.private.onRenderQueue[i]);
+      }
+    };
+
+    cls.private.run_item_callback = function(str){
+      var value = eval(str);
+      return value;
+    };
+
+    cls.private.bind_events = function(){
+      CoreHooks.onBeforeHashLoad[cls.q.__id] = function(){
+        //hide dropdown
+        var collapsed = $("div.navbar-collapse").hasClass("in");
+        if(collapsed){
+          $("button.navbar-toggle").click();
+        }
+      };
+
+      $("body").on("click","a.btn-back",function(e){
+        e.preventDefault();
+        window.history.back();
+      });
+    };
+
+    return cls;
+
+  }()));
+
+
+
+</script>
+</head>
+<body>
+    <div>
+        Check javascript console for messages.
+    </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    Main = require('./main.js'),
+    Config = require('./config.js'),
     Deferred = require('./deferred.js'),
     _public = {},
     _private = {};
@@ -68,12 +68,12 @@ _private.tpl = {
            if(arr.length === 0) return this.upstream;
        }
        catch(err){
-           Main.debug(err);
+           Config.debug(err);
        }
 
        //IF NOT PENDING, DO NOT ALLOW TO ADD
        if(this.state !== 0){
-          return Main.debug([
+          return Config.debug([
             "Cannot add dependency list to queue id:'"+this.id
             +"'. Queue settled/in the process of being settled."
           ],arr,this);
@@ -84,8 +84,8 @@ _private.tpl = {
            switch(true){
 
                //CHECK IF EXISTS
-               case(typeof Main.list[arr[a]['id']] === 'object'):
-                   arr[a] = Main.list[arr[a]['id']];
+               case(typeof Config.list[arr[a]['id']] === 'object'):
+                   arr[a] = Config.list[arr[a]['id']];
                    break;
 
                //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
@@ -109,7 +109,7 @@ _private.tpl = {
            //must check the target to see if the dependency exists in its downstream
            for(var b in this.downstream){
                if(b === arr[a].id){
-                  return Main.debug([
+                  return Config.debug([
                     "Error adding upstream dependency '"
                     +arr[a].id+"' to queue"+" '"
                     +this.id+"'.\n Promise object for '"
@@ -140,7 +140,7 @@ _private.tpl = {
 
       //IF NOT PENDING, DO NOT ALLOW REMOVAL
       if(this.state !== 0){
-          return Main.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+          return Config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
       }
 
       for(var a in arr){
@@ -162,7 +162,7 @@ _private.tpl = {
    ,reset : function(options){
 
       if(this.settled !== 1 || this.state !== 1){
-        return Main.debug("Can only reset a queue settled without errors.");
+        return Config.debug("Can only reset a queue settled without errors.");
       }
 
       options = options || {};
@@ -232,13 +232,13 @@ _public.queue = function(deps,options){
 
   var _o;
   if(!(deps instanceof Array)){
-    return Main.debug("Queue dependencies must be an array.");
+    return Config.debug("Queue dependencies must be an array.");
   }
 
   options = options || {};
 
   //DOES NOT ALREADY EXIST
-  if(!Main.list[options.id]){
+  if(!Config.list[options.id]){
 
     //CREATE NEW QUEUE OBJECT
     var _o = _private.factory(options);
@@ -250,7 +250,7 @@ _public.queue = function(deps,options){
   //ALREADY EXISTS
   else {
 
-    _o = Main.list[options.id];
+    _o = Config.list[options.id];
 
     if(_o.model !== 'queue'){
     //MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
@@ -301,7 +301,7 @@ _public.receive_signal = function(target,from_id){
    //MAKE SURE THE SIGNAL WAS FROM A PROMISE BEING LISTENED TO
    //BUT ALLOW SELF STATUS CHECK
    if(from_id !== target.id && !target.upstream[from_id]){
-       return Main.debug(from_id + " can't signal " + target.id + " because not in upstream.");
+       return Config.debug(from_id + " can't signal " + target.id + " because not in upstream.");
    }
    //RUN THROUGH QUEUE OF OBSERVING PROMISES TO SEE IF ALL DONE
    else{
@@ -354,12 +354,12 @@ _private.factory = function(options){
 
   //Get backtrace info if none found [may be set @ Main.define]
   if(!_o.backtrace){
-    _o.backtrace = Main.get_backtrace_info('queue');
+    _o.backtrace = Config.get_backtrace_info('queue');
   }
 
   //if no id, use backtrace origin
   if(!options.id){
-    _o.id = _o.backtrace.origin + '-' + (++Main[i]);
+    _o.id = _o.backtrace.origin + '-' + (++Config.i);
   }
 
   return _o;
@@ -423,7 +423,7 @@ _private.activate = function(o,options,deps){
 _private.upgrade = function(obj,options,deps){
 
     if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
-        return Main.debug('Can only upgrade unsettled promise or deferred into a queue.');
+        return Config.debug('Can only upgrade unsettled promise or deferred into a queue.');
     }
 
    //GET A NEW QUEUE OBJECT AND MERGE IN

@@ -1,8 +1,9 @@
-var Main = require('./main.js');
+var Config = require('./config.js');
 var Fs = require('fs');
 var Http = require('http');
 var Vm = require('vm');
-var _public = {};
+var _public = {}
+    _private = {};
 
 _public.browser = {},
 _public.native = {},
@@ -117,8 +118,8 @@ _public.native.script = function(path,deferred){
 
     //Check that we have configured the environment to allow this,
     //as it represents a security threat and should only be used for debugging
-    if(!Main.config.debug_mode){_
-      Main.debug("Set Main.config.debug_mode=1 to run remote scripts outside of debug mode.");
+    if(!Config.settings.debug_mode){_
+      Config.debug("Set config.debug_mode=1 to run remote scripts outside of debug mode.");
     }
     else{
       _private.native.get(path,deferred,function(data){

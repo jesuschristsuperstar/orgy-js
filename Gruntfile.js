@@ -141,5 +141,5 @@ module.exports = function(grunt) {
     grunt.registerTask('k', ['browserify','karma:dsk']);
     grunt.registerTask('m', ['browserify','mochaTest:test']);
     //grunt.registerTask('default', ['browserify','uglify','t']);
-    grunt.registerTask('default', ['browserify']);
+    grunt.registerTask('default', ['browserify','uglify']);
 };

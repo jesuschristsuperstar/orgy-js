@@ -1,7 +1,5 @@
 var _ = require('lodash');
-debugger;
-var Main = require('./main.js');
-var Config = Main.config();
+var Config = require('./config.js');
 var Queue = require('./queue.js');
 var Tpl = require('./deferred.tpl.js');
 var File_loader = require('./file_loader.js');
@@ -39,8 +37,8 @@ _public.deferred = function(options){
     var _o;
     options = options || {};
 
-    if(options.id && Main.list[options.id]){
-        _o = Main.list[options.id];
+    if(options.id && Config.list[options.id]){
+        _o = Config.list[options.id];
     }
     else{
         //CREATE NEW INSTANCE OF DEFERRED CLASS
@@ -68,12 +66,12 @@ _private.factory = function(options){
 
     //Get backtrace info if none found [may be set @ _public.define]
     if(!_o.backtrace){
-      _o.backtrace = Main.get_backtrace_info('deferred');
+      _o.backtrace = Config.get_backtrace_info('deferred');
     }
 
     //if no id, use backtrace origin
     if(!options.id){
-      _o.id = _o.backtrace.origin + '-' + (++Main[i]);
+      _o.id = _o.backtrace.origin + '-' + (++Config.i);
     }
 
     return _o;
@@ -93,8 +91,8 @@ _private.settle = function(def){
 
 
     //Call hook
-    if(Config.hooks.onSettle){
-      Config.hooks.onSettle(def);
+    if(Config.settings.hooks.onSettle){
+      Config.settings.hooks.onSettle(def);
     }
 
 
@@ -278,20 +276,20 @@ _private.get_state = function(def){
 _private.activate = function(obj){
 
     //MAKE SURE NAMING CONFLICT DOES NOT EXIST
-    if(Main.list[obj.id] && !Main.list[obj.id].overwritable){
-        Main.debug("Tried to overwrite "+obj.id+" without overwrite permissions.");
-        return Main.list[obj.id];
+    if(Config.list[obj.id] && !Config.list[obj.id].overwritable){
+        Config.debug("Tried to overwrite "+obj.id+" without overwrite permissions.");
+        return Config.list[obj.id];
     }
 
     //SAVE TO MASTER LIST
-    Main.list[obj.id] = obj;
+    Config.list[obj.id] = obj;
 
     //AUTO TIMEOUT
     _private.auto_timeout.call(obj);
 
     //Call hook
-    if(Config.hooks.onActivate){
-      Config.hooks.onActivate(obj);
+    if(Config.settings.hooks.onActivate){
+      Config.settings.hooks.onActivate(obj);
     }
 
     return obj;
@@ -318,7 +316,7 @@ _private.auto_timeout = function(timeout){
         }
 
         if(typeof this.timeout === 'undefined'){
-            Main.debug([
+            Config.debug([
               "Auto timeout this.timeout cannot be undefined."
               ,this.id
             ]);
@@ -369,7 +367,7 @@ _private.auto_timeout_cb = function(){
          * applying callback until
          * callback returns a non-false value.
          */
-        if(Config.debug_mode){
+        if(Config.settings.debug_mode){
             var r = _private.search_obj_recursively(this,'upstream',fn);
             msgs.push(scope.id + ": rejected by auto timeout after "
                     + this.timeout + "ms");
@@ -421,7 +419,7 @@ _private.signal_downstream = function(target){
           }
           else{
             //tried to settle a successfully settled downstream
-            Main.debug(target.id + " tried to settle promise "+"'"+target.downstream[i].id+"' that has already been settled.");
+            Config.debug(target.id + " tried to settle promise "+"'"+target.downstream[i].id+"' that has already been settled.");
           }
         }
     }
@@ -463,7 +461,7 @@ _private.search_obj_recursively = function(obj,propName,fn,breadcrumb){
         //MATCH RETURNED. RECURSE INTO MATCH IF HAS PROPERTY OF SAME NAME TO SEARCH
             //CHECK THAT WE AREN'T CAUGHT IN A CIRCULAR LOOP
             if(breadcrumb.indexOf(r1) !== -1){
-                return Main.debug([
+                return Config.debug([
                     "Circular condition in recursive search of obj property '"
                         +propName+"' of object "
                         +((typeof obj.id !== 'undefined') ? "'"+obj.id+"'" : '')
@@ -503,7 +501,7 @@ _private.convert_to_promise = function(obj,options){
     //Autoname
     if (!obj.id) {
       if (obj.type === 'timer') {
-        obj.id = "timer-" + obj.timeout + "-" + (++Main[i]);
+        obj.id = "timer-" + obj.timeout + "-" + (++Config.i);
       }
       else if (typeof obj.url === 'string') {
         obj.id = obj.url.split("/").pop();
@@ -517,22 +515,22 @@ _private.convert_to_promise = function(obj,options){
     }
 
     //Return if already exists
-    if(Main.list[obj.id] && obj.type !== 'timer'){
+    if(Config.list[obj.id] && obj.type !== 'timer'){
       //A previous promise of the same id exists.
       //Make sure this dependency object doesn't have a
       //resolver - if it does error
       if(obj.resolver){
-        Main.debug([
+        Config.debug([
           "You can't set a resolver on a queue that has already been declared. You can only reference the original."
           ,"Detected re-init of '" + obj.id + "'."
           ,"Attempted:"
           ,obj
           ,"Existing:"
-          ,Main.list[obj.id]
+          ,Config.list[obj.id]
         ]);
       }
       else{
-        return Main.list[obj.id];
+        return Config.list[obj.id];
       }
     }
 
@@ -591,7 +589,7 @@ _private.convert_to_promise = function(obj,options){
 
             //Check if is a thenable
             if(typeof def !== 'object' || !def.then){
-                return Main.debug("Dependency labeled as a promise did not return a promise.",obj);
+                return Config.debug("Dependency labeled as a promise did not return a promise.",obj);
             }
             break;
 
@@ -610,7 +608,7 @@ _private.convert_to_promise = function(obj,options){
     }
 
     //Index promise by id for future referencing
-    Main.list[obj.id] = def;
+    Config.list[obj.id] = def;
 
     return def;
 };
@@ -699,7 +697,7 @@ _private.wrap_xhr = function(dep){
     var required = ["id","url"];
     for(var i in required){
         if(!dep[required[i]]){
-            return Main.debug([
+            return Config.debug([
                 "File requests converted to promises require: " + required[i]
                 ,"Make sure you weren't expecting dependency to already have been resolved upstream."
                 ,dep
@@ -708,18 +706,18 @@ _private.wrap_xhr = function(dep){
     }
 
     //IF PROMISE FOR THIS URL ALREADY EXISTS, RETURN IT
-    if(Main.list[dep.id]){
-      return Main.list[dep.id];
+    if(Config.list[dep.id]){
+      return Config.list[dep.id];
     }
 
     //CONVERT TO DEFERRED:
     var def = _public.deferred(dep);
 
-    if(typeof File_loader[Config.mode][dep.type] !== 'undefined'){
-      File_loader[Config.mode][dep.type](dep.url,def,dep);
+    if(typeof File_loader[Config.settings.mode][dep.type] !== 'undefined'){
+      File_loader[Config.settings.mode][dep.type](dep.url,def,dep);
     }
     else{
-      File_loader[Config.mode]['default'](dep.url,def,dep);
+      File_loader[Config.settings.mode]['default'](dep.url,def,dep);
     }
 
     return def;

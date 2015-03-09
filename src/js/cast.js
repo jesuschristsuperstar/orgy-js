@@ -1,4 +1,4 @@
-var Main = require('./main.js'),
+var Config = require('./config.js'),
     Deferred = require('./deferred.js'),
     _public = {},
     _private = {};
@@ -28,7 +28,7 @@ _public.cast = function(obj){
     var required = ["then","error"];
     for(var i in required){
         if(!obj[required[i]]){
-            return Main.debug("Castable objects require the following properties: "
+            return Config.debug("Castable objects require the following properties: "
                 + required[i]);
         }
     }
@@ -42,11 +42,11 @@ _public.cast = function(obj){
     }
     else{
       //Get backtrace info if none found [may be set @ _public.define]
-      var backtrace = Main.get_backtrace_info('cast');
+      var backtrace = Config.get_backtrace_info('cast');
 
       //if no id, use backtrace origin
       if(!options.id){
-        options.id = backtrace.origin + '-' + (++Main[i]);
+        options.id = backtrace.origin + '-' + (++Config.i);
       }
     }
 

@@ -2,9 +2,7 @@
  * Default properties for all deferred objects.
  *
  */
-var Main = require('./main.js'),
-Config = Main.config();
-
+var Config = require('./config.js');
 var tpl = {};
 
 tpl.is_orgy = true;
@@ -86,7 +84,7 @@ tpl.overwritable = 0;
  * Default timeout for a deferred
  * @type number
  */
-tpl.timeout = Config.timeout;
+tpl.timeout = Config.settings.timeout;
 
 /**
  * REMOTE
@@ -118,7 +116,7 @@ tpl.list = 1;
 tpl.resolve = function(value){
 
   if(this.settled === 1){
-    Main.debug([
+    Config.debug([
       this.id + " can't resolve."
       ,"Only unsettled deferreds are resolvable."
     ]);
@@ -179,9 +177,9 @@ tpl.reject = function(err){
 
   var msg = "Rejected "+this.model+": '"+this.id+"'."
 
-  if(Config.debug_mode){
+  if(Config.settings.debug_mode){
     err.unshift(msg);
-    Main.debug(err,this);
+    Config.debug(err,this);
   }
   else{
     msg = msg + "\n Turn debug mode on for more info.";
@@ -218,7 +216,7 @@ tpl.then = function(fn,rejector){
 
     //Execution chain already finished. Bail out.
     case(this.done_fired === 1):
-      return Main.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+      return Config.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
 
     default:
 
@@ -292,11 +290,11 @@ tpl.done = function(fn,rejector){
         else{}
     }
     else{
-      return Main.debug("done() must be passed a function.");
+      return Config.debug("done() must be passed a function.");
     }
   }
   else{
-    return Main.debug("done() can only be called once.");
+    return Config.debug("done() can only be called once.");
   }
 };
 
