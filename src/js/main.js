@@ -6,7 +6,7 @@ var Queue = require('./queue.js'),
 var _public = {};
 var _private = {};
 
-
+debugger;
 ////////////////////////////////////////
 //  _public VARIABLES
 ////////////////////////////////////////
@@ -331,5 +331,6 @@ _public.get_backtrace_info = function(ss){
 
 _public.deferred = Deferred.deferred;
 _public.queue = Queue.queue;
-publlc.cast = Cast.cast;
+_public.cast = Cast.cast;
+
 module.exports = _public;

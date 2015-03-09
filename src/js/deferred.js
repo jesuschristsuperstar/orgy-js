@@ -1,9 +1,10 @@
-var _ = require('lodash'),
-Main = require('./main.js'),
-Config = Main.config,
-Queue = require('./queue.js'),
-Tpl = require('./deferred.tpl.js'),
-File_loader = require('./file_loader.js');
+var _ = require('lodash');
+debugger;
+var Main = require('./main.js');
+var Config = Main.config();
+var Queue = require('./queue.js');
+var Tpl = require('./deferred.tpl.js');
+var File_loader = require('./file_loader.js');
 
 
 var _public = {},

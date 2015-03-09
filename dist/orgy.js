@@ -146,12 +146,13 @@ module.exports = _public;
 },{"./deferred.js":3,"./main.js":6}],3:[function(require,module,exports){
 "use strict";
 
-var _ = require("lodash"),
-    Main = require("./main.js"),
-    Config = Main.config,
-    Queue = require("./queue.js"),
-    Tpl = require("./deferred.tpl.js"),
-    File_loader = require("./file_loader.js");
+var _ = require("lodash");
+debugger;
+var Main = require("./main.js");
+var Config = Main.config();
+var Queue = require("./queue.js");
+var Tpl = require("./deferred.tpl.js");
+var File_loader = require("./file_loader.js");
 
 var _public = {},
     _private = {};
@@ -787,9 +788,9 @@ module.exports = _public;
  *
  */
 var Main = require("./main.js"),
-    Config = Main.config;
+    Config = Main.config();
 
-tpl = {};
+var tpl = {};
 
 tpl.is_orgy = true;
 
@@ -1213,6 +1214,7 @@ var Queue = require("./queue.js"),
 var _public = {};
 var _private = {};
 
+debugger;
 ////////////////////////////////////////
 //  _public VARIABLES
 ////////////////////////////////////////
@@ -1510,7 +1512,8 @@ _public.get_backtrace_info = function (ss) {
 
 _public.deferred = Deferred.deferred;
 _public.queue = Queue.queue;
-publlc.cast = Cast.cast;
+_public.cast = Cast.cast;
+
 module.exports = _public;
 
 }).call(this,require('_process'),"/src/js")

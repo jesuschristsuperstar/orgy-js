@@ -3,9 +3,9 @@
  *
  */
 var Main = require('./main.js'),
-Config = Main.config;
+Config = Main.config();
 
-tpl = {};
+var tpl = {};
 
 tpl.is_orgy = true;
 

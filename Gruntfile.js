@@ -47,7 +47,7 @@ module.exports = function(grunt) {
           }
           ,debug: {
             files: {
-              'dist/orgy-debug.js': [
+              'dist/orgy.devel.js': [
                 'src/js/*.js'
               ],
             },
@@ -137,9 +137,9 @@ module.exports = function(grunt) {
     grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
     grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
-    grunt.registerTask('default', ['browserify','uglify']);
     grunt.registerTask('t', ['browserify','test-dsk']);
     grunt.registerTask('k', ['browserify','karma:dsk']);
     grunt.registerTask('m', ['browserify','mochaTest:test']);
-
+    //grunt.registerTask('default', ['browserify','uglify','t']);
+    grunt.registerTask('default', ['browserify']);
 };
