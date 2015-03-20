@@ -3,21 +3,22 @@ var Config = require('./config.js'),
 
 
 /**
- * Casts an object into an Orgy deferred.
+ * Casts a thenable object into an Orgy deferred object.
  *
- * > Object to be casted must have the following properties:
- *  - then()
- *  - error()
- *
+ * > To qualify as a <b>thenable</b>, the object to be casted must have the following properties:
+ * >
+ * > - then()
+ * > 
+ * > - error()
+ * >
  * > If the casted object has an id or url property set, the id or url
- * [in that order] will become the id of the deferred for referencing
- * with Orgy.get(id)
+ * [in that order] will become the id of the returned deferred object.
  * 
  * @memberof orgy
  * @function cast
  * 
- * @param {object} obj  /thenable
- * @returns {object}
+ * @param {object} obj A thenable
+ * @returns {object} deferred
  */
 module.exports = function(obj){
 

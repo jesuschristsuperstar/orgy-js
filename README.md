@@ -5,9 +5,12 @@ Orgy
 
 Deferred / Queue library that yields to no spec.  
 
+## API Reference:
+[Documentation here.](orgy.html "Docs")
+
 ## Features:
 
-- Works both with nodejs and with browsers.
+- Browser and [nodej](https://nodejs.org/) / [iojs](https://iojs.org/en/index.html) compatible.
 
 - Handles a variety of dependency types and automatically converts them into promises.
     - javascript files
@@ -125,9 +128,11 @@ var q = Orgy.get("q1");
 
 ```
 
-## Todo
+## Todo:
 
-- Extend deferred, queue from native ES6 promises.
+- Test / deploy devel branch, which is browserified and refactored
+- Add optional retry configuration setting when remote requests rejected due non 200 HTTP response?
+- Extend deferred, queue from native [ES6](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)    promises
 - Improve async backtraces
 - Fix unit tests
 

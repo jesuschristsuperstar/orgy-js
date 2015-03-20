@@ -1,13 +1,16 @@
+var Deferred = require('./deferred.js'),
+    Queue = require('./queue.js'),
+    Cast = require('./cast.js'),
+    Config = require('./config.js');
+
 module.exports = {
 
 /**
- * Direct the pleasure.
  * @namespace orgy
- *
  */
 
 /**
-* Creates a new promise from a value and an id and automatically
+* Creates a new deferred from a value and an id and automatically
 * resolves it.
 *
 * @memberof orgy 
@@ -15,7 +18,7 @@ module.exports = {
 * @param {string} id A unique id you give to the object
 * @param {mixed}  data The value that the object is assigned
 * @param {object} options Passable options
-* @returns {object} resolved promise
+* @returns {object} resolved deferred
 */
 define : function(id,data,options){
 
@@ -60,60 +63,22 @@ define : function(id,data,options){
     return def;
 },
 
+
 /**
- * Defines a module.
+ * Gets an exisiting deferred / queue object from global store.
+ * Returns null if none found.
  * 
  * @memberof orgy 
  * 
- * @param {string} id
- * @param {object} obj
- * @param {array} deps
- */
-define_module : function(id,obj,deps){
-
-  var options = {};
-
-  if(typeof Config.list[id] === 'undefined'
-  || Config.list[id].state === 0){
-    if(deps){
-      options.dependencies = deps;
-    }
-
-    if(obj.__resolver){
-      options.resolver = obj.__resolver.bind(obj);
-    };
-
-    if(Config.settings.mode === 'native'){
-      options.cwd = __dirname;
-      var def = this.define(id,obj,options);
-      return def;
-    }
-    else{
-      this.define(id,obj,options);
-    }
-  }
-  else{
-    return Config.list[id];
-  }
-},
-
-
-/**
- * Getter.
- *
- * @memberof orgy 
- * 
- * @param {string} id
- * @returns {object}
+ * @param {string} id Id of deferred or queue object.
+ * @returns {object} deferred | queue | null
  */
 get : function(id){
   if(Config.list[id]){
     return Config.list[id];
   }
   else{
-    return Config.debug([
-      "No instance exists: "+id
-    ]);
+    return null;
   }
 },
 
@@ -125,11 +90,11 @@ get : function(id){
  *
  * @memberof orgy 
  * 
- * @param {string} tgt | queue / queue id
- * @param {array}  arr | list/promise ids,dependencies
- * @param {boolean} add | add if true, remove if false
+ * @param {string|object} tgt Queue id / queue object
+ * @param {array}  arr  Array of promise ids or dependency objects
+ * @param {boolean} add  If true <b>ADD</b> array to queue dependencies, If false <b>REMOVE</b> array from queue dependencies
  *
- * @return {array} queue of list
+ * @return {object} queue
  */
 assign : function(tgt,arr,add){
 
@@ -162,7 +127,6 @@ assign : function(tgt,arr,add){
     }
     //CREATE NEW QUEUE AND ADD DEPENDENCIES
     else if(add){
-
         q = Queue(arr,{
             id : id
         });
@@ -179,32 +143,24 @@ assign : function(tgt,arr,add){
 * Documented in required file. 
 * @ignore
 */
-deferred : function(){
-  return require('./deferred.js');
-},
+deferred : Deferred,
 
 /**
 * Documented in required file. 
 * @ignore
 */
-queue : function(){
-  return require('./queue.js');
-},
+queue : Queue,
 
 /**
 * Documented in required file. 
 * @ignore
 */
-cast : function(){
-  return require('./cast.js');
-},
+cast : Cast,
 
 /**
 * Documented in required file. 
 * @ignore
 */
-config : function(){
-  return require('./config.js').config;
-}
+config : Config.config
 
 };

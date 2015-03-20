@@ -64,13 +64,16 @@ _public.settings = {
 
 
 /**
- * Configuration setter.
+ * Options you wish to pass to set the global configuration
  * 
  * @memberof orgy
  * @function config
  * 
- * @param {object} obj
- * @returns {object}
+ * @param {object} obj List of options: 
+ *  - {number} <b>timeout</b>
+ *  - {string} <b>cwd</b> Sets current working directory. Server side scripts only.
+ *  - {boolean} <b>debug_mode</b>
+ * @returns {object} configuration settings
  */
 _public.config = function(obj){
 

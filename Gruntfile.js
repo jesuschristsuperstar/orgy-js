@@ -3,9 +3,8 @@
  * node-debug $(which grunt) task
  */
 
- var brfs = require('brfs'),
-     es6ify = require('es6ify'),
-     babelify = require('babelify');
+var brfs = require('brfs'),
+    babelify = require('babelify');
 
 module.exports = function(grunt) {
 
@@ -15,46 +14,38 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json')
 
         ,options : {
-            timestamp : (function(){
+          timestamp : (function(){
+            //A FORMATTED TIMESTAMP STRING FOR BACKUP NAMING
+            var d = new Date(),dstr = '';
+            dstr = ('0' + d.getHours()).slice(-2)
+            + ':' + ('0' + d.getMinutes()).slice(-2)
+            + ':' + ('0' + d.getSeconds()).slice(-2);
 
-                //A FORMATTED TIMESTAMP STRING FOR BACKUP NAMING
-                var d = new Date(),dstr = '';
-                dstr = ('0' + d.getHours()).slice(-2)
-                + ':' + ('0' + d.getMinutes()).slice(-2)
-                + ':' + ('0' + d.getSeconds()).slice(-2);
+            return dstr;
 
-                return dstr;
-
-            }())
+          }())
         },
 
         browserify: {
           prod: {
-            files: {
-              'dist/<%= pkg.name %>.bundle.min.js': [
-                'src/js/*.js',
-                '!src/js/no-bundle.js'
-              ],
-            },
+            src: [ './src/js/main.js' ],
+            dest: './dist/<%= pkg.name %>.js',
             options: {
-              //brfs:  inline fs.readFileSync() calls with file contents
-              //transform: ['brfs','es6ify'],
               transform: ['brfs',["babelify", { "experimental": true }]],
+              exclude: ['http','fs','vm','process','lodash'],
               browserifyOptions : {
-                //debug : true
+                standalone : 'Orgy'
               },
-              exclude: ['http','fs','vm','process','lodash']
             }
           }
           ,devel: {
-            src: [ '/src/js/main.js' ],
-            dest: './dist/<%= pkg.name %>.bundle.devel.js',
+            src: [ './src/js/main.js' ],
+            dest: './dist/<%= pkg.name %>.devel.js',
             options: {
-              //brfs:  inline fs.readFileSync() calls with file contents
-              //transform: ['brfs','es6ify'],
               transform: ['brfs',["babelify", { "experimental": true }]],
               browserifyOptions : {
-                debug : true
+                debug : true,
+                standalone : "Orgy"
               },
               exclude: ['http','fs','vm','process','lodash']
             }
@@ -71,15 +62,22 @@ module.exports = function(grunt) {
                     ,wrap : true
                 }
                 ,files: {
-                    'dist/<%= pkg.name %>.bundle.min.js': 'dist/<%= pkg.name %>.bundle.min.js'
+                    'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js'
                 }
             }
         },
-
-        concat: {
-          'dist/<%= pkg.name %>.min.js' : ['dist/<%= pkg.name %>.bundle.min.js', 'src/js/no-bundle.js'],
-          'dist/<%= pkg.name %>.devel.js' : ['dist/<%= pkg.name %>.bundle.devel.js', 'src/js/no-bundle.js']
+        
+        jsdoc : {
+          dist : {
+            src: ['./src/js/*.js','./README.md'],
+            options: {
+              destination: 'docs',
+              template : "node_modules/grunt-jsdoc/node_modules/ink-docstrap/template",
+              configure : "./jsdoc.conf.json"
+            }
+          }
         },
+        
 
         karma: {
             dsk: {
@@ -133,7 +131,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-jsdoc');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
@@ -143,5 +141,5 @@ module.exports = function(grunt) {
     grunt.registerTask('k', ['browserify','karma:dsk']);
     grunt.registerTask('m', ['browserify','mochaTest:test']);
     //grunt.registerTask('default', ['browserify','uglify','t']);
-    grunt.registerTask('default', ['browserify','uglify','concat']);
+    grunt.registerTask('default', ['browserify','uglify','jsdoc']);
 };
