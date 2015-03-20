@@ -1,5 +1,4 @@
-var _public = {},
-    _private = {};
+var _public = {};
 
 
 ////////////////////////////////////////
@@ -66,7 +65,10 @@ _public.settings = {
 
 /**
  * Configuration setter.
- *
+ * 
+ * @memberof orgy
+ * @function config
+ * 
  * @param {object} obj
  * @returns {object}
  */
@@ -91,24 +93,14 @@ _public.config = function(obj){
  */
 _public.debug = function(msg,def){
 
-    if(! (msg instanceof Array)){
-        msg = [msg];
+    var msgs;
+    if(msg instanceof Array){
+        msgs = msg.join("\n");
     }
 
-    for(var i in msg){
-        if(typeof msg[i] === 'string'){
-            console.error("ERROR-"+i+": "+msg[i]);
-        }
-        else{
-            console.error(msg[i]);
-        }
-    }
+    var e = new Error(msgs);
+    console.log(e.stack);
 
-    //if we saved a stack trace to connect async, push it
-    if(def){
-        console.log("Backtrace:");
-        console.log(def.backtrace.stack);
-    }
 
     if(this.settings.debug_mode){
       //turn off debug_mode to avoid hitting debugger
@@ -124,33 +116,42 @@ _public.debug = function(msg,def){
 };
 
 
-_public.get_backtrace_info = function(ss){
-
-    var r = {}
-    ,l
-    ,str;
-
-    l = r.stack = new Error().stack;
-
-    if(this.settings.mode === 'browser'){
-      l = l.split(ss)[1].trim().split("\n");
-      str = l.pop();
-      while(str.search("orgy") !== -1 && l.length > 0){
-        //iterate until outside of class
-        str = l.pop();
-      }
-      str = window.location.protocol + "//" + str.split("//")[1];
+/**
+ * Makes a shallow copy of an array.
+ * Makes a copy of an object so long as it is JSON
+ *
+ * @param {array} donors /array of donor objects,
+ *                overwritten from right to left
+ * @returns {object}
+ */
+_public.naive_cloner = function(donors){
+    var o = {};
+    for(var a in donors){
+        for(var b in donors[a]){
+            if(donors[a][b] instanceof Array){
+                o[b] = donors[a][b].slice(0);
+            }
+            else if(typeof donors[a][b] === 'object'){
+              try{
+                o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+              }
+              catch(e){
+                console.error(e);
+                debugger;
+              }
+            }
+            else{
+                o[b] = donors[a][b];
+            }
+        }
     }
-    else{
-      str = l.split(ss + " ")[1].split("\n")[1];
-      str = str.match(/\(([^)]+)\)/)[1];
-    }
-
-    //Set origin
-    r.origin = str;
-
-    return r;
+    return o;
 };
+
+
+_public.generate_id = function(){
+  return new Date().getTime() + '-' + (++this.i);  
+}
 
 
 module.exports = _public;

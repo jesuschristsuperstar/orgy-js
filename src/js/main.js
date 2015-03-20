@@ -1,27 +1,23 @@
-var Config = require('./config.js'),
-    Queue = require('./queue.js'),
-    Deferred = require('./deferred.js'),
-    Cast = require('./cast.js');
+module.exports = {
 
-var _public = {};
-var _private = {};
-
-
-////////////////////////////////////////
-//  _public METHODS
-////////////////////////////////////////
-
+/**
+ * Direct the pleasure.
+ * @namespace orgy
+ *
+ */
 
 /**
 * Creates a new promise from a value and an id and automatically
 * resolves it.
 *
-* @param {string} id
-* @param {mixed} data
-* @param {object} options
+* @memberof orgy 
+* 
+* @param {string} id A unique id you give to the object
+* @param {mixed}  data The value that the object is assigned
+* @param {object} options Passable options
 * @returns {object} resolved promise
 */
-_public.define = function(id,data,options){
+define : function(id,data,options){
 
     var def;
     options = options || {};
@@ -39,9 +35,6 @@ _public.define = function(id,data,options){
     }
 
     options.id = id;
-
-    //Set backtrace info, here - so origin points to callee
-    options.backtrace = this.get_backtrace_info('define');
 
     if(options.dependencies !== null
       && options.dependencies instanceof Array){
@@ -65,42 +58,55 @@ _public.define = function(id,data,options){
     }
 
     return def;
-};
+},
 
-
-_public.define_module = function(obj){
+/**
+ * Defines a module.
+ * 
+ * @memberof orgy 
+ * 
+ * @param {string} id
+ * @param {object} obj
+ * @param {array} deps
+ */
+define_module : function(id,obj,deps){
 
   var options = {};
-  var id = obj.q.__id;
 
-  if(typeof Orgy.list[id] === 'undefined' || Orgy.list[id].state === 0){
-    if(obj.q.__dependencies){
-      options.dependencies = obj.q.__dependencies;
+  if(typeof Config.list[id] === 'undefined'
+  || Config.list[id].state === 0){
+    if(deps){
+      options.dependencies = deps;
     }
 
-    if(obj.q.__resolver){
-      options.resolver = obj.q.__resolver.bind(obj);
+    if(obj.__resolver){
+      options.resolver = obj.__resolver.bind(obj);
     };
 
-    if(_private.config.mode === 'native'){
+    if(Config.settings.mode === 'native'){
       options.cwd = __dirname;
-      var def = this.define(id,obj._public,options);
+      var def = this.define(id,obj,options);
       return def;
     }
     else{
-      this.define(id,obj._public,options);
+      this.define(id,obj,options);
     }
   }
-};
+  else{
+    return Config.list[id];
+  }
+},
 
 
 /**
  * Getter.
  *
+ * @memberof orgy 
+ * 
  * @param {string} id
  * @returns {object}
  */
-_public.get = function(id){
+get : function(id){
   if(Config.list[id]){
     return Config.list[id];
   }
@@ -109,7 +115,7 @@ _public.get = function(id){
       "No instance exists: "+id
     ]);
   }
-};
+},
 
 
 /**
@@ -117,13 +123,15 @@ _public.get = function(id){
  *
  * Can use a queue id, even for a queue that is yet to be created.
  *
+ * @memberof orgy 
+ * 
  * @param {string} tgt | queue / queue id
  * @param {array}  arr | list/promise ids,dependencies
  * @param {boolean} add | add if true, remove if false
  *
  * @return {array} queue of list
  */
-_public.assign = function(tgt,arr,add){
+assign : function(tgt,arr,add){
 
     add = (typeof add === "boolean") ? add : 1;
 
@@ -165,12 +173,38 @@ _public.assign = function(tgt,arr,add){
     }
 
     return q;
+},
+
+/**
+* Documented in required file. 
+* @ignore
+*/
+deferred : function(){
+  return require('./deferred.js');
+},
+
+/**
+* Documented in required file. 
+* @ignore
+*/
+queue : function(){
+  return require('./queue.js');
+},
+
+/**
+* Documented in required file. 
+* @ignore
+*/
+cast : function(){
+  return require('./cast.js');
+},
+
+/**
+* Documented in required file. 
+* @ignore
+*/
+config : function(){
+  return require('./config.js').config;
+}
+
 };
-
-
-_public.deferred = Deferred.deferred;
-_public.queue = Queue.queue;
-_public.cast = Cast.cast;
-_public.config = Config.config;
-
-module.exports = _public;

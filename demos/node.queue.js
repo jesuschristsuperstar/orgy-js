@@ -1,3 +1,11 @@
+//This code allows you to run a virtual dom server side.
+//Allows simulating CSS load
+var jsdom = require("jsdom").jsdom;
+var doc = jsdom("starting body content");
+global.window = doc.defaultView;
+global.document = global.window.document;
+//var $ = require('jquery');
+
 var r = {};
 r.deps = [
     {
@@ -17,10 +25,10 @@ r.deps = [
 
 //if node
 if(typeof process === 'object' && process + '' === '[object process]'){
-  
+
   var t0 = new Date().getMilliseconds();
-  
-  Orgy = require("../dist/orgy.devel.js");
+
+  Orgy = require("../src/js/main.js");
 
   Orgy.config({
       //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
@@ -48,21 +56,21 @@ if(typeof process === 'object' && process + '' === '[object process]'){
   });
 
   console.log("Creating a deferred that will hold up the callback chain...");
-  var def = Orgy.deferred().resolve('foo');
-  
-  /*
+  var def = Orgy.deferred();//.resolve('foo');
+
+  /**/
   setTimeout(function(){
     console.log("Resolving the example deferred to resume the chain...");
     def.resolve('foo');
   },'1000');
-  */
+  /**/
 
   //FIRES WHEN RESOLVED
   q.then(function(r,deferred,last){
       console.log(last); //2
       return def;
   });
-  
+
   //FIRES WHEN RESOLVED
   q.then(function(r,deferred,last){
     console.log(last.value); //foo
@@ -73,20 +81,20 @@ if(typeof process === 'object' && process + '' === '[object process]'){
   q.done(function(r,deferred,last){
     console.log("Chain end value:",last);
     console.log("HTML:",$("body").html());
-    
+
     var t1 = new Date().getMilliseconds();
     console.log("This queue finished in..."+(t1-t0)+"ms");
     //console.log("Dependency values:");
     //console.log(r);
   });
-  
-  //Export the dependencies in this example so the same ones 
+
+  //Export the dependencies in this example so the same ones
   //will be used in unit tests.
   module.exports = r;
 }
 //browser
 else{
-  //Export the dependencies in this example so the same ones 
+  //Export the dependencies in this example so the same ones
   //will be used in unit tests.
   Deps = r.deps;
 }

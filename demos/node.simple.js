@@ -1,5 +1,5 @@
-Orgy = require("../dist/orgy.devel.js");
-
+Orgy = require("../src/js/main.js");
+debugger;
 var t0 = new Date().getMilliseconds();
 var q = Orgy.queue([]);
 

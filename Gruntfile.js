@@ -29,10 +29,11 @@ module.exports = function(grunt) {
         },
 
         browserify: {
-          dist: {
+          prod: {
             files: {
-              'dist/orgy.js': [
-                'src/js/*.js'
+              'dist/<%= pkg.name %>.bundle.min.js': [
+                'src/js/*.js',
+                '!src/js/no-bundle.js'
               ],
             },
             options: {
@@ -45,12 +46,9 @@ module.exports = function(grunt) {
               exclude: ['http','fs','vm','process','lodash']
             }
           }
-          ,debug: {
-            files: {
-              'dist/orgy.devel.js': [
-                'src/js/*.js'
-              ],
-            },
+          ,devel: {
+            src: [ '/src/js/main.js' ],
+            dest: './dist/<%= pkg.name %>.bundle.devel.js',
             options: {
               //brfs:  inline fs.readFileSync() calls with file contents
               //transform: ['brfs','es6ify'],
@@ -73,9 +71,14 @@ module.exports = function(grunt) {
                     ,wrap : true
                 }
                 ,files: {
-                    'dist/<%= pkg.name %>.min.js': "./dist/orgy.js"
+                    'dist/<%= pkg.name %>.bundle.min.js': 'dist/<%= pkg.name %>.bundle.min.js'
                 }
             }
+        },
+
+        concat: {
+          'dist/<%= pkg.name %>.min.js' : ['dist/<%= pkg.name %>.bundle.min.js', 'src/js/no-bundle.js'],
+          'dist/<%= pkg.name %>.devel.js' : ['dist/<%= pkg.name %>.bundle.devel.js', 'src/js/no-bundle.js']
         },
 
         karma: {
@@ -125,13 +128,12 @@ module.exports = function(grunt) {
                 }
             }
         }
-
-
     });
 
     grunt.loadNpmTasks('grunt-browserify');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
     grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
@@ -141,5 +143,5 @@ module.exports = function(grunt) {
     grunt.registerTask('k', ['browserify','karma:dsk']);
     grunt.registerTask('m', ['browserify','mochaTest:test']);
     //grunt.registerTask('default', ['browserify','uglify','t']);
-    grunt.registerTask('default', ['browserify','uglify']);
+    grunt.registerTask('default', ['browserify','uglify','concat']);
 };

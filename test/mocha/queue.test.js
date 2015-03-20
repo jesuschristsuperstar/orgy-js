@@ -1,14 +1,15 @@
 /**
- * To debug this file (from document root): 
- * 
- * $ node-inspector 
- * $ mocha --debug-brk 
- * 
+ * To debug this file (from document root):
+ *
+ * $ node-inspector
+ * $ mocha --debug-brk
+ *
  */
 require('source-map-support').install({
   handleUncaughtExceptions: false
 });
-global.Orgy = require("../../dist/orgy.devel.js");
+//global.Orgy = require("../../dist/orgy.devel.js");
+global.Orgy = require("../../src/js/main.js");
 global.chai = require('chai');
 global.expect = chai.expect;
 global.assert = require("assert");
@@ -23,8 +24,8 @@ Orgy.config({
   ,debug_mode : 1
 });
 
-var cwd = process.cwd();
-process.chdir(cwd + "/demos");
+var owd = process.cwd();
+process.chdir(owd + "/demos");
 
 var Test = require('../test.class.js');
 var deps = require('../../demos/node.queue.js').deps;
@@ -34,6 +35,8 @@ var q = Orgy.queue(deps,{
 });
 
 //Change back to original cwd
-process.chdir(cwd);
+process.chdir(owd);
+
+console.log("Changed working directory back to: "+owd);
 
 Test.describe(q,deps);

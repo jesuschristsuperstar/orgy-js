@@ -7,7 +7,6 @@
     used by anonymous, self-naming module test-module.js
     -->
     <script src="../dist/orgy.devel.js"></script>
-
 <script>
 
   /**
@@ -19,7 +18,7 @@
   }(function(id){
 
     var cls = {};
-    public = {},
+    cls.public = {},
     cls.private = {};
     cls.q = {};
 
@@ -30,9 +29,8 @@
     cls.q.__id = "header.base";
     cls.q.__dependencies = [
       {
-        comment : "All core modules"
-        ,id : "utils.core"
-        ,type : "promise"
+          url : "data/data2.json"
+          ,type : "json"
       }
     ];
     cls.q.__resolver = function(r,deferred){
@@ -49,7 +47,7 @@
           deferred.resolve(public);
         }
 
-        public.load();
+        cls.public.load();
 
       };
     };
@@ -58,7 +56,7 @@
     ///////////////////////
     //  VARIABLES
     ///////////////////////
-    public.data = {};
+    cls.public.data = {};
     cls.private.loaded_config = null;
     cls.private.runs = 0;
     cls.private.onRenderQueue = [];
@@ -67,7 +65,7 @@
     ///////////////////////
     //  METHODS
     ///////////////////////
-    public.load = function(deferred){
+    cls.public.load = function(deferred){
       cls.private.fetch(function(data,cc){
         cls.private.display(data,cc);
         if(deferred){
@@ -76,7 +74,7 @@
       });
     };
 
-    public.format = function(obj){
+    cls.public.format = function(obj){
 
       var __html = '';
 
@@ -92,7 +90,7 @@
       return __html;
     };
 
-    public.formats = {
+    cls.public.formats = {
 
       btn_group : function(o){
 
@@ -247,7 +245,7 @@
       //Re-fetch only if config changed
       if(cls.private.loaded_config !== cc){
         //Use saved config when possible
-        if(typeof public.data[cc] === 'object'){
+        if(typeof cls.public.data[cc] === 'object'){
           _callback(public.data[cc],cc);
         }
         else{
@@ -258,7 +256,7 @@
             }
             ,callback:function(r){
               //Save config
-              public.data[cc] = r;
+              cls.public.data[cc] = r;
               _callback(r,cc);
             }
           };
@@ -288,7 +286,7 @@
 
       for(var i in data){
         if(data[i].type === 'btn_group'){
-          __btn_group += public.format(data[i]);
+          __btn_group += cls.public.format(data[i]);
         }
         else{
 
@@ -299,7 +297,7 @@
           continue;
         }
 
-          __links += public.format(data[i]);
+          __links += cls.public.format(data[i]);
         }
       }
 

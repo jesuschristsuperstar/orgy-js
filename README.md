@@ -7,7 +7,7 @@ Deferred / Queue library that yields to no spec.
 
 ## Features:
 
-- Works both with nodejs and with browsers. 
+- Works both with nodejs and with browsers.
 
 - Handles a variety of dependency types and automatically converts them into promises.
     - javascript files
@@ -18,15 +18,15 @@ Deferred / Queue library that yields to no spec.
 
 - Creates deferreds or queues.
 
-- Queues can be held back from settling after their dependencies have resolved by a resolver method. 
+- Queues can be held back from settling after their dependencies have resolved by a resolver method.
 
 - When then() returns a value that value is passed down the execution chain.
 
 - When then() returns an unsettled instance (deferred/queue), further execution on the callback chain is halted until that instance resolves. The deferred is then passed to the next tick of the callback chain, where its return value can be accessed.
 
-- When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser. 
+- When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser.
 
-For example: 
+For example:
 
 ```
 Orgy.config({
@@ -80,14 +80,14 @@ var q = Orgy.queue([
         ,url : "data/sample.css"
     }
 ],{
-  id : "q1" //Optional. Id used to get instance outside of local scope. 
+  id : "q1" //Optional. Id used to get instance outside of local scope.
             //i.e. var q = Orgy.get("q1")
 });
 
 
 //Done can be called async and out of order.
 setTimeout(function(){
-  q.done(function(r,deferred,last){ 
+  q.done(function(r,deferred,last){
     console.log(last); // 2
   });
 },500)
@@ -124,6 +124,12 @@ q.then(function(r,deferred,last){
 var q = Orgy.get("q1");
 
 ```
+
+## Todo
+
+- Extend deferred, queue from native ES6 promises.
+- Improve async backtraces
+- Fix unit tests
 
 ## More examples:
 

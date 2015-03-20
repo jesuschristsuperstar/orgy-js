@@ -1,12 +1,10 @@
 var Config = require('./config.js');
-var Fs = require('fs');
-var Http = require('http');
-var Vm = require('vm');
-var _public = {}
+var _public = {},
     _private = {};
 
 _public.browser = {},
 _public.native = {},
+_private.native = {};
 
 //Browser load
 
@@ -36,6 +34,8 @@ _public.browser.css = function(path,deferred){
   else{
     //ADD elem BUT MAKE XHR REQUEST TO CHECK FILE RECEIVED
     head.appendChild(elem);
+    console.warn("No onload available for link tag, autoresolving.");
+    deferred.resolve(elem);
   }
 }
 
@@ -110,8 +110,18 @@ _public.native.css = function(path,deferred){
 _public.native.script = function(path,deferred){
   //local package
   if(path[0]==='.'){
-    var r = require(path);
-    deferred.resolve(r);
+    var pathInfo = _private.native.prepare_path(path,deferred);
+
+    var r = require(pathInfo.path);
+
+    //Change back to original working dir
+    if(pathInfo.dirchanged) process.chdir(pathInfo.owd);
+
+    //Autoresolve by default
+    if(typeof deferred.autoresolve !== 'boolean'
+    || deferred.autoresolve === true){
+      deferred.resolve(r);
+    }
   }
   //remote script
   else{
@@ -123,6 +133,7 @@ _public.native.script = function(path,deferred){
     }
     else{
       _private.native.get(path,deferred,function(data){
+        var Vm = require('vm');
         r = Vm.runInThisContext(data);
         deferred.resolve(r);
       });
@@ -142,16 +153,22 @@ _public.native.default = function(path,deferred){
 
 _private.native.get = function (path,deferred,callback){
   if(path[0] === '.'){
+
+    var pathInfo = _private.native.prepare_path(path,deferred);
+
     //file system
-    //var Fs = require('fs');
-    Fs.readFile(path, function (err, data) {
+    var Fs = require('fs');
+    Fs.readFile(pathInfo.path, function (err, data) {
       if (err) throw err;
       callback(data);
     });
+
+    //Change back to original working dir
+    if(pathInfo.dirchanged) process.chdir(pathInfo.owd);
   }
   else{
     //http
-    //var Http = require('http');
+    var Http = require('http');
     Http.get({ path : path}, function (res) {
       var data = '';
       res.on('data', function (buf) {
@@ -164,4 +181,24 @@ _private.native.get = function (path,deferred,callback){
   }
 }
 
+_private.native.prepare_path = function(path,deferred){
+  var owd = process.cwd(), //keep track of starting point so we can return
+      cwd = (deferred.cwd) ? deferred.cwd :
+            ((Config.settings.cwd) ? Config.settings.cwd : false)
+  ,dirchanged = false;
+
+  if(cwd){
+    process.chdir(cwd);
+    dirchanged = true;
+  }
+  else{
+    cwd = owd;
+  }
+
+  return {
+    owd : owd
+    ,path : cwd+'/'+path
+    ,dirchanged : dirchanged
+  };
+}
 module.exports = _public;

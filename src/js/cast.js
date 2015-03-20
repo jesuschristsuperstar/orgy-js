@@ -1,12 +1,5 @@
 var Config = require('./config.js'),
-    Deferred = require('./deferred.js'),
-    _public = {},
-    _private = {};
-
-
-////////////////////////////////////////
-//  _public METHODS
-////////////////////////////////////////
+    Deferred = require('./deferred.js');
 
 
 /**
@@ -19,11 +12,14 @@ var Config = require('./config.js'),
  * > If the casted object has an id or url property set, the id or url
  * [in that order] will become the id of the deferred for referencing
  * with Orgy.get(id)
- *
+ * 
+ * @memberof orgy
+ * @function cast
+ * 
  * @param {object} obj  /thenable
  * @returns {object}
  */
-_public.cast = function(obj){
+module.exports = function(obj){
 
     var required = ["then","error"];
     for(var i in required){
@@ -41,12 +37,9 @@ _public.cast = function(obj){
         options.id = obj.url;
     }
     else{
-      //Get backtrace info if none found [may be set @ _public.define]
-      var backtrace = Config.get_backtrace_info('cast');
-
       //if no id, use backtrace origin
       if(!options.id){
-        options.id = backtrace.origin + '-' + (++Config.i);
+        options.id = Config.generate_id();
       }
     }
 
@@ -61,16 +54,12 @@ _public.cast = function(obj){
     //Set Resolver
     obj.then(resolver);
 
-    //Create Rejector
+    //Reject deferred on .error
     var err = function(err){
       def.reject(err);
     };
-
-    //Set rejector
     obj.error(err);
 
     //Return deferred
     return def;
 };
-
-module.exports = _public;
