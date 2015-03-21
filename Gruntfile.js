@@ -4,7 +4,8 @@
  */
 
 var brfs = require('brfs'),
-    babelify = require('babelify');
+    babelify = require('babelify'),
+    _ignore = '--ignore=http --ignore=fs --ignore=vm --ignore=process --ignore=lodash';
 
 module.exports = function(grunt) {
 
@@ -26,34 +27,40 @@ module.exports = function(grunt) {
           }())
         },
 
-        browserify: {
-          prod: {
-            src: [ './src/js/main.js' ],
-            dest: './dist/<%= pkg.name %>.js',
-            options: {
-              transform: ['brfs',["babelify", { "experimental": true }]],
-              exclude: ['http','fs','vm','process','lodash'],
-              browserifyOptions : {
-                standalone : 'Orgy'
-              },
+        shell: {
+          "browserify-prod-standalone": {
+            command: function () {
+              var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.js';
+              return cmd;
             }
-          }
-          ,devel: {
-            src: [ './src/js/main.js' ],
-            dest: './dist/<%= pkg.name %>.devel.js',
-            options: {
-              transform: ['brfs',["babelify", { "experimental": true }]],
-              browserifyOptions : {
-                debug : true,
-                standalone : "Orgy"
-              },
-              exclude: ['http','fs','vm','process','lodash']
+          },
+          "browserify-devel-standalone": {
+            command: function () {
+              var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.devel.js';
+              return cmd;
+            }
+          },
+          "browserify-prod-bundle": {
+            command: function () {
+              var cmd = 'browserify '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.js';
+              return cmd;
+            }
+          },
+          "browserify-devel-bundle": {
+            command: function () {
+              var cmd = 'browserify --debug '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.devel.js';
+              return cmd;
+            }
+          },
+          "cleanup" : {
+            command: function(){
+              return "rm ./dist/orgy.js ./dist/orgy.bundle.js";
             }
           }
         },
 
         uglify: {
-            dist: {
+            "min": {
                 options: {
                     banner: '/** \n<%= pkg.name %>: <%= pkg.description %> \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> <%= options.timestamp %>\nAuthor: <%= pkg.author %>  \n*/\n'
                     ,mangle : true
@@ -62,14 +69,26 @@ module.exports = function(grunt) {
                     ,wrap : true
                 }
                 ,files: {
-                    'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js'
+                    'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js',
+                }
+            },
+            "bundle-min": {
+                options: {
+                    banner: '/** \n<%= pkg.name %>: <%= pkg.description %> \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> <%= options.timestamp %>\nAuthor: <%= pkg.author %>  \n*/\n'
+                    ,mangle : true
+                    ,compress : true
+                    ,drop_debugger : false
+                    ,wrap : true
+                }
+                ,files: {
+                    'dist/<%= pkg.name %>.bundle.min.js': 'dist/<%= pkg.name %>.bundle.js',
                 }
             }
         },
-        
+
         jsdoc : {
           dist : {
-            src: ['./src/js/*.js','./README.md'],
+            src: ['./src/*.js','./README.md'],
             options: {
               destination: 'docs',
               template : "node_modules/grunt-jsdoc/node_modules/ink-docstrap/template",
@@ -77,7 +96,7 @@ module.exports = function(grunt) {
             }
           }
         },
-        
+
 
         karma: {
             dsk: {
@@ -128,7 +147,7 @@ module.exports = function(grunt) {
         }
     });
 
-    grunt.loadNpmTasks('grunt-browserify');
+    grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-jsdoc');
@@ -137,9 +156,17 @@ module.exports = function(grunt) {
     grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
     grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
-    grunt.registerTask('t', ['browserify','test-dsk']);
-    grunt.registerTask('k', ['browserify','karma:dsk']);
-    grunt.registerTask('m', ['browserify','mochaTest:test']);
-    //grunt.registerTask('default', ['browserify','uglify','t']);
-    grunt.registerTask('default', ['browserify','uglify','jsdoc']);
+    grunt.registerTask('t', ['test-dsk']);
+    grunt.registerTask('k', ['karma:dsk']);
+    grunt.registerTask('m', ['mochaTest:test']);
+
+    grunt.registerTask('default', [
+      'shell:browserify-prod-standalone',
+      'shell:browserify-devel-standalone',
+      'shell:browserify-prod-bundle',
+      'shell:browserify-prod-bundle',
+      'uglify',
+      'shell:cleanup',
+      'jsdoc'
+    ]);
 };
