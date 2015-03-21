@@ -102,7 +102,8 @@ module.exports = function(grunt) {
             dsk: {
                 configFile: 'karma.conf.js',
                 singleRun: true,
-                browsers: ['Chrome',"Firefox","Opera"],
+                //browsers: ['Chrome',"Firefox","Opera"],
+                browsers: ["Firefox"],
                 //browsers: ["PhantomJS"]
                 //urlRoot: '/base/demos',
                 proxies: {
@@ -134,7 +135,7 @@ module.exports = function(grunt) {
 
         watch: {
             src: {
-                files: ['src/js/*.js'],
+                files: ['src/*.js'],
                 tasks: ['browserify'],
                 options: {
                   //spawn: false,

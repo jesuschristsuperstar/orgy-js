@@ -9,7 +9,7 @@ require('source-map-support').install({
   handleUncaughtExceptions: false
 });
 //global.Orgy = require("../../dist/orgy.devel.js");
-global.Orgy = require("../../src/js/main.js");
+global.Orgy = require("../../src/main.js");
 global.chai = require('chai');
 global.expect = chai.expect;
 global.assert = require("assert");

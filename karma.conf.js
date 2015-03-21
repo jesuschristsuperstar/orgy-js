@@ -18,9 +18,9 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'dist/orgy.devel.js',
+      'js/jquery-1.11.1.min.js',
+      'dist/orgy.bundle.devel.js',
       'test/test.class.js',
-      'demos/browser.*.js',
       {pattern: 'demos/data/*', included: false},
       {pattern: 'test/karma/*.js', included: true}
     ],

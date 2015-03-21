@@ -28,7 +28,7 @@ if(typeof process === 'object' && process + '' === '[object process]'){
 
   var t0 = new Date().getMilliseconds();
 
-  Orgy = require("../src/js/main.js");
+  Orgy = require("../src/main.js");
 
   Orgy.config({
       //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]

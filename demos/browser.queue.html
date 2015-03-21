@@ -1,65 +1,8 @@
 <!DOCTYPE html>
 <head>
-
-    <script src="../js/jquery-1.11.1.min.js"></script>
-    <!-- 
-    document.currentScript polyfill 
-    used by anonymous, self-naming module test-module.js
-    --> 
-    <script src="../dist/orgy.devel.js"></script>
-    
-<script>
-    
-
-  var q = Orgy.queue([
-      {
-          type : "json"
-          ,url : "data/data1.json"
-      },
-      {
-          type : "json"
-          ,url : "data/data2.json"
-      },
-      {
-          type : "css"
-          ,url : "data/sample.css"
-      },
-      {
-          type : "timer"
-          ,timeout : 1000
-       }
-  ],{
-    //timeout : 200  //optional. defaults to Orgy.config().timeout [5000]
-  });
-
-  //Done can be called async and out of order.
-  setTimeout(function(){
-    q.done(function(r,deferred,last){ 
-      console.log(last); // 2
-      console.log("Done.");
-    },function(){
-      console.error(this.id + " done rejected.");
-    });
-  },1000)
-
-
-  /**
-   * If a then function returns a value, that value is passed down to any
-   * subsequent then() or done() functions.
-  */
-  q.then(function(r){
-      console.log(r); //Dependency values.
-      return 1;
-  },function(){
-    console.error(this.id + " then 1 rejected.");
-  });
-
-  q.then(function(r,deferred,last){
-      console.log(last); // 1
-      return 2;
-  });
-
-</script>
+<script src="../js/jquery-1.11.1.min.js"></script>
+<script src="../dist/orgy.bundle.devel.js"></script>
+<script src="../test/karma/queue.js"></script>
 </head>
 <body>
     <div>
