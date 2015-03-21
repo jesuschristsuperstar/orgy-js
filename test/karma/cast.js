@@ -1,8 +1,10 @@
+(function(){
+
 //Code that runs in browser
 var fn = function(MochaTestRunnerDeferred){
 
   console.log("Testing orgy.cast...");
-  
+
   var Orgy = require("orgy");
 
   //Show backtraces when instances rejected
@@ -89,3 +91,4 @@ else{
   }
   fn();
 }
+})()

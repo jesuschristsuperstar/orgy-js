@@ -1,3 +1,5 @@
+(function(){
+
 //Code that runs in browser
 var fn = function(MochaTestRunnerDeferred){
 
@@ -104,7 +106,7 @@ if(typeof describe !== 'undefined'){
       it('should not have run before done', function(){
         should.not.exist(output.done);
       })
-      
+
       output.then2 = true;
     },
     done : function(r,last){
@@ -159,3 +161,4 @@ else{
   }
   fn();
 }
+})()

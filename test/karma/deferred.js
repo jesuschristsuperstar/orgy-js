@@ -1,3 +1,5 @@
+(function(){
+
 //Code that runs in browser
 var fn = function(MochaTestRunnerDeferred){
 
@@ -106,3 +108,4 @@ else{
   }
   fn();
 }
+})()

@@ -1,7 +1,9 @@
+(function(){
+
 //Code that runs in browser
 var fn = function(MochaTestRunnerDeferred){
 
-  console.log("Testing orgy.queue...");
+  console.log("Testing chainging of deferreds via chaining.js...");
 
   var Orgy = require("orgy");
 
@@ -27,7 +29,7 @@ var fn = function(MochaTestRunnerDeferred){
 
   setTimeout(function(){
     console.log("Resolving the example deferred to resume the chain...");
-    def.resolve(1000);
+    def.resolve(555);
   },'1000');
 
   //Should fire only after def.resolve(1000)
@@ -66,14 +68,16 @@ if(typeof describe !== 'undefined'){
         r[1].value.should.equal(1);
       })
 
-      it('last should equal 1000', function(){
-        last.should.equal(1000);
+      it('last should equal 555', function(){
+        last.should.equal(555);
       })
 
+var diff = new Date().getTime() - output.then1;
+diff = diff * 1;
+console.log("!!"+diff);
       it('should be executing at least 1 second after previous then statement', function(){
-        var diff = new Date().getTime() - output.then1;
-        expect(diff).to.be.above(1000);
-        console.log("!"+diff);
+        expect(1000).to.be.at.least(2000);
+        expect(diff).to.be.at.least(2000);
       })
 
       output.then2 = true;
@@ -115,7 +119,7 @@ if(typeof describe !== 'undefined'){
     }
   };
 
-  describe('deferred', function(){
+  describe('chaining', function(){
     it('should run then chain in correct order, updating return values',
     function(MochaTestRunnerDeferred){
       fn(MochaTestRunnerDeferred);
@@ -130,3 +134,4 @@ else{
   }
   fn();
 }
+})()
