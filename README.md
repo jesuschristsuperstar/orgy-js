@@ -138,4 +138,4 @@ var q = Orgy.get("q1");
 
 ## More examples:
 
-[Here](https://github.com/tecfu/orgy/tree/master/demos).
+[Here](../test).

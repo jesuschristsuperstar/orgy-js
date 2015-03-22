@@ -1,47 +1,44 @@
 var Config = require('./config.js'),
     Deferred = require('./deferred.js');
 
-
 /**
  * Casts a thenable object into an Orgy deferred object.
  *
  * > To qualify as a <b>thenable</b>, the object to be casted must have the following properties:
  * >
- * > - then()
- * > 
- * > - error()
+ * > - id
  * >
- * > If the casted object has an id or url property set, the id or url
- * [in that order] will become the id of the returned deferred object.
- * 
+ * > - then()
+ * >
+ * > - error()
+ *
  * @memberof orgy
  * @function cast
- * 
- * @param {object} obj A thenable
+ *
+ * @param {object} obj A thenable with the following properties:
+ *  - {string} <b>id</b>  Unique id of the object.
+ *
+ *  - {function} <b>then</b>
+ *
+ *  - {function} <b>error</b>
+ *
  * @returns {object} deferred
  */
 module.exports = function(obj){
 
-    var required = ["then","error"];
+    var required = ["then","error","id"];
     for(var i in required){
-        if(!obj[required[i]]){
-            return Config.debug("Castable objects require the following properties: "
-                + required[i]);
-        }
+      if(!obj[required[i]]){
+        return Config.debug("Cast method missing property '" + required[i] +"'");
+      }
     }
 
     var options = {};
-    if(obj.id){
-        options.id = obj.id;
-    }
-    else if(obj.url){
-        options.id = obj.url;
-    }
-    else{
-      //if no id, use backtrace origin
-      if(!options.id){
-        options.id = Config.generate_id();
-      }
+    options.id = obj.id;
+
+    //Make sure id does not conflict with existing
+    if(Config.list[options.id]){
+      return Config.debug("Id "+options.id+" conflicts with existing id.")
     }
 
     //Create a deferred
@@ -49,7 +46,7 @@ module.exports = function(obj){
 
     //Create resolver
     var resolver = function(){
-        def.resolve.call(def,arguments[0]);
+      def.resolve.call(def,arguments[0]);
     };
 
     //Set Resolver

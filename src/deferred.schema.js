@@ -186,8 +186,8 @@ _public.reject = function(err){
     Config.debug(err,this);
   }
   else{
-    msg = msg + "\n Turn debug mode on for more info.";
-    console.log(msg);
+    msg = msg + " Turn on debug mode for more info.";
+    console.warn(msg);
   }
 
   //Remove auto timeout timer

@@ -13,17 +13,20 @@ module.exports = function(config) {
 
     // frameworks to use
     // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
-    frameworks: ['mocha', 'chai', 'sinon'],
+    frameworks: ['mocha','chai'],
 
 
     // list of files / patterns to load in the browser
     files: [
       'js/jquery-1.11.1.min.js',
+      'js/expect.js',
       'dist/orgy.bundle.devel.js',
+      //'dist/orgy.bundle.devel.map.js',
       'test/test.class.js',
       {pattern: 'demos/data/*', included: false},
-      {pattern: 'test/karma/*.js', included: true}
+      {pattern: 'test/*.js', included: true}
     ],
+
 
 
     // list of files to exclude
@@ -34,14 +37,21 @@ module.exports = function(config) {
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
+      //'test/karma/*.js': ['coverage']
     },
 
 
     // test results reporter to use
     // possible values: 'dots', 'progress'
     // available reporters: https://npmjs.org/browse/keyword/karma-reporter
+    // coverage reporter generates the coverage
+    //reporters: ['progress', 'coverage'],
     reporters: ['progress'],
 
+    coverageReporter: {
+      type : 'html',
+      dir : 'coverage/'
+    },
 
     // web server port
     port: 9876,
@@ -53,7 +63,7 @@ module.exports = function(config) {
 
     // level of logging
     // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
-    logLevel: config.LOG_INFO,
+    logLevel: config.LOG_DEBUG,
 
 
     // enable / disable watching file and executing tests whenever any file changes

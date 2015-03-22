@@ -3,9 +3,7 @@
 //Code that runs in browser
 var fn = function(MochaTestRunnerDeferred){
 
-  console.log("Testing orgy.cast...");
-
-  var Orgy = require("orgy");
+  console.info("Testing file: orgy.cast...");
 
   //Show backtraces when instances rejected
   Orgy.config({
@@ -13,13 +11,16 @@ var fn = function(MochaTestRunnerDeferred){
   });
 
   // Example: Cast $.ajax to Orgy
-  var c1 = Orgy.cast($.ajax({
+  var options = {
     url : "data/data1.json"
     ,dataType : "json"
     ,error : function(){
-      console.error("Request failed.");
+      console.error("Casted XHR request errored.");
     }
-  }));
+  };
+  var a = $.ajax(options);
+  a.id = options.url; //id must be set
+  var c1 = Orgy.cast(a);
 
   //Then and done don't need to be entered in correct order
   c1.done(function(r){
@@ -29,9 +30,6 @@ var fn = function(MochaTestRunnerDeferred){
     if(typeof MochaTestRunnerDeferred !== 'undefined') MochaTestRunnerDeferred();
   },function(){
     console.log("c1 done rejected");
-    tests.done(r)
-    //Makes the mocha test runner hold up execution.
-    if(typeof MochaTestRunnerDeferred !== 'undefined') MochaTestRunnerDeferred();
   });
 
   c1.then(function(r){
@@ -39,7 +37,6 @@ var fn = function(MochaTestRunnerDeferred){
     tests.then1(r);
   },function(r){
     console.log("c1 then rejected");
-    tests.then1(r);
   });
 }
 
@@ -50,37 +47,21 @@ if(typeof describe !== 'undefined'){
   var output = {};
   var tests = {
     then1 : function(r){
-
-      it('should have value property that equals 1', function(){
-        expect(r).to.have.property('value');
-        r.value.should.equal(1);
-      })
-
-      it('should not have run before done', function(){
-        should.not.exist(output.done);
-      })
-
-      output.then1 = true;
+      expect(r).to.have.property('valueZ');
+      r.value.should.equal(1);
+      should.not.exist(output.done);
+      output.then1 = new Date().getTime();
     },
     done : function(r){
-
-      it('should have value property that equals 1', function(){
-        expect(r).to.have.property('value');
-        r.value.should.equal(1);
-      })
-
-      it('should have run after then', function(){
-        output.then1.should.equal(1);
-      })
-
-      output.then1 = true;
+      expect(r).to.have.property('value');
+      r.value.should.equal(1);
+      should.exist(output.then1);
+      output.done = new Date().getTime();
     }
   };
-
-  describe('cast', function(){
-    it('should run then before done and return the correct result',
-    function(MochaTestRunnerDeferred){
-      fn(MochaTestRunnerDeferred);
+  describe('cast.js tests',function(){
+    it('',function(done){
+      fn(done);
     })
   })
 }

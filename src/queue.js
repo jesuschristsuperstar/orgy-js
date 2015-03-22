@@ -1,11 +1,13 @@
 var Config = require('./config.js');
+var DeferredSchema = require('./deferred.schema.js');
+var QueueSchema = require('./queue.schema.js');
 var _private = require('./queue.private.js');
 
 /**
  * Creates a new queue object.
  * If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
  * is resolved.
- * 
+ *
  * ### Queue usage example:
 
 ```
@@ -31,7 +33,7 @@ var q = Orgy.queue([
         if (value % div == 0) {
           return false;
         }
-      } 
+      }
       return true;
     });
     deferred.resolve(primes);
@@ -40,18 +42,18 @@ var q = Orgy.queue([
 
 ```
 
- * 
+ *
  * @memberof orgy
  * @function queue
- * 
- * @param {array} deps Array of dependencies that must be resolved before <b>resolver</b> option is called. 
+ *
+ * @param {array} deps Array of dependencies that must be resolved before <b>resolver</b> option is called.
  * @param {object} options  List of options:
  *  - {string} <b>id</b> Unique id of the object. Can be used with Orgy.get(id). Optional.
- *  
- *  - {number} <b>timeout</b> 
- *  Time in ms after which reject is called. Defaults to Orgy.config().timeout [5000]. 
- *  
- *  - {function(result,deferred)} <b>resolver</b> 
+ *
+ *  - {number} <b>timeout</b>
+ *  Time in ms after which reject is called. Defaults to Orgy.config().timeout [5000].
+ *
+ *  - {function(result,deferred)} <b>resolver</b>
  *  Callback function to execute after all dependencies have resolved. Arg1 is an array of the dependencies' resolved values. Arg2 is the deferred object. The queue will only resolve when Arg2.resolve() is called. If not, it will timeout to options.timeout || Orgy.config.timeout.
  *
  * @returns {object} queue
@@ -68,10 +70,10 @@ module.exports = function(deps,options){
   //DOES NOT ALREADY EXIST
   if(!Config.list[options.id]){
 
-    //CREATE NEW QUEUE OBJECT
-    var _o = _private.factory(options);
+    //Pass array of prototypes to queue factory
+    var _o = _private.factory([DeferredSchema,QueueSchema],[options]);
 
-    //ACTIVATE QUEUE
+    //Activate queue
     _o = _private.activate(_o,options,deps);
 
   }

@@ -13,8 +13,8 @@ module.exports = {
 * Creates a new deferred from a value and an id and automatically
 * resolves it.
 *
-* @memberof orgy 
-* 
+* @memberof orgy
+*
 * @param {string} id A unique id you give to the object
 * @param {mixed}  data The value that the object is assigned
 * @param {object} options Passable options
@@ -67,9 +67,9 @@ define : function(id,data,options){
 /**
  * Gets an exisiting deferred / queue object from global store.
  * Returns null if none found.
- * 
- * @memberof orgy 
- * 
+ *
+ * @memberof orgy
+ *
  * @param {string} id Id of deferred or queue object.
  * @returns {object} deferred | queue | null
  */
@@ -88,8 +88,8 @@ get : function(id){
  *
  * Can use a queue id, even for a queue that is yet to be created.
  *
- * @memberof orgy 
- * 
+ * @memberof orgy
+ *
  * @param {string|object} tgt Queue id / queue object
  * @param {array}  arr  Array of promise ids or dependency objects
  * @param {boolean} add  If true <b>ADD</b> array to queue dependencies, If false <b>REMOVE</b> array from queue dependencies
@@ -140,25 +140,25 @@ assign : function(tgt,arr,add){
 },
 
 /**
-* Documented in required file. 
+* Documented in required file.
 * @ignore
 */
 deferred : Deferred,
 
 /**
-* Documented in required file. 
+* Documented in required file.
 * @ignore
 */
 queue : Queue,
 
 /**
-* Documented in required file. 
+* Documented in required file.
 * @ignore
 */
 cast : Cast,
 
 /**
-* Documented in required file. 
+* Documented in required file.
 * @ignore
 */
 config : Config.config

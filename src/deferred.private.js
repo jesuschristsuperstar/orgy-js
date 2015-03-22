@@ -5,18 +5,16 @@ var File_loader = require('./file_loader.js');
 var _public = {};
 
 
-_public.factory = function(options){
+/**
+ * @param array options Prototype objects
+**/
+_public.factory = function(protoObjArr,optionsObjArr){
 
-    var DeferredSchema = require('./deferred.schema.js');
-    var _o = Config.naive_cloner([
-      DeferredSchema
-      ,options
-    ]);
+    //Merge array of objects into a single, shallow clone
+    var _o = Config.naive_cloner(protoObjArr,optionsObjArr);
 
-    //if no id, use backtrace origin
-    if(!options.id){
-      _o.id = Config.generate_id();
-    }
+    //if no id, generate one
+    _o.id = (!_o.id) ? Config.generate_id() : _o.id;
 
     return _o;
 };
@@ -26,7 +24,7 @@ _public.activate = function(obj){
 
     //MAKE SURE NAMING CONFLICT DOES NOT EXIST
     if(Config.list[obj.id] && !Config.list[obj.id].overwritable){
-        Config.debug("Tried to overwrite "+obj.id+" without overwrite permissions.");
+        Config.debug("Tried illegal overwrite of "+obj.id+".");
         return Config.list[obj.id];
     }
 
@@ -52,16 +50,13 @@ _public.settle = function(def){
         clearTimeout(def.timeout_id);
     }
 
-
     //Set state to resolved
     _public.set_state(def,1);
-
 
     //Call hook
     if(Config.settings.hooks.onSettle){
       Config.settings.hooks.onSettle(def);
     }
-
 
     //Add done as a callback to then chain completion.
     def.callbacks.then.hooks.onComplete.train.push(function(d2,itinerary,last){
@@ -74,9 +69,7 @@ _public.settle = function(def){
             ,def.caboose
             ,{pause_on_deferred : false}
         );
-
     });
-
 
     //Run then queue
     _public.run_train(
@@ -85,7 +78,6 @@ _public.settle = function(def){
         ,def.value
         ,{pause_on_deferred : true}
     );
-
 
     return def;
 };
@@ -645,13 +637,13 @@ _public.wrap_xhr = function(dep){
 
     var required = ["id","url"];
     for(var i in required){
-        if(!dep[required[i]]){
-            return Config.debug([
-                "File requests converted to promises require: " + required[i]
-                ,"Make sure you weren't expecting dependency to already have been resolved upstream."
-                ,dep
-            ]);
-        }
+      if(!dep[required[i]]){
+        return Config.debug([
+          "File requests converted to promises require: " + required[i]
+          ,"Make sure you weren't expecting dependency to already have been resolved upstream."
+          ,dep
+        ]);
+      }
     }
 
     //IF PROMISE FOR THIS URL ALREADY EXISTS, RETURN IT

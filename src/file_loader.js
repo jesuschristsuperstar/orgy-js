@@ -110,13 +110,8 @@ _public.native.css = function(path,deferred){
 _public.native.script = function(path,deferred){
   //local package
   if(path[0]==='.'){
-    var pathInfo = _private.native.prepare_path(path,deferred);
-
-    var r = require(pathInfo.path);
-
-    //Change back to original working dir
-    if(pathInfo.dirchanged) process.chdir(pathInfo.owd);
-
+    path = _private.native.prepare_path(path,deferred);
+    var r = require(path);
     //Autoresolve by default
     if(typeof deferred.autoresolve !== 'boolean'
     || deferred.autoresolve === true){
@@ -125,7 +120,6 @@ _public.native.script = function(path,deferred){
   }
   //remote script
   else{
-
     //Check that we have configured the environment to allow this,
     //as it represents a security threat and should only be used for debugging
     if(!Config.settings.debug_mode){_
@@ -146,59 +140,43 @@ _public.native.html = function(path,deferred){
 }
 
 _public.native.default = function(path,deferred){
-  _private.native.get(path,deferred,function(r){
-    deferred.resolve(r);
-  })
+  (function(deferred){
+    _private.native.get(path,deferred,function(r){
+      if(deferred.type === 'json'){
+        r = JSON.parse(r);
+      }
+      deferred.resolve(r);
+    })
+  })(deferred)
 }
 
 _private.native.get = function (path,deferred,callback){
+  path = _private.native.prepare_path(path);
   if(path[0] === '.'){
-
-    var pathInfo = _private.native.prepare_path(path,deferred);
-
     //file system
     var Fs = require('fs');
-    Fs.readFile(pathInfo.path, function (err, data) {
+    Fs.readFile(path, "utf-8", function (err, data) {
       if (err) throw err;
       callback(data);
     });
-
-    //Change back to original working dir
-    if(pathInfo.dirchanged) process.chdir(pathInfo.owd);
   }
   else{
     //http
-    var Http = require('http');
-    Http.get({ path : path}, function (res) {
-      var data = '';
-      res.on('data', function (buf) {
-          data += buf;
-      });
-      res.on('end', function () {
-          callback(data);
-      });
-    });
+    var request = require('request');
+    request(path,function(error,response,body){
+      if (!error && response.statusCode == 200) {
+        callback(body);
+      }
+      else{
+        throw error;
+      }
+    })
   }
 }
 
-_private.native.prepare_path = function(path,deferred){
-  var owd = process.cwd(), //keep track of starting point so we can return
-      cwd = (deferred.cwd) ? deferred.cwd :
-            ((Config.settings.cwd) ? Config.settings.cwd : false)
-  ,dirchanged = false;
-
-  if(cwd){
-    process.chdir(cwd);
-    dirchanged = true;
-  }
-  else{
-    cwd = owd;
-  }
-
-  return {
-    owd : owd
-    ,path : cwd+'/'+path
-    ,dirchanged : dirchanged
-  };
+_private.native.prepare_path = function(p){
+  p = (p[0] !== '/' && p[0] !== '.')
+  ? ((p[0].indexOf("http")!==0) ? './' + p : p) : p;
+  return p;
 }
 module.exports = _public;

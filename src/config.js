@@ -65,14 +65,18 @@ _public.settings = {
 
 /**
  * Options you wish to pass to set the global configuration
- * 
+ *
  * @memberof orgy
  * @function config
- * 
- * @param {object} obj List of options: 
- *  - {number} <b>timeout</b>
- *  - {string} <b>cwd</b> Sets current working directory. Server side scripts only.
- *  - {boolean} <b>debug_mode</b>
+ *
+ * @param {object} obj List of options:
+
+  - {number} <b>timeout</b>
+
+  - {string} <b>cwd</b> Sets current working directory. Server side scripts only.
+
+  - {boolean} <b>debug_mode</b>
+
  * @returns {object} configuration settings
  */
 _public.config = function(obj){
@@ -96,10 +100,7 @@ _public.config = function(obj){
  */
 _public.debug = function(msg,def){
 
-    var msgs;
-    if(msg instanceof Array){
-        msgs = msg.join("\n");
-    }
+    var msgs = (msg instanceof Array) ? msg.join("\n") : [msg];
 
     var e = new Error(msgs);
     console.log(e.stack);
@@ -120,40 +121,54 @@ _public.debug = function(msg,def){
 
 
 /**
- * Makes a shallow copy of an array.
- * Makes a copy of an object so long as it is JSON
+ * Take an array of prototype objects and an array of property objects,
+ * merges each, and returns a shallow copy.
  *
- * @param {array} donors /array of donor objects,
- *                overwritten from right to left
- * @returns {object}
+ * @param {array} protoObjArr Array of prototype objects which are overwritten from right to left
+ * @param {array} propsObjArr Array of desired property objects which are overwritten from right to left
+ * @returns {object} object
  */
-_public.naive_cloner = function(donors){
-    var o = {};
-    for(var a in donors){
-        for(var b in donors[a]){
-            if(donors[a][b] instanceof Array){
-                o[b] = donors[a][b].slice(0);
-            }
-            else if(typeof donors[a][b] === 'object'){
-              try{
-                o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+_public.naive_cloner = function(protoObjArr,propsObjArr){
+
+    function merge(donors){
+      var o = {};
+      for(var a in donors){
+          for(var b in donors[a]){
+              if(donors[a][b] instanceof Array){
+                  o[b] = donors[a][b].slice(0);
               }
-              catch(e){
-                console.error(e);
-                debugger;
+              else if(typeof donors[a][b] === 'object'){
+                try{
+                  o[b] = JSON.parse(JSON.stringify(donors[a][b]));
+                }
+                catch(e){
+                  console.error(e);
+                  debugger;
+                }
               }
-            }
-            else{
-                o[b] = donors[a][b];
-            }
-        }
+              else{
+                  o[b] = donors[a][b];
+              }
+          }
+      }
+      return o;
     }
-    return o;
+
+    var proto = merge(protoObjArr),
+        props = merge(propsObjArr);
+
+    //@todo consider manually setting the prototype instead
+    var finalObject = Object.create(proto);
+    for(var i in props){
+      finalObject[i] = props[i];
+    }
+
+    return finalObject;
 };
 
 
 _public.generate_id = function(){
-  return new Date().getTime() + '-' + (++this.i);  
+  return new Date().getTime() + '-' + (++this.i);
 }
 
 

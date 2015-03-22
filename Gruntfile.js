@@ -5,7 +5,7 @@
 
 var brfs = require('brfs'),
     babelify = require('babelify'),
-    _ignore = '--ignore=http --ignore=fs --ignore=vm --ignore=process --ignore=lodash';
+    _ignore = '--ignore=path --ignore=request --ignore=http --ignore=fs --ignore=vm --ignore=process --ignore=lodash';
 
 module.exports = function(grunt) {
 
@@ -103,7 +103,7 @@ module.exports = function(grunt) {
                 configFile: 'karma.conf.js',
                 singleRun: true,
                 //browsers: ['Chrome',"Firefox","Opera"],
-                browsers: ["Firefox"],
+                browsers: ["Chrome"],
                 //browsers: ["PhantomJS"]
                 //urlRoot: '/base/demos',
                 proxies: {
@@ -127,9 +127,12 @@ module.exports = function(grunt) {
         mochaTest: {
             test: {
               options: {
+                ui : 'bdd',
                 reporter: 'spec',
               },
-              src: ['test/mocha/*.js']
+              //We require all our tests in the conf file, so we
+              //can do some pre-test functions before they are run.
+              src: ['test/mocha.conf.js']
             }
         },
 
@@ -165,7 +168,7 @@ module.exports = function(grunt) {
       'shell:browserify-prod-standalone',
       'shell:browserify-devel-standalone',
       'shell:browserify-prod-bundle',
-      'shell:browserify-prod-bundle',
+      'shell:browserify-devel-bundle',
       'uglify',
       'shell:cleanup',
       'jsdoc'

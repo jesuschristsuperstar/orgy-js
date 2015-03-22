@@ -4,23 +4,6 @@ var _proto = require('./deferred.private.js');
 var _public = Object.create(_proto,{});
 
 
-_public.factory = function(options){
-
-  //CREATE A NEW QUEUE OBJECT
-  var _o = Config.naive_cloner([
-    QueueSchema
-    ,options
-  ]);
-
-  //if no id, use backtrace origin
-  if(!options.id){
-    _o.id = Config.generate_id();
-  }
-
-  return _o;
-};
-
-
 /**
  * Activates a queue object.
  *
