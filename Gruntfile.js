@@ -177,8 +177,13 @@ module.exports = function(grunt) {
       'execute:mocha-after',
       'karma:dsk'
     ]);
-    grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
-
+    grunt.registerTask('test-travis', [
+      'execute:mocha-before',
+      'mochaTest:test',
+      'execute:mocha-after',
+      'karma:travis'
+    ]);
+  
     grunt.registerTask('t', ['test-dsk']);
     grunt.registerTask('k', ['karma:dsk']);
     grunt.registerTask('m', ['mochaTest:test']);
