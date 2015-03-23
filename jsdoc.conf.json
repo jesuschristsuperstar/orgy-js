@@ -1,0 +1,28 @@
+{
+	"tags"      : {
+		"allowUnknownTags" : true
+	},
+	"plugins"   : ["plugins/markdown"],
+
+	"templates" : {
+		"cleverLinks"           : false,
+		"monospaceLinks"        : false,
+		"dateFormat"            : "ddd MMM Do YYYY",
+		"outputSourceFiles"     : true,
+		"outputSourcePath"      : true,
+		"systemName"            : "Orgy. Deferreds, Queues, and Fun.",
+    "footer"                : "",
+    "copyright"             : "Copyright © 2015 Tecfu",
+		"navType"               : "vertical",
+		"theme"                 : "cerulean",
+		"linenums"              : true,
+		"collapseSymbols"       : false,
+		"inverseNav"            : false,
+		"highlightTutorialCode" : true,
+		"protocol": "fred://"
+	},
+	"markdown"  : {
+		"parser"   : "gfm",
+		"hardwrap" : true
+	}
+}
