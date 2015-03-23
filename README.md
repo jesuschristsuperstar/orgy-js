@@ -133,8 +133,7 @@ var q = Orgy.get("q1");
 - Test / deploy devel branch, which is browserified and refactored
 - Add optional retry configuration setting when remote requests rejected due non 200 HTTP response?
 - Extend deferred, queue from native [ES6](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)    promises
-- Improve async backtraces
-- Fix unit tests
+- Create unit tests for assign, define
 
 ## More examples:
 
