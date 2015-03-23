@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Orgy-js : Javascript promises library that works both with nodejs and with browsers. ">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Orgy-js</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/tecfu/orgy-js">View on GitHub</a>
+
+          <h1 id="project_title">Orgy-js</h1>
+          <h2 id="project_tagline">Javascript promises library that works both with nodejs and with browsers. </h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/tecfu/orgy-js/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/tecfu/orgy-js/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><a href="https://travis-ci.org/tecfu/orgy-js"><img src="https://travis-ci.org/tecfu/orgy-js.svg?branch=master" alt="Build Status"></a> <a href="https://david-dm.org/tecfu/orgy-js"><img src="https://david-dm.org/tecfu/orgy-js.png" alt="Dependency Status"></a> <a href="http://badge.fury.io/js/orgy"><img src="https://badge.fury.io/js/orgy.svg" alt="NPM version"></a> <a href="http://gruntjs.com/"><img src="https://cdn.gruntjs.com/builtwith.png" alt="Built with Grunt"></a></p>
+
+<p>Deferred / Queue library that yields to no spec.  </p>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation:</h2>
+
+<p><a href="orgy.html" title="API Reference">See the API reference here.</a></p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features:</h2>
+
+<ul>
+<li><p>Browser and <a href="https://nodejs.org/">nodej</a> / <a href="https://iojs.org/en/index.html">iojs</a> compatible.</p></li>
+<li>
+<p>Handles a variety of dependency types and automatically converts them into promises.</p>
+
+<ul>
+<li>javascript files</li>
+<li>css files</li>
+<li>DOMContentLoaded, window.load</li>
+<li>timers</li>
+<li>all other file types handled as text</li>
+</ul>
+</li>
+<li><p>Creates deferreds or queues.</p></li>
+<li><p>Queues can be held back from settling after their dependencies have resolved by a resolver method.</p></li>
+<li><p>When then() returns a value that value is passed down the execution chain.</p></li>
+<li><p>When then() returns an unsettled instance (deferred/queue), further execution on the callback chain is halted until that instance resolves. The deferred is then passed to the next tick of the callback chain, where its return value can be accessed.</p></li>
+<li><p>When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser.</p></li>
+</ul>
+
+<p>For example:</p>
+
+<pre><code>Orgy.config({
+    document : (function(){
+        var cheerio = require('cheerio');
+        return global.$ = cheerio.load("&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;");
+    }())
+});
+</code></pre>
+
+<h2>
+<a id="nodejs-install" class="anchor" href="#nodejs-install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Nodejs install:</h2>
+
+<pre><code>npm install orgy
+</code></pre>
+
+<h2>
+<a id="browser-install" class="anchor" href="#browser-install" aria-hidden="true"><span class="octicon octicon-link"></span></a>Browser Install:</h2>
+
+<pre><code>&lt;script src="/dist/orgy.min.js"&gt;&lt;/script&gt;
+</code></pre>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage:</h2>
+
+<ul>
+<li>Wait for an array of dependencies to resolve prior to executing a callback:</li>
+</ul>
+
+<pre><code>var Orgy = require("orgy");
+
+Orgy.config({
+    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+    document : (function(){
+        var cheerio = require('cheerio');
+        return global.$ = cheerio.load("&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;");
+    }())
+});
+
+
+var q = Orgy.queue([
+    {
+        type : "json"
+        ,url : "data/data1.json"
+    },
+    {
+        type : "json"
+        ,url : "data/data2.json"
+    },
+    {
+        type : "css"
+        ,url : "data/sample.css"
+    }
+],{
+  id : "q1" //Optional. Id used to get instance outside of local scope.
+            //i.e. var q = Orgy.get("q1")
+});
+
+
+//Done can be called async and out of order.
+setTimeout(function(){
+  q.done(function(r,deferred,last){
+    console.log(last); // 2
+  });
+},500)
+
+
+/**
+ * If a then function returns a value, that value is passed down to any
+ * subsequent then() or done() functions.
+*/
+q.then(function(r){
+
+    //Modify some DOM content
+    $("body").append("hey!");
+
+    console.log(r); //Dependency values.
+    return 1;
+});
+
+
+q.then(function(r,deferred,last){
+
+    //Get modified DOM content
+    console.log($("body").html()); //hey!
+
+    console.log(last); // 1
+    return 2;
+});
+
+
+/**
+ * To reference the queue above outside of the local scope:
+ *
+*/
+var q = Orgy.get("q1");
+
+</code></pre>
+
+<h2>
+<a id="todo" class="anchor" href="#todo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Todo:</h2>
+
+<ul>
+<li>Test / deploy devel branch, which is browserified and refactored</li>
+<li>Add optional retry configuration setting when remote requests rejected due non 200 HTTP response?</li>
+<li>Extend deferred, queue from native <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">ES6</a>    promises</li>
+<li>Create unit tests for assign, define</li>
+</ul>
+
+<h2>
+<a id="more-examples" class="anchor" href="#more-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>More examples:</h2>
+
+<p><a href="../test">Here</a>.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Orgy-js maintained by <a href="https://github.com/tecfu">tecfu</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
