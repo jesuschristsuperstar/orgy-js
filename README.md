@@ -6,7 +6,7 @@ Orgy
 Deferred / Queue library that yields to no spec.  
 
 ## Documentation:
-[See the API reference here.](orgy.html "API Reference")
+[See the API reference here.](/docs "API Reference")
 
 ## Features:
 
@@ -137,4 +137,4 @@ var q = Orgy.get("q1");
 
 ## More examples:
 
-[Here](../test).
+[Here](https://github.com/tecfu/orgy-js/tree/master/test).
