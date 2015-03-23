@@ -59,6 +59,20 @@ module.exports = function(grunt) {
           }
         },
 
+        execute : {
+          "mocha-before": {
+            call : function(){
+              global.original_working_directory = process.cwd();
+            }
+          },
+          "mocha-after" : {
+            call : function(){
+              process.chdir(global.original_working_directory);
+              console.log("Changed cwd back to " + process.cwd());
+            }
+          }
+        },
+
         uglify: {
             "min": {
                 options: {
@@ -97,7 +111,6 @@ module.exports = function(grunt) {
           }
         },
 
-
         karma: {
             dsk: {
                 configFile: 'karma.conf.js',
@@ -132,7 +145,7 @@ module.exports = function(grunt) {
               },
               //We require all our tests in the conf file, so we
               //can do some pre-test functions before they are run.
-              src: ['test/mocha.conf.js']
+              src: ['./test/mocha.conf.js']
             }
         },
 
@@ -152,12 +165,18 @@ module.exports = function(grunt) {
     });
 
     grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-execute');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-jsdoc');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
-    grunt.registerTask('test-dsk', ['mochaTest:test','karma:dsk']);
+    grunt.registerTask('test-dsk', [
+      'execute:mocha-before',
+      'mochaTest:test',
+      'execute:mocha-after',
+      'karma:dsk'
+    ]);
     grunt.registerTask('test-travis', ['mochaTest:test','karma:travis']);
 
     grunt.registerTask('t', ['test-dsk']);

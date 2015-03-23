@@ -56,7 +56,7 @@ if(typeof describe !== 'undefined'){
   var tests = {
     then1 : function(r){
       if(config.mode === 'browser'){
-        expect(r).to.have.property('valueZ');
+        expect(r).to.have.property('value');
         r.value.should.equal(1);
       }
       else{

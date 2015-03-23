@@ -1,26 +1,20 @@
+var globule = require("globule");
 global.jsdom = require("jsdom").jsdom;
 global.doc = jsdom("starting body content");
 global.window = doc.defaultView;
 global.document = global.window.document;
 global.$ = require("jquery");
-global.Orgy = require("../src/main.js");
 global.chai = require("chai");
 global.expect = chai.expect;
 global.assert = chai.assert;
 global.should = chai.should();
+global.Orgy = require("./../src/main.js");
 
-//change working directory
-process.chdir(__dirname);
+process.chdir("./test");
 
-//require("./deferred");
-//require("./queue");
-//require("./chaining");
-require("./cast");
-
-//Require all the files in the current directory.
-//We do this because we want to use the same files to run
-//node and browser tests, and thus the same filepaths in the test dependencies
-/*
-var requireDirectory = require('require-directory'),
-  hash = requireDirectory(__dirname, {recurse: false});
-*/
+//run all tests in top level of current directory
+var result = globule.find(["*.js","!mocha.conf.js"]);
+console.warn("Found "+result.length+" files.");
+result.forEach(function(x){
+  require("./"+x);
+})
