@@ -12,9 +12,9 @@ global.should = chai.should();
 //change working directory
 process.chdir(__dirname);
 
-require("./deferred");
-require("./queue");
-require("./chaining");
+//require("./deferred");
+//require("./queue");
+//require("./chaining");
 require("./cast");
 
 //Require all the files in the current directory.

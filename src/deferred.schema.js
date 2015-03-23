@@ -214,8 +214,12 @@ _public.then = function(fn,rejector){
 
   switch(true){
 
-    //An error was previously thrown, bail out
+    //An error was previously thrown, add rejector & bail out
     case(this.state === 2):
+debugger;
+      if(typeof rejector === 'function'){
+        this.callbacks.reject.train.push(rejector);
+      }
       break;
 
     //Execution chain already finished. Bail out.
