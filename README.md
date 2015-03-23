@@ -5,8 +5,8 @@ Orgy
 
 Deferred / Queue library that yields to no spec.  
 
-## API Reference:
-[Documentation here.](orgy.html "Docs")
+## Documentation:
+[See the API reference here.](orgy.html "API Reference")
 
 ## Features:
 

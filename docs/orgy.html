@@ -10,7 +10,7 @@
 	<![endif]-->
 	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
 
-	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
 
 </head>
 
@@ -31,18 +31,12 @@
 							<a href="orgy.html">orgy</a>
 						</li>
 						
-
-					</ul>
-				</li>
-				
-				<li class="dropdown">
-					<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b
-						class="caret"></b></a>
-
-					<ul class="dropdown-menu ">
+						<li>
+							<a href="deferred.html">orgy/deferred</a>
+						</li>
 						
 						<li>
-							<a href="global.html#Config">Config</a>
+							<a href="queue.html">orgy/queue</a>
 						</li>
 						
 
@@ -288,7 +282,7 @@
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-99">line 99</a>
+				 <a href="main.js.html#sunlight-1-line-88">line 88</a>
 			</li>
 		</ul>
 	</dd>
@@ -671,7 +665,13 @@
     
     
     <div class="description">
-        <p>Creates a new deferred object.</p>
+        <p>Creates a new deferred object or if one exists by the same id,
+returns it.</p>
+<p> <b>Usage:</b></p>
+<pre><code> var Orgy = require(&quot;orgy&quot;),
+        q = Orgy.deferred({
+          id : &quot;q1&quot;
+        });</code></pre>
     </div>
     
 
@@ -721,12 +721,20 @@
 
             
 
-            <td class="description last"><p>List of options:
- - {string} <b>id</b>  Unique id of the object. Can be used with Orgy.get(id). Optional.</p>
+            <td class="description last"><p>List of options:</p>
 <ul>
-<li>{number} <b>timeout</b> Time in ms after which reject is called. Defaults to Orgy.config().timeout [5000].
-Note the timeout is only affected by dependencies and/or the resolver callback.
-Then,done delays will not flag a timeout because they are called after the instance is considered resolved.</li>
+<li><b>id</b> {string} Unique id of the object.<ul>
+<li>Can be used with Orgy.get(id).</li>
+<li>Optional.</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><b>timeout</b> {number} Time in ms after which reject is called if not yet resolved.<ul>
+<li>Defaults to Orgy.config().timeout.</li>
+<li>Delays in object.then() and object.done() won't not trigger this, because those methods run after resolve.</li>
+</ul>
+</li>
 </ul></td>
         </tr>
 
@@ -764,7 +772,7 @@ Then,done delays will not flag a timeout because they are called after the insta
 		<ul class="dummy">
 			<li>
 				<a href="deferred.js.html">deferred.js</a>,
-				 <a href="deferred.js.html#sunlight-1-line-5">line 5</a>
+				 <a href="deferred.js.html#sunlight-1-line-7">line 7</a>
 			</li>
 		</ul>
 	</dd>
@@ -791,7 +799,7 @@ Then,done delays will not flag a timeout because they are called after the insta
     
             
 <div class="param-desc">
-    <p>deferred</p>
+    <p><a href="deferred.html">orgy/deferred</a></p>
 </div>
 
 
@@ -959,7 +967,7 @@ resolves it.</p>
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-23">line 23</a>
+				 <a href="main.js.html#sunlight-1-line-10">line 10</a>
 			</li>
 		</ul>
 	</dd>
@@ -1108,7 +1116,7 @@ Returns null if none found.</p>
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-76">line 76</a>
+				 <a href="main.js.html#sunlight-1-line-68">line 68</a>
 			</li>
 		</ul>
 	</dd>
@@ -1172,35 +1180,36 @@ Returns null if none found.</p>
         <p>Creates a new queue object.
 If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
 is resolved.</p>
-<h3>Queue usage example:</h3>
-<pre><code>var q = Orgy.queue([
-  {
-    comment : &quot;This is a nested queue created on the fly.&quot;
-    ,type : &quot;json&quot;
-    ,url : &quot;/api/json/somnums&quot;
-    ,resolver : function(r,deferred){
-      //Filter out even numbers
-      var odd = arr.filter(function(val) {
-        return 0 != val % 2;
-      });
-      deferred.resolve(odd);
-    }
-  }
-],{
-  id : &quot;q1&quot;,
-  resolver : function(r,deferred){
-    var primes = r[0].filter(function(val) {
-      high = Math.floor(Math.sqrt(val)) + 1;
-      for (var div = 2; div &lt;= high; div++) {
-        if (value % div == 0) {
-          return false;
-        }
-      }
-      return true;
-    });
-    deferred.resolve(primes);
-  })
-});</code></pre>
+<p> <b>Usage:</b></p>
+<pre><code> var Orgy = require(&quot;orgy&quot;),
+        q = Orgy.queue([
+           {
+             comment : &quot;This is a nested queue created on the fly.&quot;
+             ,type : &quot;json&quot;
+             ,url : &quot;/api/json/somnums&quot;
+             ,resolver : function(r,deferred){
+               //Filter out even numbers
+               var odd = arr.filter(function(val) {
+                 return 0 != val % 2;
+               });
+               deferred.resolve(odd);
+             }
+           }
+         ],{
+           id : &quot;q1&quot;,
+           resolver : function(r,deferred){
+             var primes = r[0].filter(function(val) {
+               high = Math.floor(Math.sqrt(val)) + 1;
+               for (var div = 2; div &lt;= high; div++) {
+                 if (value % div == 0) {
+                   return false;
+                 }
+               }
+               return true;
+             });
+             deferred.resolve(primes);
+           })
+         });</code></pre>
     </div>
     
 
@@ -1273,14 +1282,28 @@ is resolved.</p>
 
             
 
-            <td class="description last"><p>List of options:
- - {string} <b>id</b> Unique id of the object. Can be used with Orgy.get(id). Optional.</p>
+            <td class="description last"><p>List of options:</p>
 <ul>
-<li><p>{number} <b>timeout</b>
-Time in ms after which reject is called. Defaults to Orgy.config().timeout [5000].</p>
+<li><b>id</b> {string} Unique id of the object.<ul>
+<li>Can be used with Orgy.get(id).</li>
+<li>Optional.</li>
+</ul>
 </li>
-<li><p>{function(result,deferred)} <b>resolver</b>
-Callback function to execute after all dependencies have resolved. Arg1 is an array of the dependencies' resolved values. Arg2 is the deferred object. The queue will only resolve when Arg2.resolve() is called. If not, it will timeout to options.timeout || Orgy.config.timeout.</p>
+</ul>
+<ul>
+<li><b>timeout</b> {number} Time in ms after which reject is called.<ul>
+<li>Defaults to Orgy.config().timeout [5000].</li>
+<li>Note the timeout is only affected by dependencies and/or the resolver callback.</li>
+<li>Then,done delays will not flag a timeout because they are called after the instance is considered resolved.</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.<ul>
+<li><i>result</i> is an array of the queue's resolved dependency values.</li>
+<li><i>deferred</i> is the queue object.</li>
+<li>The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.</li>
+</ul>
 </li>
 </ul></td>
         </tr>
@@ -1319,7 +1342,7 @@ Callback function to execute after all dependencies have resolved. Arg1 is an ar
 		<ul class="dummy">
 			<li>
 				<a href="queue.js.html">queue.js</a>,
-				 <a href="queue.js.html#sunlight-1-line-6">line 6</a>
+				 <a href="queue.js.html#sunlight-1-line-8">line 8</a>
 			</li>
 		</ul>
 	</dd>
@@ -1346,7 +1369,7 @@ Callback function to execute after all dependencies have resolved. Arg1 is an ar
     
             
 <div class="param-desc">
-    <p>queue</p>
+    <p><a href="queue.html">orgy/queue</a></p>
 </div>
 
 
@@ -1395,7 +1418,7 @@ Callback function to execute after all dependencies have resolved. Arg1 is an ar
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a>
-		on Sun Mar 22nd 2015 using the <a
+		on Mon Mar 23rd 2015 using the <a
 			href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>

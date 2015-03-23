@@ -1,7 +1,8 @@
 /**
  * Default properties for all deferred objects.
- *
+ * @ignore
  */
+
 var Config = require('./config.js');
 var _public = {};
 
@@ -108,10 +109,13 @@ _public.list = 1;
 
 
 /**
- * Resolves a deferred.
+ * Resolves a deferred/queue.
  *
- * @param {mixed} value
- * @returns {void}
+ * @memberof orgy/deferred
+ * @function orgy/deferred#resolve
+ *
+ * @param {mixed} value Resolver value.
+ * @returns {object} deferred/queue
  */
 _public.resolve = function(value){
 
@@ -171,6 +175,15 @@ _public.resolve = function(value){
 };
 
 
+/**
+ * Rejects a deferred/queue
+ *
+ * @memberof orgy/deferred
+ * @function orgy/deferred#reject
+ *
+ * @param {string|array} err Error information.
+ * @return {object} deferred/queue
+ */
 _public.reject = function(err){
 
   var _private = require('./deferred.private.js');
@@ -210,6 +223,32 @@ _public.reject = function(err){
 };
 
 
+/**
+ * Chain method
+
+ <b>Usage:</b>
+ ```
+ var Orgy = require("orgy"),
+        q = Orgy.deferred({
+          id : "q1"
+        });
+
+ //Resolve the deferred
+ q.resolve("Some value.");
+
+ q.then(function(r){
+  console.log(r); //Some value.
+ })
+
+ ```
+
+ * @memberof orgy/deferred
+ * @function orgy/deferred#then
+ *
+ * @param {function} fn Callback function
+ * @param {function} rejector Rejection callback function
+ * @return {object} deferred/queue
+ */
 _public.then = function(fn,rejector){
 
   switch(true){
@@ -253,6 +292,16 @@ debugger;
 };
 
 
+/**
+ * Done callback.
+ *
+ * @memberof orgy/deferred
+ * @function orgy/deferred#done
+ *
+ * @param {function} fn Callback function
+ * @param {function} rejector Rejection callback function
+ * @returns {object} deferred/queue
+ */
 _public.done = function(fn,rejector){
 
   var _private = require('./deferred.private.js');

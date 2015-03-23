@@ -14,6 +14,7 @@ module.exports = {
 * resolves it.
 *
 * @memberof orgy
+* @function define
 *
 * @param {string} id A unique id you give to the object
 * @param {mixed}  data The value that the object is assigned
@@ -69,6 +70,7 @@ define : function(id,data,options){
  * Returns null if none found.
  *
  * @memberof orgy
+ * @function get
  *
  * @param {string} id Id of deferred or queue object.
  * @returns {object} deferred | queue | null
@@ -89,6 +91,7 @@ get : function(id){
  * Can use a queue id, even for a queue that is yet to be created.
  *
  * @memberof orgy
+ * @function assign
  *
  * @param {string|object} tgt Queue id / queue object
  * @param {array}  arr  Array of promise ids or dependency objects

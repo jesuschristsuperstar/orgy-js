@@ -3,18 +3,36 @@ var _private = require('./deferred.private.js');
 var DeferredSchema = require('./deferred.schema.js');
 
 /**
- * Creates a new deferred object.
+ * @namespace orgy/deferred
+*/
+
+/**
+ * Creates a new deferred object or if one exists by the same id,
+ * returns it.
+
+ <b>Usage:</b>
+ ```
+ var Orgy = require("orgy"),
+        q = Orgy.deferred({
+          id : "q1"
+        });
+ ```
+
  * @memberof orgy
  * @function deferred
  *
  * @param {object} options List of options:
- *  - {string} <b>id</b>  Unique id of the object. Can be used with Orgy.get(id). Optional.
  *
- *  - {number} <b>timeout</b> Time in ms after which reject is called. Defaults to Orgy.config().timeout [5000].
- *  Note the timeout is only affected by dependencies and/or the resolver callback.
- *  Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+ *  - <b>id</b> {string} Unique id of the object.
+ *   - Can be used with Orgy.get(id).
+ *   - Optional.
  *
- * @returns {object} deferred
+ *
+ *  - <b>timeout</b> {number} Time in ms after which reject is called if not yet resolved.
+     - Defaults to Orgy.config().timeout.
+     - Delays in object.then() and object.done() won't not trigger this, because those methods run after resolve.
+ *
+ * @returns {object} {@link orgy/deferred}
  */
 module.exports = function(options){
 
