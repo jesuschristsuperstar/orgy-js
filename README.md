@@ -6,7 +6,7 @@ Orgy
 Deferred / Queue library that yields to no spec.  
 
 ## Documentation:
-[See the API reference here.](http://tecfu.github.io/orgy-js/docs "API Reference")
+[See the Documentation here.](http://tecfu.github.io/orgy-js/docs "API Reference")
 
 ## Features:
 
