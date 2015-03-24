@@ -18,7 +18,9 @@ module.exports = {
 *
 * @param {string} id A unique id you give to the object
 * @param {mixed}  data The value that the object is assigned
-* @param {object} options Passable options
+* @param {object} options 
+- <b>dependencies</b> {array}
+- <b>resolver</b> {function(<i>assignedValue</i>,<i>deferred</i>}
 * @returns {object} resolved deferred
 */
 define : function(id,data,options){

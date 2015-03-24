@@ -251,11 +251,12 @@ _public.reject = function(err){
  */
 _public.then = function(fn,rejector){
 
+  var _private = require('./deferred.private.js');
+
   switch(true){
 
     //An error was previously thrown, add rejector & bail out
     case(this.state === 2):
-debugger;
       if(typeof rejector === 'function'){
         this.callbacks.reject.train.push(rejector);
       }
@@ -277,7 +278,7 @@ debugger;
 
       //Settled, run train now
       if(this.settled === 1 && this.state === 1 && !this.done_fired){
-        this.run_train(
+        _private.run_train(
           this
           ,this.callbacks.then
           ,this.caboose
