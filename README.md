@@ -3,7 +3,7 @@ Orgy
 
 [![Build Status](https://travis-ci.org/tecfu/orgy-js.svg?branch=master)](https://travis-ci.org/tecfu/orgy-js) [![Dependency Status](https://david-dm.org/tecfu/orgy-js.png)](https://david-dm.org/tecfu/orgy-js) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
 
-Deferred / Queue library that yields to no spec.  
+Promises library that supports queues of file requests.
 
 ## Documentation:
 [View the API reference here.](http://tecfu.github.io/orgy-js/docs/orgy.html "API Reference")
