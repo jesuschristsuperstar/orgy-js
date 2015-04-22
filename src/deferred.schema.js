@@ -35,10 +35,10 @@ _public.done_fired = 0;
 _public.timeout_id = null;
 
 _public.callback_states = {
-  resolve : 0
-  ,then : 0
-  ,done : 0
-  ,reject : 0
+	resolve : 0
+	,then : 0
+	,done : 0
+	,reject : 0
 };
 
 /**
@@ -53,23 +53,23 @@ _public.callback_states = {
  */
 _public.callbacks = (function(){
 
-  var o = {};
+	var o = {};
 
-  for(var i in _public.callback_states){
-    o[i] = {
-      train : []
-      ,hooks : {
-        onBefore : {
-          train : []
-        }
-        ,onComplete : {
-          train : []
-        }
-      }
-    };
-  }
+	for(var i in _public.callback_states){
+		o[i] = {
+			train : []
+			,hooks : {
+				onBefore : {
+					train : []
+				}
+				,onComplete : {
+					train : []
+				}
+			}
+		};
+	}
 
-  return o;
+	return o;
 })();
 
 //PROMISE HAS OBSERVERS BUT DOES NOT OBSERVE OTHERS
@@ -85,7 +85,7 @@ _public.overwritable = 0;
  * Default timeout for a deferred
  * @type number
  */
-_public.timeout = Config.settings.timeout;
+_public.timeout = Config.config().timeout;
 
 /**
  * REMOTE
@@ -119,59 +119,59 @@ _public.list = 1;
  */
 _public.resolve = function(value){
 
-  var _private = require('./deferred.private.js');
+	var _private = require('./deferred.private.js');
 
-  if(this.settled === 1){
-    Config.debug([
-      this.id + " can't resolve."
-      ,"Only unsettled deferreds are resolvable."
-    ]);
-  }
+	if(this.settled === 1){
+		Config.debug([
+			this.id + " can't resolve."
+			,"Only unsettled deferreds are resolvable."
+		]);
+	}
 
-  //SET STATE TO SETTLEMENT IN PROGRESS
-  _private.set_state(this,-1);
+	//SET STATE TO SETTLEMENT IN PROGRESS
+	_private.set_state(this,-1);
 
-  //SET VALUE
-  this.value = value;
+	//SET VALUE
+	this.value = value;
 
-  //RUN RESOLVER BEFORE PROCEEDING
-  //EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
-  if(!this.resolver_fired && typeof this.resolver === 'function'){
+	//RUN RESOLVER BEFORE PROCEEDING
+	//EVEN IF THERE IS NO RESOLVER, SET IT TO FIRED WHEN CALLED
+	if(!this.resolver_fired && typeof this.resolver === 'function'){
 
-    this.resolver_fired = 1;
+		this.resolver_fired = 1;
 
-    //Add resolver to resolve train
-    try{
-      this.callbacks.resolve.train.push(function(){
-        this.resolver(value,this);
-      });
-    }
-    catch(e){
-      debugger;
-    }
-  }
-  else{
+		//Add resolver to resolve train
+		try{
+			this.callbacks.resolve.train.push(function(){
+				this.resolver(value,this);
+			});
+		}
+		catch(e){
+			debugger;
+		}
+	}
+	else{
 
-    this.resolver_fired = 1;
+		this.resolver_fired = 1;
 
-    //Add settle to resolve train
-    //Always settle before all other complete callbacks
-    this.callbacks.resolve.hooks.onComplete.train.unshift(function(){
-      _private.settle(this);
-    });
-  }
+		//Add settle to resolve train
+		//Always settle before all other complete callbacks
+		this.callbacks.resolve.hooks.onComplete.train.unshift(function(){
+			_private.settle(this);
+		});
+	}
 
-  //Run resolve
-  _private.run_train(
-    this
-    ,this.callbacks.resolve
-    ,this.value
-    ,{pause_on_deferred : false}
-  );
+	//Run resolve
+	_private.run_train(
+		this
+		,this.callbacks.resolve
+		,this.value
+		,{pause_on_deferred : false}
+	);
 
-  //resolver is expected to call resolve again
-  //and that will get us past this point
-  return this;
+	//resolver is expected to call resolve again
+	//and that will get us past this point
+	return this;
 };
 
 
@@ -186,40 +186,40 @@ _public.resolve = function(value){
  */
 _public.reject = function(err){
 
-  var _private = require('./deferred.private.js');
+	var _private = require('./deferred.private.js');
 
-  if(!(err instanceof Array)){
-    err = [err];
-  }
+	if(!(err instanceof Array)){
+		err = [err];
+	}
 
-  var msg = "Rejected "+this.model+": '"+this.id+"'."
+	var msg = "Rejected "+this.model+": '"+this.id+"'."
 
-  if(Config.settings.debug_mode){
-    err.unshift(msg);
-    Config.debug(err,this);
-  }
-  else{
-    msg = msg + " Turn on debug mode for more info.";
-    console.warn(msg);
-  }
+	if(Config.settings.debug_mode){
+		err.unshift(msg);
+		Config.debug(err,this);
+	}
+	else{
+		msg = msg + " Turn on debug mode for more info.";
+		console.warn(msg);
+	}
 
-  //Remove auto timeout timer
-  if(this.timeout_id){
-    clearTimeout(this.timeout_id);
-  }
+	//Remove auto timeout timer
+	if(this.timeout_id){
+		clearTimeout(this.timeout_id);
+	}
 
-  //Set state to rejected
-  _private.set_state(this,2);
+	//Set state to rejected
+	_private.set_state(this,2);
 
-  //Execute rejection queue
-  _private.run_train(
-    this
-    ,this.callbacks.reject
-    ,err
-    ,{pause_on_deferred : false}
-  );
+	//Execute rejection queue
+	_private.run_train(
+		this
+		,this.callbacks.reject
+		,err
+		,{pause_on_deferred : false}
+	);
 
-  return this;
+	return this;
 };
 
 
@@ -229,15 +229,15 @@ _public.reject = function(err){
  <b>Usage:</b>
  ```
  var Orgy = require("orgy"),
-        q = Orgy.deferred({
-          id : "q1"
-        });
+				q = Orgy.deferred({
+					id : "q1"
+				});
 
  //Resolve the deferred
  q.resolve("Some value.");
 
  q.then(function(r){
-  console.log(r); //Some value.
+	console.log(r); //Some value.
  })
 
  ```
@@ -251,45 +251,45 @@ _public.reject = function(err){
  */
 _public.then = function(fn,rejector){
 
-  var _private = require('./deferred.private.js');
+	var _private = require('./deferred.private.js');
 
-  switch(true){
+	switch(true){
 
-    //An error was previously thrown, add rejector & bail out
-    case(this.state === 2):
-      if(typeof rejector === 'function'){
-        this.callbacks.reject.train.push(rejector);
-      }
-      break;
+		//An error was previously thrown, add rejector & bail out
+		case(this.state === 2):
+			if(typeof rejector === 'function'){
+				this.callbacks.reject.train.push(rejector);
+			}
+			break;
 
-    //Execution chain already finished. Bail out.
-    case(this.done_fired === 1):
-      return Config.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+		//Execution chain already finished. Bail out.
+		case(this.done_fired === 1):
+			return Config.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
 
-    default:
+		default:
 
-      //Push callback to then queue
-      this.callbacks.then.train.push(fn);
+			//Push callback to then queue
+			this.callbacks.then.train.push(fn);
 
-      //Push reject callback to the rejection queue
-      if(typeof rejector === 'function'){
-        this.callbacks.reject.train.push(rejector);
-      }
+			//Push reject callback to the rejection queue
+			if(typeof rejector === 'function'){
+				this.callbacks.reject.train.push(rejector);
+			}
 
-      //Settled, run train now
-      if(this.settled === 1 && this.state === 1 && !this.done_fired){
-        _private.run_train(
-          this
-          ,this.callbacks.then
-          ,this.caboose
-          ,{pause_on_deferred : true}
-        );
-      }
-      //Unsettled, train will be run when settled
-      else{}
-  }
+			//Settled, run train now
+			if(this.settled === 1 && this.state === 1 && !this.done_fired){
+				_private.run_train(
+					this
+					,this.callbacks.then
+					,this.caboose
+					,{pause_on_deferred : true}
+				);
+			}
+			//Unsettled, train will be run when settled
+			else{}
+	}
 
-  return this;
+	return this;
 };
 
 
@@ -305,57 +305,57 @@ _public.then = function(fn,rejector){
  */
 _public.done = function(fn,rejector){
 
-  var _private = require('./deferred.private.js');
+	var _private = require('./deferred.private.js');
 
-  if(this.callbacks.done.train.length === 0
-     && this.done_fired === 0){
-      if(typeof fn === 'function'){
+	if(this.callbacks.done.train.length === 0
+		 && this.done_fired === 0){
+			if(typeof fn === 'function'){
 
-        //wrap callback with some other commands
-        var fn2 = function(r,deferred,last){
+				//wrap callback with some other commands
+				var fn2 = function(r,deferred,last){
 
-          //Done can only be called once, so note that it has been
-          deferred.done_fired = 1;
+					//Done can only be called once, so note that it has been
+					deferred.done_fired = 1;
 
-          fn(r,deferred,last);
-        };
+					fn(r,deferred,last);
+				};
 
-        this.callbacks.done.train.push(fn2);
+				this.callbacks.done.train.push(fn2);
 
-        //Push reject callback to the rejection queue onComplete
-        if(typeof rejector === 'function'){
-          this.callbacks.reject.hooks.onComplete.train.push(rejector);
-        }
+				//Push reject callback to the rejection queue onComplete
+				if(typeof rejector === 'function'){
+					this.callbacks.reject.hooks.onComplete.train.push(rejector);
+				}
 
-        //Settled, run train now
-        if(this.settled === 1){
-          if(this.state === 1){
-            _private.run_train(
-              this
-              ,this.callbacks.done
-              ,this.caboose
-              ,{pause_on_deferred : false}
-            );
-          }
-          else{
-            _private.run_train(
-              this
-              ,this.callbacks.reject
-              ,this.caboose
-              ,{pause_on_deferred : false}
-            );
-          }
-        }
-        //Unsettled, train will be run when settled
-        else{}
-    }
-    else{
-      return Config.debug("done() must be passed a function.");
-    }
-  }
-  else{
-    return Config.debug("done() can only be called once.");
-  }
+				//Settled, run train now
+				if(this.settled === 1){
+					if(this.state === 1){
+						_private.run_train(
+							this
+							,this.callbacks.done
+							,this.caboose
+							,{pause_on_deferred : false}
+						);
+					}
+					else{
+						_private.run_train(
+							this
+							,this.callbacks.reject
+							,this.caboose
+							,{pause_on_deferred : false}
+						);
+					}
+				}
+				//Unsettled, train will be run when settled
+				else{}
+		}
+		else{
+			return Config.debug("done() must be passed a function.");
+		}
+	}
+	else{
+		return Config.debug("done() can only be called once.");
+	}
 };
 
 

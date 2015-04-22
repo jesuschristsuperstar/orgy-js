@@ -14,7 +14,9 @@ _public.factory = function(protoObjArr,optionsObjArr){
 		var _o = Config.naive_cloner(protoObjArr,optionsObjArr);
 
 		//if no id, generate one
-		_o.id = (!_o.id) ? Config.generate_id() : _o.id;
+		if(!_o.id){
+			_o.id = Config.generate_id();
+		}
 
 		return _o;
 };
@@ -29,6 +31,8 @@ _public.activate = function(obj){
 		}
 
 		//SAVE TO MASTER LIST
+		//@todo only save if was assigned an id,
+		//which implies user intends to access somewhere else outside of scope
 		Config.list[obj.id] = obj;
 
 		//AUTO TIMEOUT
