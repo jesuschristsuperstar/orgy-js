@@ -2,7 +2,7 @@
 	"name": "orgy",
 	"version": "2.0.2",
 	"description": "Async file and script loader that works both in the browser and in nodejs / io.js.",
-	"author": "tecfu.com <help@tecfu.com> (http://github.com/tecfu)",
+	"author": "tecfu <help@tecfu.com> (http://github.com/tecfu)",
 	"main": "dist/orgy.devel.js",
 	"keywords": [
 		"async library",
