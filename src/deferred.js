@@ -1,6 +1,5 @@
 var Config = require('./config.js');
 var _private = require('./deferred.private.js');
-var DeferredSchema = require('./deferred.schema.js');
 
 /**
 * @namespace orgy/deferred
@@ -44,6 +43,7 @@ module.exports = function(options){
 	}
 	else{
 		//Create a new deferred class instance
+		var DeferredSchema = require('./deferred.schema.js')();
 		_o = _private.factory([DeferredSchema],[options]);
 
 		//ACTIVATE DEFERRED

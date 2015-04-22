@@ -1,6 +1,4 @@
 var Config = require('./config.js');
-var DeferredSchema = require('./deferred.schema.js');
-var QueueSchema = require('./queue.schema.js');
 var _private = require('./queue.private.js');
 
 /**
@@ -86,6 +84,9 @@ module.exports = function(deps,options){
 
 	//DOES NOT ALREADY EXIST
 	if(!Config.list[options.id]){
+
+		var DeferredSchema = require('./deferred.schema.js')();
+		var QueueSchema = require('./queue.schema.js')();
 
 		//Pass array of prototypes to queue factory
 		_o = _private.factory([DeferredSchema,QueueSchema],[options]);

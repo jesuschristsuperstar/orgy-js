@@ -1,5 +1,5 @@
 var Config = require('./config.js');
-var QueueSchema = require('./queue.schema.js');
+var QueueSchema = require('./queue.schema.js')();
 var _proto = require('./deferred.private.js');
 var _public = Object.create(_proto,{});
 
@@ -14,43 +14,43 @@ var _public = Object.create(_proto,{});
  */
 _public.activate = function(o,options,deps){
 
-    //ACTIVATE AS A DEFERRED
-    //var proto = Object.getPrototypeOf(this);
-    o = _proto.activate(o);
+		//ACTIVATE AS A DEFERRED
+		//var proto = Object.getPrototypeOf(this);
+		o = _proto.activate(o);
 
-    //@todo rethink this
-    //This timeout gives defined promises that are defined
-    //further down the same script a chance to define themselves
-    //and in case this queue is about to request them from a
-    //remote source here.
-    //This is important in the case of compiled js files that contain
-    //multiple modules when depend on each other.
+		//@todo rethink this
+		//This timeout gives defined promises that are defined
+		//further down the same script a chance to define themselves
+		//and in case this queue is about to request them from a
+		//remote source here.
+		//This is important in the case of compiled js files that contain
+		//multiple modules when depend on each other.
 
-    //temporarily change state to prevent outside resolution
-    o.state = -1;
+		//temporarily change state to prevent outside resolution
+		o.state = -1;
 
-    var self = this;
+		var self = this;
 
-    setTimeout(function(){
+		setTimeout(function(){
 
-      //Restore state
-      o.state = 0;
+			//Restore state
+			o.state = 0;
 
-      //ADD DEPENDENCIES TO QUEUE
-      QueueSchema.add.call(o,deps);
+			//ADD DEPENDENCIES TO QUEUE
+			QueueSchema.add.call(o,deps);
 
-      //SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
-      self.receive_signal(o,o.id);
+			//SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
+			self.receive_signal(o,o.id);
 
-      //ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
-      if(o.assign){
-          for(var a in o.assign){
-              self.assign(o.assign[a],[o],true);
-          }
-      }
-    },1);
+			//ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
+			if(o.assign){
+					for(var a in o.assign){
+							self.assign(o.assign[a],[o],true);
+					}
+			}
+		},1);
 
-    return o;
+		return o;
 };
 
 
@@ -64,27 +64,27 @@ _public.activate = function(o,options,deps){
 */
 _public.upgrade = function(obj,options,deps){
 
-    if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
-        return Config.debug('Can only upgrade unsettled promise or deferred into a queue.');
-    }
+		if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
+				return Config.debug('Can only upgrade unsettled promise or deferred into a queue.');
+		}
 
-   //GET A NEW QUEUE OBJECT AND MERGE IN
-    var _o = Config.naive_cloner([
-        QueueSchema
-        ,options
-    ]);
+	 //GET A NEW QUEUE OBJECT AND MERGE IN
+		var _o = Config.naive_cloner([
+				QueueSchema
+				,options
+		]);
 
-    for(var i in _o){
-       obj[i] = _o[i];
-    }
+		for(var i in _o){
+			 obj[i] = _o[i];
+		}
 
-    //delete _o;
+		//delete _o;
 
-    //CREATE NEW INSTANCE OF QUEUE
-    obj = this.activate(obj,options,deps);
+		//CREATE NEW INSTANCE OF QUEUE
+		obj = this.activate(obj,options,deps);
 
-    //RETURN QUEUE OBJECT
-    return obj;
+		//RETURN QUEUE OBJECT
+		return obj;
 };
 
 
