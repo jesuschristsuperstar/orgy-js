@@ -10,7 +10,6 @@
 		Orgy.config({
 			timeout: newTimeout
 		});
-		debugger;
 		var d1 = Orgy.deferred({});
 
 		tests.initD1(d1, newTimeout);
@@ -23,6 +22,9 @@
 
 		var d2 = Orgy.deferred();
 		tests.initD2(d2, newTimeout);
+		var value = 1000;
+		d2.resolve(value);
+		tests.d2Done(d2,value);
 
 		setTimeout(function() {
 			d1.resolve(100.125);
@@ -69,6 +71,10 @@
 				deferred.timeout.should.equal(timeoutValue);
 				output.initD2 = new Date().getTime();
 			},
+			d2Done: function(deferred, value) {
+				deferred.value.should.equal(value);
+				output.d2Done = new Date().getTime();
+			},
 			then1: function(r) {
 				r.should.equal(100.125);
 				should.not.exist(output.done);
@@ -95,6 +101,7 @@
 		tests = {
 			initD1: function() {},
 			initD2: function() {},
+			d2Done: function() {},
 			then1: function() {},
 			then2: function() {},
 			done: function() {}
