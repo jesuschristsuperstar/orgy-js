@@ -46,71 +46,71 @@ _public.dependencies = [];
 */
 _public.add = function(arr){
 
-  var _private = require('./queue.private.js');
+	var _private = require('./queue.private.js');
 
-   try{
-       if(arr.length === 0) return this.upstream;
-   }
-   catch(err){
-       Config.debug(err);
-   }
+	 try{
+			 if(arr.length === 0) return this.upstream;
+	 }
+	 catch(err){
+			 Config.debug(err);
+	 }
 
-   //IF NOT PENDING, DO NOT ALLOW TO ADD
-   if(this.state !== 0){
-      return Config.debug([
-        "Cannot add dependency list to queue id:'"+this.id
-        +"'. Queue settled/in the process of being settled."
-      ],arr,this);
-   }
+	 //IF NOT PENDING, DO NOT ALLOW TO ADD
+	 if(this.state !== 0){
+			return Config.debug([
+				"Cannot add dependency list to queue id:'"+this.id
+				+"'. Queue settled/in the process of being settled."
+			],arr,this);
+	 }
 
-   for(var a in arr){
+	 for(var a in arr){
 
-       switch(true){
+			 switch(true){
 
-           //CHECK IF EXISTS
-           case(typeof Config.list[arr[a]['id']] === 'object'):
-               arr[a] = Config.list[arr[a]['id']];
-               break;
+					 //CHECK IF EXISTS
+					 case(typeof Config.list[arr[a].id] === 'object'):
+							 arr[a] = Config.list[arr[a].id];
+							 break;
 
-           //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
-           case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
-               arr[a] = _private.convert_to_promise(arr[a],{
-                 parent : this
-               });
-               break;
+					 //IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
+					 case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
+							 arr[a] = _private.convert_to_promise(arr[a],{
+								 parent : this
+							 });
+							 break;
 
-           //REF IS A PROMISE.
-           case(typeof arr[a].then === 'function'):
-               break;
+					 //REF IS A PROMISE.
+					 case(typeof arr[a].then === 'function'):
+							 break;
 
-           default:
-               console.error("Object could not be converted to promise.");
-               console.error(arr[a]);
-               debugger;
-               continue;
-       }
+					 default:
+							 console.error("Object could not be converted to promise.");
+							 console.error(arr[a]);
+							 debugger;
+							 continue;
+			 }
 
-       //must check the target to see if the dependency exists in its downstream
-       for(var b in this.downstream){
-           if(b === arr[a].id){
-              return Config.debug([
-                "Error adding upstream dependency '"
-                +arr[a].id+"' to queue"+" '"
-                +this.id+"'.\n Promise object for '"
-                +arr[a].id+"' is scheduled to resolve downstream from queue '"
-                +this.id+"' so it can't be added upstream."
-              ]
-              ,this);
-           }
-       }
+			 //must check the target to see if the dependency exists in its downstream
+			 for(var b in this.downstream){
+					 if(b === arr[a].id){
+							return Config.debug([
+								"Error adding upstream dependency '"
+								+arr[a].id+"' to queue"+" '"
+								+this.id+"'.\n Promise object for '"
+								+arr[a].id+"' is scheduled to resolve downstream from queue '"
+								+this.id+"' so it can't be added upstream."
+							]
+							,this);
+					 }
+			 }
 
-       //ADD TO UPSTREAM, DOWNSTREAM, DEPENDENCIES
-       this.upstream[arr[a].id] = arr[a];
-       arr[a].downstream[this.id] = this;
-       this.dependencies.push(arr[a]);
-   }
+			 //ADD TO UPSTREAM, DOWNSTREAM, DEPENDENCIES
+			 this.upstream[arr[a].id] = arr[a];
+			 arr[a].downstream[this.id] = this;
+			 this.dependencies.push(arr[a]);
+	 }
 
-   return this.upstream;
+	 return this.upstream;
 };
 
 
@@ -122,17 +122,17 @@ _public.add = function(arr){
 */
 _public.remove = function(arr){
 
-  //IF NOT PENDING, DO NOT ALLOW REMOVAL
-  if(this.state !== 0){
-      return Config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
-  }
+	//IF NOT PENDING, DO NOT ALLOW REMOVAL
+	if(this.state !== 0){
+			return Config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+	}
 
-  for(var a in arr){
-     if(this.upstream[arr[a].id]){
-        delete this.upstream[arr[a].id];
-        delete arr[a].downstream[this.id];
-     }
-  }
+	for(var a in arr){
+		 if(this.upstream[arr[a].id]){
+				delete this.upstream[arr[a].id];
+				delete arr[a].downstream[this.id];
+		 }
+	}
 };
 
 
@@ -145,35 +145,35 @@ _public.remove = function(arr){
 */
 _public.reset = function(options){
 
-  var _private = require('./deferred.private.js');
+	var _private = require('./deferred.private.js');
 
-  if(this.settled !== 1 || this.state !== 1){
-    return Config.debug("Can only reset a queue settled without errors.");
-  }
+	if(this.settled !== 1 || this.state !== 1){
+		return Config.debug("Can only reset a queue settled without errors.");
+	}
 
-  options = options || {};
+	options = options || {};
 
-  this.settled = 0;
-  this.state = 0;
-  this.resolver_fired = 0;
-  this.done_fired = 0;
+	this.settled = 0;
+	this.state = 0;
+	this.resolver_fired = 0;
+	this.done_fired = 0;
 
-  //REMOVE AUTO TIMEOUT TIMER
-  if(this.timeout_id){
-    clearTimeout(this.timeout_id);
-  }
+	//REMOVE AUTO TIMEOUT TIMER
+	if(this.timeout_id){
+		clearTimeout(this.timeout_id);
+	}
 
-  //CLEAR OUT THE DOWNSTREAM
-  this.downstream = {};
-  this.dependencies = [];
+	//CLEAR OUT THE DOWNSTREAM
+	this.downstream = {};
+	this.dependencies = [];
 
-  //SET NEW AUTO TIMEOUT
-  _private.auto_timeout.call(this,options.timeout);
+	//SET NEW AUTO TIMEOUT
+	_private.auto_timeout.call(this,options.timeout);
 
-  //POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
-  //this.check_self()
+	//POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
+	//this.check_self()
 
-  return this;
+	return this;
 };
 
 
@@ -192,9 +192,9 @@ _public.reset = function(options){
 * @returns {int} State of the queue.
 */
 _public.check_self = function(){
-  var _private = require('./deferred.private.js');
-  _private.receive_signal(this,this.id);
-  return this.state;
+	var _private = require('./deferred.private.js');
+	_private.receive_signal(this,this.id);
+	return this.state;
 };
 
 

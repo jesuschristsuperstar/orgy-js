@@ -1,5 +1,5 @@
 var Config = require('./config.js'),
-    Deferred = require('./deferred.js');
+		Deferred = require('./deferred.js');
 
 /**
  * Casts a thenable object into an Orgy deferred object.
@@ -26,38 +26,38 @@ var Config = require('./config.js'),
  */
 module.exports = function(obj){
 
-    var required = ["then","error","id"];
-    for(var i in required){
-      if(!obj[required[i]]){
-        return Config.debug("Cast method missing property '" + required[i] +"'");
-      }
-    }
+		var required = ["then","error","id"];
+		for(var i in required){
+			if(!obj[required[i]]){
+				return Config.debug("Cast method missing property '" + required[i] +"'");
+			}
+		}
 
-    var options = {};
-    options.id = obj.id;
+		var options = {};
+		options.id = obj.id;
 
-    //Make sure id does not conflict with existing
-    if(Config.list[options.id]){
-      return Config.debug("Id "+options.id+" conflicts with existing id.")
-    }
+		//Make sure id does not conflict with existing
+		if(Config.list[options.id]){
+			return Config.debug("Id "+options.id+" conflicts with existing id.");
+		}
 
-    //Create a deferred
-    var def = Deferred(options);
+		//Create a deferred
+		var def = Deferred(options);
 
-    //Create resolver
-    var resolver = function(){
-      def.resolve.call(def,arguments[0]);
-    };
+		//Create resolver
+		var resolver = function(){
+			def.resolve.call(def,arguments[0]);
+		};
 
-    //Set Resolver
-    obj.then(resolver);
+		//Set Resolver
+		obj.then(resolver);
 
-    //Reject deferred on .error
-    var err = function(err){
-      def.reject(err);
-    };
-    obj.error(err);
+		//Reject deferred on .error
+		var err = function(err){
+			def.reject(err);
+		};
+		obj.error(err);
 
-    //Return deferred
-    return def;
+		//Return deferred
+		return def;
 };
