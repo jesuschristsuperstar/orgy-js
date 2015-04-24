@@ -363,6 +363,17 @@ var schema = function(){
 			return Config.debug("done() can only be called once.");
 		}
 	};
+
+
+	/**
+	 * Allows a preprocessor to set backrace data on an Orgy object.
+	 * @param  {string} str filename:line number
+	 * @return {object} deferred/queue
+	 */
+	_public._btrc = function(str){
+		this.backtrace = str;
+		return this;
+	};
 };
 
 var factory = function(){
