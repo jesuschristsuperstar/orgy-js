@@ -13,11 +13,11 @@ Promises library that supports queues of file requests.
 - Browser and [nodej](https://nodejs.org/) / [iojs](https://iojs.org/en/index.html) compatible.
 
 - Handles a variety of dependency types and automatically converts them into promises.
-    - javascript files
-    - css files
-    - DOMContentLoaded, window.load
-    - timers
-    - all other file types handled as text
+		- javascript files
+		- css files
+		- DOMContentLoaded, window.load
+		- timers
+		- all other file types handled as text
 
 - Creates deferreds or queues.
 
@@ -33,10 +33,10 @@ For example:
 
 ```
 Orgy.config({
-    document : (function(){
-        var cheerio = require('cheerio');
-        return global.$ = cheerio.load("<html><head></head><body></body></html>");
-    }())
+		document : (function(){
+				var cheerio = require('cheerio');
+				return global.$ = cheerio.load("<html><head></head><body></body></html>");
+		}())
 });
 ```
 
@@ -61,38 +61,38 @@ npm install orgy
 var Orgy = require("orgy");
 
 Orgy.config({
-    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
-    document : (function(){
-        var cheerio = require('cheerio');
-        return global.$ = cheerio.load("<html><head></head><body></body></html>");
-    }())
+		//SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+		document : (function(){
+				var cheerio = require('cheerio');
+				return global.$ = cheerio.load("<html><head></head><body></body></html>");
+		}())
 });
 
 
 var q = Orgy.queue([
-    {
-        type : "json"
-        ,url : "data/data1.json"
-    },
-    {
-        type : "json"
-        ,url : "data/data2.json"
-    },
-    {
-        type : "css"
-        ,url : "data/sample.css"
-    }
+		{
+				type : "json"
+				,url : "data/data1.json"
+		},
+		{
+				type : "json"
+				,url : "data/data2.json"
+		},
+		{
+				type : "css"
+				,url : "data/sample.css"
+		}
 ],{
-  id : "q1" //Optional. Id used to get instance outside of local scope.
-            //i.e. var q = Orgy.get("q1")
+	id : "q1" //Optional. Id used to get instance outside of local scope.
+						//i.e. var q = Orgy.get("q1")
 });
 
 
 //Done can be called async and out of order.
 setTimeout(function(){
-  q.done(function(r,deferred,last){
-    console.log(last); // 2
-  });
+	q.done(function(r,deferred,last){
+		console.log(last); // 2
+	});
 },500)
 
 
@@ -102,21 +102,21 @@ setTimeout(function(){
 */
 q.then(function(r){
 
-    //Modify some DOM content
-    $("body").append("hey!");
+		//Modify some DOM content
+		$("body").append("hey!");
 
-    console.log(r); //Dependency values.
-    return 1;
+		console.log(r); //Dependency values.
+		return 1;
 });
 
 
 q.then(function(r,deferred,last){
 
-    //Get modified DOM content
-    console.log($("body").html()); //hey!
+		//Get modified DOM content
+		console.log($("body").html()); //hey!
 
-    console.log(last); // 1
-    return 2;
+		console.log(last); // 1
+		return 2;
 });
 
 
@@ -130,10 +130,8 @@ var q = Orgy.get("q1");
 
 ## Todo:
 
-- Test / deploy devel branch, which is browserified and refactored
 - Add optional retry configuration setting when remote requests rejected due non 200 HTTP response?
 - Extend deferred, queue from native [ES6](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)    promises
-- Create unit tests for assign, define
 
 ## More examples:
 
