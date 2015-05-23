@@ -61,8 +61,8 @@ _public.browser.script = function(path,deferred){
 	this.head.appendChild(elem);
 };
 
-_public.browser.html = function(path,deferred){
-	this.default(path,deferred);
+_public.browser.html = function(path,deferred,dep){
+	this.default(path,deferred,dep);
 };
 
 _public.browser.default = function(path,deferred,options){
