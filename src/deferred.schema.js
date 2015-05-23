@@ -362,6 +362,8 @@ var schema = function(){
 		else{
 			return Config.debug("done() can only be called once.");
 		}
+		
+		return this;
 	};
 
 
