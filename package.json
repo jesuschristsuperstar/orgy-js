@@ -75,24 +75,5 @@
 	"bugs": "https://github.com/tecfu/orgy-js/issues",
 	"engines": {
 		"node": ">=0.10.25"
-	},
-	"jshintConfig": {
-		"esnext": true,
-		"undef": true,
-		"unused": true,
-		"debug": true,
-		"predef": [
-			"global",
-			"require",
-			"console",
-			"window",
-			"setTimeout",
-			"module",
-			"Orgy",
-			"process",
-			"clearTimeout"
-		],
-		"laxcomma": true,
-		"laxbreak": true
 	}
 }
