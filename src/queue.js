@@ -110,9 +110,9 @@ module.exports = function(deps,options){
 		else{
 
 			//OVERWRITE ANY EXISTING OPTIONS
-			for(var i in options){
-				_o[i] = options[i];
-			}
+			options.forEach(function(value,key){
+				_o[key] = value; 
+			});
 
 			//ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
 			if(deps.length > 0){

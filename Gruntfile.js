@@ -3,9 +3,7 @@
  * node-debug $(which grunt) task
  */
 
-var brfs = require('brfs'),
-    babelify = require('babelify'),
-    _ignore = '--ignore=path --ignore=request --ignore=http --ignore=fs --ignore=vm --ignore=process --ignore=lodash';
+var _ignore = '--ignore=path --ignore=request --ignore=http --ignore=fs --ignore=vm --ignore=process --ignore=lodash';
 
 module.exports = function(grunt) {
 
@@ -21,13 +19,11 @@ module.exports = function(grunt) {
             dstr = ('0' + d.getHours()).slice(-2)
             + ':' + ('0' + d.getMinutes()).slice(-2)
             + ':' + ('0' + d.getSeconds()).slice(-2);
-
             return dstr;
-
           }())
         },
 
-        shell: {
+				shell: {
           "browserify-prod-standalone": {
             command: function () {
               var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.js';
@@ -164,6 +160,7 @@ module.exports = function(grunt) {
         }
     });
 
+		grunt.loadNpmTasks('grunt-fixmyjs');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-execute');
     grunt.loadNpmTasks('grunt-contrib-uglify');

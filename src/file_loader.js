@@ -18,7 +18,7 @@ _public.browser.css = function(path,deferred){
 	elem.setAttribute("rel","stylesheet");
 
 	if(elem.onload){
-		(function(elem,path,deferred){
+		(function(elem){
 				elem.onload = elem.onreadystatechange = function(path,deferred){
 					deferred.resolve(elem);
 			 };
@@ -122,7 +122,7 @@ _public.native.script = function(path,deferred){
 	else{
 		//Check that we have configured the environment to allow this,
 		//as it represents a security threat and should only be used for debugging
-		if(!Config.settings.debug_mode){_
+		if(!Config.settings.debug_mode){
 			Config.debug("Set config.debug_mode=1 to run remote scripts outside of debug mode.");
 		}
 		else{
@@ -156,15 +156,19 @@ _private.native.get = function (path,deferred,callback){
 		//file system
 		var Fs = require('fs');
 		Fs.readFile(path, "utf-8", function (err, data) {
-			if (err) throw err;
-			callback(data);
+			if (err){
+				throw err;
+			}
+			else{
+				callback(data);
+			}
 		});
 	}
 	else{
 		//http
 		var request = require('request');
 		request(path,function(error,response,body){
-			if (!error && response.statusCode == 200) {
+			if (!error && response.statusCode === 200) {
 				callback(body);
 			}
 			else{

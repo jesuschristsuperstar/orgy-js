@@ -28,7 +28,7 @@ module.exports = function(obj){
 
 		var required = ["then","error","id"];
 		for(var i in required){
-			if(!obj[required[i]]){
+			if(!obj.hasOwnProperty(required[i])){
 				return Config.debug("Cast method missing property '" + required[i] +"'");
 			}
 		}

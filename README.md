@@ -33,10 +33,10 @@ For example:
 
 ```
 Orgy.config({
-		document : (function(){
-				var cheerio = require('cheerio');
-				return global.$ = cheerio.load("<html><head></head><body></body></html>");
-		}())
+	document : (function(){
+		var cheerio = require('cheerio');
+		return global.$ = cheerio.load("<html><head></head><body></body></html>");
+	}())
 });
 ```
 
@@ -61,11 +61,11 @@ npm install orgy
 var Orgy = require("orgy");
 
 Orgy.config({
-		//SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
-		document : (function(){
-				var cheerio = require('cheerio');
-				return global.$ = cheerio.load("<html><head></head><body></body></html>");
-		}())
+	//SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
+	document : (function(){
+		var cheerio = require('cheerio');
+		return global.$ = cheerio.load("<html><head></head><body></body></html>");
+	}())
 });
 
 
@@ -83,8 +83,8 @@ var q = Orgy.queue([
 				,url : "data/sample.css"
 		}
 ],{
-	id : "q1" //Optional. Id used to get instance outside of local scope.
-						//i.e. var q = Orgy.get("q1")
+	//Optional. Id can be used to reference outside of local scope.
+	id : "q1" 
 });
 
 
@@ -102,21 +102,21 @@ setTimeout(function(){
 */
 q.then(function(r){
 
-		//Modify some DOM content
-		$("body").append("hey!");
+	//Modify some DOM content
+	$("body").append("hey!");
 
-		console.log(r); //Dependency values.
-		return 1;
+	console.log(r); //Dependency values.
+	return 1;
 });
 
 
 q.then(function(r,deferred,last){
 
-		//Get modified DOM content
-		console.log($("body").html()); //hey!
+	//Get modified DOM content
+	console.log($("body").html()); //hey!
 
-		console.log(last); // 1
-		return 2;
+	console.log(last); // 1
+	return 2;
 });
 
 
