@@ -3,7 +3,7 @@
 	"version": "2.0.4",
 	"description": "Async file and script loader that works both in the browser and in nodejs / io.js.",
 	"author": "tecfu <help@tecfu.com> (http://github.com/tecfu)",
-	"main": "dist/orgy.devel.js",
+	"main": "src/main.js",
 	"keywords": [
 		"async library",
 		"queue library",
