@@ -1,130 +1,371 @@
-var Config = require('./config.js');
-var _private = require('./queue.private.js');
-
-/**
- * @namespace orgy/queue
- * @borrows orgy/deferred#then as #then
- * @borrows orgy/deferred#done as #done
- * @borrows orgy/deferred#reject as #reject
- * @borrows orgy/deferred#resolve as #resolve
- *
-*/
-
-/**
- * Creates a new queue object.
- * If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
- * is resolved.
-
- <b>Usage:</b>
- ```
- var Orgy = require("orgy"),
-				q = Orgy.queue([
-					 {
-						 comment : "This is a nested queue created on the fly."
-						 ,type : "json"
-						 ,url : "/api/json/somnums"
-						 ,resolver : function(r,deferred){
-							 //Filter out even numbers
-							 var odd = arr.filter(function(val) {
-								 return 0 != val % 2;
-							 });
-							 deferred.resolve(odd);
-						 }
-					 }
-				 ],{
-					 id : "q1",
-					 resolver : function(r,deferred){
-						 var primes = r[0].filter(function(val) {
-							 high = Math.floor(Math.sqrt(val)) + 1;
-							 for (var div = 2; div <= high; div++) {
-								 if (value % div == 0) {
-									 return false;
-								 }
-							 }
-							 return true;
-						 });
-						 deferred.resolve(primes);
-					 })
-				 });
-
- ```
- * @memberof orgy
- * @function queue
- *
- * @param {array} deps Array of dependencies that must be resolved before <b>resolver</b> option is called.
- * @param {object} options  List of options:
-
-- <b>id</b> {string} Unique id of the object.
-	- Can be used with Orgy.get(id).
-	- Optional.
+module.exports = function(Orgy){
 
 
-- <b>timeout</b> {number} Time in ms after which reject is called.
-	- Defaults to Orgy.config().timeout [5000].
-	- Note the timeout is only affected by dependencies and/or the resolver callback.
-	- Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+	/**
+	 * @namespace orgy/queue
+	 * @borrows orgy/deferred#then as #then
+	 * @borrows orgy/deferred#done as #done
+	 * @borrows orgy/deferred#reject as #reject
+	 * @borrows orgy/deferred#resolve as #resolve
+	 *
+	*/
+
+	var _private = {};
+
+	/**
+	 * Activates a queue object.
+	 *
+	 * @param {object} o
+	 * @param {object} options
+	 * @param {array} deps
+	 * @returns {object} queue
+	 */
+	_private.activate = function(o,options,deps){
+
+			//ACTIVATE AS A DEFERRED
+			//var proto = Object.getPrototypeOf(this);
+			o = Orgy.private.deferred.activate(o);
+
+			//@todo rethink this
+			//This timeout gives defined promises that are defined
+			//further down the same script a chance to define themselves
+			//and in case this queue is about to request them from a
+			//remote source here.
+			//This is important in the case of compiled js files that contain
+			//multiple modules when depend on each other.
+
+			//temporarily change state to prevent outside resolution
+			o.state = -1;
+
+			var self = this;
+
+			setTimeout(function(){
+
+				//Restore state
+			o.state = 0;
+
+				//ADD DEPENDENCIES TO QUEUE
+				_public.add.call(o,deps);
+
+				//SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
+				Orgy.private.deferred.receive_signal(o,o.id);
+
+				//ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
+				if(o.assign){
+						for(var a in o.assign){
+								self.assign(o.assign[a],[o],true);
+						}
+				}
+			},1);
+
+			return o;
+	};
 
 
-- <b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.
-	- <i>result</i> is an array of the queue's resolved dependency values.
-	- <i>deferred</i> is the queue object.
-	- The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.
+	/**
+	* Upgrades a promise object to a queue.
+	*
+	* @param {object} obj
+	* @param {object} options
+	* @param {array} deps \dependencies
+	* @returns {object} queue object
+	*/
+	_private.upgrade = function(obj,options,deps){
 
-	* @returns {object} {@link orgy/queue}
- *
- */
-module.exports = function(deps,options){
-
-	var _o;
-	if(!(deps instanceof Array)){
-		return Config.debug("Queue dependencies must be an array.");
-	}
-
-	options = options || {};
-
-	//DOES NOT ALREADY EXIST
-	if(!Config.list[options.id]){
-
-		var DeferredSchema = require('./deferred.schema.js')();
-		var QueueSchema = require('./queue.schema.js')();
-
-		//Pass array of prototypes to queue factory
-		_o = _private.factory([DeferredSchema,QueueSchema],[options]);
-
-		//Activate queue
-		_o = _private.activate(_o,options,deps);
-
-	}
-	//ALREADY EXISTS
-	else {
-
-		_o = Config.list[options.id];
-
-		if(_o.model !== 'queue'){
-		//MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
-
-			options.overwritable = 1;
-
-			_o = _private.upgrade(_o,options,deps);
-		}
-		else{
-
-			//OVERWRITE ANY EXISTING OPTIONS
-			options.forEach(function(value,key){
-				_o[key] = value; 
-			});
-
-			//ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
-			if(deps.length > 0){
-				_private.tpl.add.call(_o,deps);
+			if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
+					return Orgy.private.config.debug('Can only upgrade unsettled promise or deferred into a queue.');
 			}
 
+		 //GET A NEW QUEUE OBJECT AND MERGE IN
+			var _o = Orgy.private.config.naive_cloner([_public],[options]);
+
+			for(var i in _o){
+				 obj[i] = _o[i];
+			}
+
+			//delete _o;
+
+			//CREATE NEW INSTANCE OF QUEUE
+			obj = this.activate(obj,options,deps);
+
+			//RETURN QUEUE OBJECT
+			return obj;
+	};
+
+
+
+
+	var _public = {};
+	
+	_public.model = 'queue';
+
+	//SET TRUE AFTER RESOLVER FIRED
+	_public.resolver_fired = 0;
+
+	//PREVENTS A QUEUE FROM RESOLVING EVEN IF ALL DEPENDENCIES MET
+	//PURPOSE: PREVENTS QUEUES CREATED BY ASSIGNMENT FROM RESOLVING
+	//BEFORE THEY ARE FORMALLY INSTANTIATED
+	_public.halt_resolution = 0;
+
+	//USED TO CHECK STATE, ENSURES ONE COPY
+	_public.upstream = {};
+
+	//USED RETURN VALUES, ENSURES ORDER
+	_public.dependencies = [];
+
+	///////////////////////////////////////////////////
+	//	QUEUE INSTANCE METHODS
+	///////////////////////////////////////////////////
+
+	/**
+	* Add list of dependencies to a queue's upstream array.
+	*
+	* The queue will resolve once all the promises in its
+	* upstream array are resolved.
+	*
+	* When _public.Orgy.private.config.debug == 1, method will test each
+	* dependency is not previously scheduled to resolve
+	* downstream from the target, in which
+	* case it would never resolve because its upstream depends on it.
+	*
+	* @param {array} arr	/array of dependencies to add
+	* @returns {array} upstream
+	*/
+	_public.add = function(arr){
+
+		try{
+				if(arr.length === 0) {
+					return this.upstream;
+				}
+		}
+		catch(err){
+				Orgy.private.config.debug(err);
 		}
 
-		//RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
-		_o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
-		options.halt_resolution : 0;
-	}
+		//IF NOT PENDING, DO NOT ALLOW TO ADD
+		if(this.state !== 0){
+				return Orgy.private.config.debug([
+					"Cannot add dependency list to queue id:'"+this.id
+					+"'. Queue settled/in the process of being settled."
+				],arr,this);
+		}
 
-	return _o;
+		for(var a in arr){
+
+				switch(true){
+
+						//CHECK IF EXISTS
+						case(typeof Orgy.private.config.list[arr[a].id] === 'object'):
+								arr[a] = Orgy.private.config.list[arr[a].id];
+								break;
+
+						//IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
+						case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
+								arr[a] = Orgy.private.deferred.convert_to_promise(arr[a],{
+									parent : this
+								});
+								break;
+
+						//REF IS A PROMISE.
+						case(typeof arr[a].then === 'function'):
+								break;
+
+						default:
+								Orgy.private.config.debug([
+									"Object could not be converted to promise.",
+									arr[a]
+								]);
+								continue;
+				}
+
+				//must check the target to see if the dependency exists in its downstream
+				for(var b in this.downstream){
+						if(b === arr[a].id){
+								return Orgy.private.config.debug([
+									"Error adding upstream dependency '"
+									+arr[a].id+"' to queue"+" '"
+									+this.id+"'.\n Promise object for '"
+									+arr[a].id+"' is scheduled to resolve downstream from queue '"
+									+this.id+"' so it can't be added upstream."
+								]
+								,this);
+						}
+				}
+
+				//ADD TO UPSTREAM, DOWNSTREAM, DEPENDENCIES
+				this.upstream[arr[a].id] = arr[a];
+				arr[a].downstream[this.id] = this;
+				this.dependencies.push(arr[a]);
+		}
+
+		return this.upstream;
+	};
+
+	/**
+	* Remove list from a queue.
+	*
+	* @param {array} arr
+	* @returns {array} array of list the queue is upstream
+	*/
+	_public.remove = function(arr){
+
+		//IF NOT PENDING, DO NOT ALLOW REMOVAL
+		if(this.state !== 0){
+				return Orgy.private.config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+		}
+
+		for(var a in arr){
+			if(this.upstream[arr[a].id]){
+					delete this.upstream[arr[a].id];
+					delete arr[a].downstream[this.id];
+			}
+		}
+	};
+
+	/**
+	* Resets an existing,settled queue back to Orgying state.
+	* Clears out the downstream.
+	* Fails if not settled.
+	* @param {object} options
+	* @returns {Orgy.private.deferred.tpl|Boolean}
+	*/
+	_public.reset = function(options){
+
+		if(this.settled !== 1 || this.state !== 1){
+			return Orgy.private.config.debug("Can only reset a queue settled without errors.");
+		}
+
+		options = options || {};
+
+		this.settled = 0;
+		this.state = 0;
+		this.resolver_fired = 0;
+		this.done_fired = 0;
+
+		//REMOVE AUTO TIMEOUT TIMER
+		if(this.timeout_id){
+			clearTimeout(this.timeout_id);
+		}
+
+		//CLEAR OUT THE DOWNSTREAM
+		this.downstream = {};
+		this.dependencies = [];
+
+		//SET NEW AUTO TIMEOUT
+		Orgy.private.deferred.auto_timeout.call(this,options.timeout);
+
+		//POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
+		//this.check_self()
+
+		return this;
+	};
+
+
+	/**
+	* Cauaes a queue to look over its dependencies and see if it
+	* can be resolved.
+	*
+	* This is done automatically by each dependency that loads,
+	* so is not needed unless:
+	*
+	* -debugging
+	*
+	* -the queue has been reset and no new
+	* dependencies were since added.
+	*
+	* @returns {int} State of the queue.
+	*/
+	_public.check_self = function(){
+		Orgy.private.deferred.receive_signal(this,this.id);
+		return this.state;
+	};
+
+
+	/**
+	 * Creates a new queue object.
+	 * If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
+	 * is resolved.
+
+	 * @memberof orgy
+	 * @function queue
+	 *
+	 * @param {array} deps Array of dependencies that must be resolved before <b>resolver</b> option is called.
+	 * @param {object} options	List of options:
+
+	- <b>id</b> {string} Unique id of the object.
+		- Can be used with Orgy.get(id).
+		- Optional.
+
+
+	- <b>timeout</b> {number} Time in ms after which reject is called.
+		- Defaults to Orgy.config().timeout [5000].
+		- Note the timeout is only affected by dependencies and/or the resolver callback.
+		- Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+
+
+	- <b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.
+		- <i>result</i> is an array of the queue's resolved dependency values.
+		- <i>deferred</i> is the queue object.
+		- The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.
+
+		* @returns {object} {@link orgy/queue}
+	 *
+	 */
+	Orgy.queue = function(deps,options){
+
+		var _o;
+		if(!(deps instanceof Array)){
+			return Orgy.private.config.debug("Queue dependencies must be an array.");
+		}
+
+		options = options || {};
+
+		//DOES NOT ALREADY EXIST
+		if(!Orgy.private.config.list[options.id]){
+
+			//Pass array of prototypes to queue factory
+			_o = Orgy.private.config.naive_cloner([Orgy.private.deferred.public,_public],[options]);
+
+			//Activate queue
+			_o = _private.activate(_o,options,deps);
+
+		}
+		//ALREADY EXISTS
+		else {
+
+			_o = Orgy.private.config.list[options.id];
+
+			if(_o.model !== 'queue'){
+			//MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
+
+				options.overwritable = 1;
+
+				_o = _private.upgrade(_o,options,deps);
+			}
+			else{
+
+				//OVERWRITE ANY EXISTING OPTIONS
+				options.forEach(function(value,key){
+					_o[key] = value; 
+				});
+
+				//ADD ADDITIONAL DEPENDENCIES IF NOT RESOLVED
+				if(deps.length > 0){
+					_private.tpl.add.call(_o,deps);
+				}
+
+			}
+
+			//RESUME RESOLUTION UNLESS SPECIFIED OTHERWISE
+			_o.halt_resolution = (typeof options.halt_resolution !== 'undefined') ?
+			options.halt_resolution : 0;
+		}
+
+		return _o;
+	};
+
+	//save for re-use
+	Orgy.private.queue = _private;
+		
+	return Orgy;
 };

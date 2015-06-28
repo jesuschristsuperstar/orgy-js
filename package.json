@@ -1,6 +1,6 @@
 {
 	"name": "orgy",
-	"version": "2.0.5",
+	"version": "2.0.6",
 	"description": "Async file and script loader that works both in the browser and in nodejs / io.js.",
 	"author": "tecfu <help@tecfu.com> (http://github.com/tecfu)",
 	"main": "src/main.js",
