@@ -1,4 +1,4 @@
-module.exports = function(Orgy){
+module.exports = function(Cls){
 
 
 	/**
@@ -24,7 +24,7 @@ module.exports = function(Orgy){
 
 			//ACTIVATE AS A DEFERRED
 			//var proto = Object.getPrototypeOf(this);
-			o = Orgy.private.deferred.activate(o);
+			o = Cls.private.deferred.activate(o);
 
 			//@todo rethink this
 			//This timeout gives defined promises that are defined
@@ -48,7 +48,7 @@ module.exports = function(Orgy){
 				_public.add.call(o,deps);
 
 				//SEE IF CAN BE IMMEDIATELY RESOLVED BY CHECKING UPSTREAM
-				Orgy.private.deferred.receive_signal(o,o.id);
+				Cls.private.deferred.receive_signal(o,o.id);
 
 				//ASSIGN THIS QUEUE UPSTREAM TO OTHER QUEUES
 				if(o.assign){
@@ -73,11 +73,11 @@ module.exports = function(Orgy){
 	_private.upgrade = function(obj,options,deps){
 
 			if(obj.settled !== 0 || (obj.model !== 'promise' && obj.model !== 'deferred')){
-					return Orgy.private.config.debug('Can only upgrade unsettled promise or deferred into a queue.');
+					return Cls.private.config.debug('Can only upgrade unsettled promise or deferred into a queue.');
 			}
 
 		 //GET A NEW QUEUE OBJECT AND MERGE IN
-			var _o = Orgy.private.config.naive_cloner([_public],[options]);
+			var _o = Cls.private.config.naive_cloner([_public],[options]);
 
 			for(var i in _o){
 				 obj[i] = _o[i];
@@ -123,7 +123,7 @@ module.exports = function(Orgy){
 	* The queue will resolve once all the promises in its
 	* upstream array are resolved.
 	*
-	* When _public.Orgy.private.config.debug == 1, method will test each
+	* When _public.Cls.private.config.debug == 1, method will test each
 	* dependency is not previously scheduled to resolve
 	* downstream from the target, in which
 	* case it would never resolve because its upstream depends on it.
@@ -139,12 +139,12 @@ module.exports = function(Orgy){
 				}
 		}
 		catch(err){
-				Orgy.private.config.debug(err);
+				Cls.private.config.debug(err);
 		}
 
 		//IF NOT PENDING, DO NOT ALLOW TO ADD
 		if(this.state !== 0){
-				return Orgy.private.config.debug([
+				return Cls.private.config.debug([
 					"Cannot add dependency list to queue id:'"+this.id
 					+"'. Queue settled/in the process of being settled."
 				],arr,this);
@@ -155,13 +155,13 @@ module.exports = function(Orgy){
 				switch(true){
 
 						//CHECK IF EXISTS
-						case(typeof Orgy.private.config.list[arr[a].id] === 'object'):
-								arr[a] = Orgy.private.config.list[arr[a].id];
+						case(typeof Cls.private.config.list[arr[a].id] === 'object'):
+								arr[a] = Cls.private.config.list[arr[a].id];
 								break;
 
 						//IF NOT, ATTEMPT TO CONVERT IT TO AN ORGY PROMISE
 						case(typeof arr[a] === 'object' && (!arr[a].is_orgy)):
-								arr[a] = Orgy.private.deferred.convert_to_promise(arr[a],{
+								arr[a] = Cls.private.deferred.convert_to_promise(arr[a],{
 									parent : this
 								});
 								break;
@@ -171,7 +171,7 @@ module.exports = function(Orgy){
 								break;
 
 						default:
-								Orgy.private.config.debug([
+								Cls.private.config.debug([
 									"Object could not be converted to promise.",
 									arr[a]
 								]);
@@ -181,7 +181,7 @@ module.exports = function(Orgy){
 				//must check the target to see if the dependency exists in its downstream
 				for(var b in this.downstream){
 						if(b === arr[a].id){
-								return Orgy.private.config.debug([
+								return Cls.private.config.debug([
 									"Error adding upstream dependency '"
 									+arr[a].id+"' to queue"+" '"
 									+this.id+"'.\n Promise object for '"
@@ -211,7 +211,7 @@ module.exports = function(Orgy){
 
 		//IF NOT PENDING, DO NOT ALLOW REMOVAL
 		if(this.state !== 0){
-				return Orgy.private.config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
+				return Cls.private.config.debug("Cannot remove list from queue id:'"+this.id+"'. Queue settled/in the process of being settled.");
 		}
 
 		for(var a in arr){
@@ -227,12 +227,12 @@ module.exports = function(Orgy){
 	* Clears out the downstream.
 	* Fails if not settled.
 	* @param {object} options
-	* @returns {Orgy.private.deferred.tpl|Boolean}
+	* @returns {Cls.private.deferred.tpl|Boolean}
 	*/
 	_public.reset = function(options){
 
 		if(this.settled !== 1 || this.state !== 1){
-			return Orgy.private.config.debug("Can only reset a queue settled without errors.");
+			return Cls.private.config.debug("Can only reset a queue settled without errors.");
 		}
 
 		options = options || {};
@@ -252,7 +252,7 @@ module.exports = function(Orgy){
 		this.dependencies = [];
 
 		//SET NEW AUTO TIMEOUT
-		Orgy.private.deferred.auto_timeout.call(this,options.timeout);
+		Cls.private.deferred.auto_timeout.call(this,options.timeout);
 
 		//POINTLESS - WILL JUST IMMEDIATELY RESOLVE SELF
 		//this.check_self()
@@ -276,7 +276,7 @@ module.exports = function(Orgy){
 	* @returns {int} State of the queue.
 	*/
 	_public.check_self = function(){
-		Orgy.private.deferred.receive_signal(this,this.id);
+		Cls.private.deferred.receive_signal(this,this.id);
 		return this.state;
 	};
 
@@ -311,20 +311,20 @@ module.exports = function(Orgy){
 		* @returns {object} {@link orgy/queue}
 	 *
 	 */
-	Orgy.queue = function(deps,options){
+	Cls.public.queue = function(deps,options){
 
 		var _o;
 		if(!(deps instanceof Array)){
-			return Orgy.private.config.debug("Queue dependencies must be an array.");
+			return Cls.private.config.debug("Queue dependencies must be an array.");
 		}
 
 		options = options || {};
 
 		//DOES NOT ALREADY EXIST
-		if(!Orgy.private.config.list[options.id]){
+		if(!Cls.private.config.list[options.id]){
 
 			//Pass array of prototypes to queue factory
-			_o = Orgy.private.config.naive_cloner([Orgy.private.deferred.public,_public],[options]);
+			_o = Cls.private.config.naive_cloner([Cls.private.deferred.public,_public],[options]);
 
 			//Activate queue
 			_o = _private.activate(_o,options,deps);
@@ -333,7 +333,7 @@ module.exports = function(Orgy){
 		//ALREADY EXISTS
 		else {
 
-			_o = Orgy.private.config.list[options.id];
+			_o = Cls.private.config.list[options.id];
 
 			if(_o.model !== 'queue'){
 			//MATCH FOUND BUT NOT A QUEUE, UPGRADE TO ONE
@@ -365,7 +365,7 @@ module.exports = function(Orgy){
 	};
 
 	//save for re-use
-	Orgy.private.queue = _private;
+	Cls.private.queue = _private;
 		
-	return Orgy;
+	return Cls;
 };

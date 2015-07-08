@@ -1,4 +1,4 @@
-module.exports = function(Orgy){
+module.exports = function(Cls){
 
 	var _public = {},
 			_private = {};
@@ -123,8 +123,8 @@ module.exports = function(Orgy){
 		else{
 			//Check that we have configured the environment to allow this,
 			//as it represents a security threat and should only be used for debugging
-			if(!Orgy.private.config.settings.debug_mode){
-				Orgy.private.config.debug("Set config.debug_mode=1 to run remote scripts outside of debug mode.");
+			if(!Cls.private.config.settings.debug_mode){
+				Cls.private.config.debug("Set config.debug_mode=1 to run remote scripts outside of debug mode.");
 			}
 			else{
 				_private.native.get(path,deferred,function(data){
@@ -185,9 +185,9 @@ module.exports = function(Orgy){
 		return p;
 	};
 
-	Orgy.file_loader = _public;
+	Cls.public.file_loader = _public;
 
-	Orgy.private.file_loader = _private;
+	Cls.private.file_loader = _private;
 
-	return Orgy;
+	return Cls;
 }

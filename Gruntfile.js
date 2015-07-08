@@ -160,7 +160,6 @@ module.exports = function(grunt) {
         }
     });
 
-		grunt.loadNpmTasks('grunt-fixmyjs');
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-execute');
     grunt.loadNpmTasks('grunt-contrib-uglify');

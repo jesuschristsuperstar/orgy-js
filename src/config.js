@@ -1,4 +1,4 @@
-module.exports = function(Orgy){
+module.exports = function(Cls){
 
 	var _private = {};
 
@@ -81,7 +81,7 @@ module.exports = function(Orgy){
 
 	 * @returns {object} configuration settings
 	 */
-	Orgy.config = function(obj){
+	Cls.public.config = function(obj){
 
 			if(typeof obj === 'object'){
 					for(var i in obj){
@@ -174,9 +174,7 @@ module.exports = function(Orgy){
 	
 	
 	//Save for re-use
-	Orgy.private.config = _private;
+	Cls.private.config = _private;
 
-	return Orgy;
-
+	return Cls;
 }
-

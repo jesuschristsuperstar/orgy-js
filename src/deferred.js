@@ -1,4 +1,4 @@
-module.exports = function(Orgy){
+module.exports = function(Cls){
 
 	/**
 	* @namespace orgy/deferred
@@ -12,26 +12,26 @@ module.exports = function(Orgy){
 
 			 //if no id, generate one
 			if(!obj.id){
-				obj.id = Orgy.private.config.generate_id();
+				obj.id = Cls.private.config.generate_id();
 			}
 
 			//MAKE SURE NAMING CONFLICT DOES NOT EXIST
-			if(Orgy.private.config.list[obj.id] && !Orgy.private.config.list[obj.id].overwritable){
-					Orgy.private.config.debug("Tried illegal overwrite of "+obj.id+".");
-					return Orgy.private.config.list[obj.id];
+			if(Cls.private.config.list[obj.id] && !Cls.private.config.list[obj.id].overwritable){
+					Cls.private.config.debug("Tried illegal overwrite of "+obj.id+".");
+					return Cls.private.config.list[obj.id];
 			}
 
 			//SAVE TO MASTER LIST
 			//@todo only save if was assigned an id,
 			//which implies user intends to access somewhere else outside of scope
-			Orgy.private.config.list[obj.id] = obj;
+			Cls.private.config.list[obj.id] = obj;
 
 			//AUTO TIMEOUT
 			_private.auto_timeout.call(obj);
 
 			//Call hook
-			if(Orgy.private.config.settings.hooks.onActivate){
-				Orgy.private.config.settings.hooks.onActivate(obj);
+			if(Cls.private.config.settings.hooks.onActivate){
+				Cls.private.config.settings.hooks.onActivate(obj);
 			}
 
 			return obj;
@@ -49,8 +49,8 @@ module.exports = function(Orgy){
 			_private.set_state(def,1);
 
 			//Call hook
-			if(Orgy.private.config.settings.hooks.onSettle){
-				Orgy.private.config.settings.hooks.onSettle(def);
+			if(Cls.private.config.settings.hooks.onSettle){
+				Cls.private.config.settings.hooks.onSettle(def);
 			}
 
 			//Add done as a callback to then chain completion.
@@ -235,7 +235,7 @@ module.exports = function(Orgy){
 	_private.auto_timeout = function(){
 
 			this.timeout = (typeof this.timeout !== 'undefined')
-			? this.timeout : Orgy.private.config.settings.timeout;
+			? this.timeout : Cls.private.config.settings.timeout;
 
 			//AUTO REJECT ON timeout
 			if(!this.type || this.type !== 'timer'){
@@ -246,7 +246,7 @@ module.exports = function(Orgy){
 					}
 					
 					if(typeof this.timeout === 'undefined'){
-							Orgy.private.config.debug([
+							Cls.private.config.debug([
 								"Auto timeout this.timeout cannot be undefined."
 								,this.id
 							]);
@@ -297,7 +297,7 @@ module.exports = function(Orgy){
 					 * applying callback until
 					 * callback returns a non-false value.
 					 */
-					if(Orgy.private.config.settings.debug_mode){
+					if(Cls.private.config.settings.debug_mode){
 							var r = _private.search_obj_recursively(this,'upstream',fn);
 							msgs.push(scope.id + ": rejected by auto timeout after "
 											+ this.timeout + "ms");
@@ -349,7 +349,7 @@ module.exports = function(Orgy){
 						}
 						else{
 							//tried to settle a successfully settled downstream
-							Orgy.private.config.debug(target.id + " tried to settle promise "+"'"+target.downstream[i].id+"' that has already been settled.");
+							Cls.private.config.debug(target.id + " tried to settle promise "+"'"+target.downstream[i].id+"' that has already been settled.");
 						}
 					}
 			}
@@ -391,7 +391,7 @@ module.exports = function(Orgy){
 					//MATCH RETURNED. RECURSE INTO MATCH IF HAS PROPERTY OF SAME NAME TO SEARCH
 							//CHECK THAT WE AREN'T CAUGHT IN A CIRCULAR LOOP
 							if(breadcrumb.indexOf(r1) !== -1){
-									return Orgy.private.config.debug([
+									return Cls.private.config.debug([
 											"Circular condition in recursive search of obj property '"
 													+propName+"' of object "
 													+((typeof obj.id !== 'undefined') ? "'"+obj.id+"'" : '')
@@ -431,7 +431,7 @@ module.exports = function(Orgy){
 			//Autoname
 			if (!obj.id) {
 				if (obj.type === 'timer') {
-					obj.id = "timer-" + obj.timeout + "-" + (++Orgy.private.config.i);
+					obj.id = "timer-" + obj.timeout + "-" + (++Cls.private.config.i);
 				}
 				else if (typeof obj.url === 'string') {
 					obj.id = obj.url.split("/").pop();
@@ -445,22 +445,22 @@ module.exports = function(Orgy){
 			}
 
 			//Return if already exists
-			if(Orgy.private.config.list[obj.id] && obj.type !== 'timer'){
+			if(Cls.private.config.list[obj.id] && obj.type !== 'timer'){
 				//A previous promise of the same id exists.
 				//Make sure this dependency object doesn't have a
 				//resolver - if it does error
 				if(obj.resolver){
-					Orgy.private.config.debug([
+					Cls.private.config.debug([
 						"You can't set a resolver on a queue that has already been declared. You can only reference the original."
 						,"Detected re-init of '" + obj.id + "'."
 						,"Attempted:"
 						,obj
 						,"Existing:"
-						,Orgy.private.config.list[obj.id]
+						,Cls.private.config.list[obj.id]
 					]);
 				}
 				else{
-					return Orgy.private.config.list[obj.id];
+					return Cls.private.config.list[obj.id];
 				}
 			}
 
@@ -475,7 +475,7 @@ module.exports = function(Orgy){
 							break;
 
 					case(obj.type === 'queue'):
-							def = Orgy.queue(obj.dependencies,obj);
+							def = Cls.public.queue(obj.dependencies,obj);
 							break;
 
 					//Already a thenable
@@ -519,7 +519,7 @@ module.exports = function(Orgy){
 
 							//Check if is a thenable
 							if(typeof def !== 'object' || !def.then){
-									return Orgy.private.config.debug("Dependency labeled as a promise did not return a promise.",obj);
+									return Cls.private.config.debug("Dependency labeled as a promise did not return a promise.",obj);
 							}
 							break;
 
@@ -538,7 +538,7 @@ module.exports = function(Orgy){
 			}
 
 			//Index promise by id for future referencing
-			Orgy.private.config.list[obj.id] = def;
+			Cls.private.config.list[obj.id] = def;
 
 			return def;
 	};
@@ -557,7 +557,7 @@ module.exports = function(Orgy){
 	 */
 	_private.wrap_event = function(obj){
 
-			var def = Orgy.deferred({
+			var def = Cls.public.deferred({
 					id : obj.id
 			});
 
@@ -595,7 +595,7 @@ module.exports = function(Orgy){
 
 	_private.wrap_timer = function(obj){
 
-			var def = Orgy.deferred();
+			var def = Cls.public.deferred();
 
 			(function(def){
 					var _start = new Date().getTime();
@@ -625,7 +625,7 @@ module.exports = function(Orgy){
 			var required = ["id","url"];
 			for(var i in required){
 				if(!dep[required[i]]){
-					return Orgy.private.config.debug([
+					return Cls.private.config.debug([
 						"File requests converted to promises require: " + required[i]
 						,"Make sure you weren't expecting dependency to already have been resolved upstream."
 						,dep
@@ -634,18 +634,18 @@ module.exports = function(Orgy){
 			}
 
 			//IF PROMISE FOR THIS URL ALREADY EXISTS, RETURN IT
-			if(Orgy.private.config.list[dep.id]){
-				return Orgy.private.config.list[dep.id];
+			if(Cls.private.config.list[dep.id]){
+				return Cls.private.config.list[dep.id];
 			}
 
 			//CONVERT TO DEFERRED:
-			var def = Orgy.deferred(dep);
+			var def = Cls.public.deferred(dep);
 
-			if(typeof Orgy.file_loader[Orgy.private.config.settings.mode][dep.type] !== 'undefined'){
-				Orgy.file_loader[Orgy.private.config.settings.mode][dep.type](dep.url,def,dep);
+			if(typeof Cls.public.file_loader[Cls.private.config.settings.mode][dep.type] !== 'undefined'){
+				Cls.public.file_loader[Cls.private.config.settings.mode][dep.type](dep.url,def,dep);
 			}
 			else{
-				Orgy.file_loader[Orgy.private.config.settings.mode]['default'](dep.url,def,dep);
+				Cls.public.file_loader[Cls.private.config.settings.mode]['default'](dep.url,def,dep);
 			}
 
 			return def;
@@ -670,7 +670,7 @@ module.exports = function(Orgy){
 	 //BUT ALLOW SELF STATUS CHECK
 	 var status;
 	 if(from_id !== target.id && !target.upstream[from_id]){
-			 return Orgy.private.config.debug(from_id + " can't signal " + target.id + " because not in upstream.");
+			 return Cls.private.config.debug(from_id + " can't signal " + target.id + " because not in upstream.");
 	 }
 	 //RUN THROUGH QUEUE OF OBSERVING PROMISES TO SEE IF ALL DONE
 	 else{
@@ -818,7 +818,7 @@ module.exports = function(Orgy){
 	_public.resolve = function(value){
 
 		if(this.settled === 1){
-			Orgy.private.config.debug([
+			Cls.private.config.debug([
 				this.id + " can't resolve."
 				,"Only unsettled deferreds are resolvable."
 			]);
@@ -843,7 +843,7 @@ module.exports = function(Orgy){
 				});
 			}
 			catch(e){
-				Orgy.private.config.debug(e);
+				Cls.private.config.debug(e);
 			}
 		}
 		else{
@@ -888,9 +888,9 @@ module.exports = function(Orgy){
 
 		var msg = "Rejected "+this.model+": '"+this.id+"'."
 
-		if(Orgy.private.config.settings.debug_mode){
+		if(Cls.private.config.settings.debug_mode){
 			err.unshift(msg);
-			Orgy.private.config.debug(err,this);
+			Cls.private.config.debug(err,this);
 		}
 		else{
 			msg = msg + " Turn on debug mode for more info.";
@@ -956,7 +956,7 @@ module.exports = function(Orgy){
 
 			//Execution chain already finished. Bail out.
 			case(this.done_fired === 1):
-				return Orgy.private.config.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
+				return Cls.private.config.debug(this.id+" can't attach .then() because .done() has already fired, and that means the execution chain is complete.");
 
 			default:
 
@@ -1040,11 +1040,11 @@ module.exports = function(Orgy){
 					//else{}
 			}
 			else{
-				return Orgy.private.config.debug("done() must be passed a function.");
+				return Cls.private.config.debug("done() must be passed a function.");
 			}
 		}
 		else{
-			return Orgy.private.config.debug("done() can only be called once.");
+			return Cls.private.config.debug("done() can only be called once.");
 		}
 		
 		return this;
@@ -1090,18 +1090,18 @@ module.exports = function(Orgy){
 	*
 	* @returns {object} {@link orgy/deferred}
 	*/
-	Orgy.deferred = function(options){
+	Cls.public.deferred = function(options){
 
 		var _o;
 		options = options || {};
 
-		if(options.id && Orgy.private.config.list[options.id]){
-			_o = Orgy.private.config.list[options.id];
+		if(options.id && Cls.private.config.list[options.id]){
+			_o = Cls.private.config.list[options.id];
 		}
 		else{
 
 			//Create a new deferred object
-			_o = Orgy.private.config.naive_cloner([_public],[options]);
+			_o = Cls.private.config.naive_cloner([_public],[options]);
 
 			//ACTIVATE DEFERRED
 			_o = _private.activate(_o);
@@ -1113,7 +1113,7 @@ module.exports = function(Orgy){
 	_private.public = _public;
 
 	//Save for re-use
-	Orgy.private.deferred = _private; 
+	Cls.private.deferred = _private; 
 
-	return Orgy;
+	return Cls;
 }

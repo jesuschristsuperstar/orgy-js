@@ -1,12 +1,13 @@
-var Orgy = Object.create({
-	private:{}
+var Cls = Object.create({
+	private:{},
+	public:{}
 });
 
-require('./config.js')(Orgy);
-require('./file_loader.js')(Orgy);
-require('./deferred.js')(Orgy);
-require('./queue.js')(Orgy);
-require('./cast.js')(Orgy);
+require('./config.js')(Cls);
+require('./file_loader.js')(Cls);
+require('./deferred.js')(Cls);
+require('./queue.js')(Cls);
+require('./cast.js')(Cls);
 
 /**
  * @namespace orgy
@@ -26,7 +27,7 @@ require('./cast.js')(Orgy);
 - <b>resolver</b> {function(<i>assignedValue</i>,<i>deferred</i>}
 * @returns {object} resolved deferred
 */
-Orgy.define = function(id,data,options){
+Cls.public.define = function(id,data,options){
 
 		var def;
 		options = options || {};
@@ -35,12 +36,12 @@ Orgy.define = function(id,data,options){
 
 		//test for a valid id
 		if(typeof id !== 'string'){
-			Orgy.private.config.debug("Must set id when defining an instance.");
+			Cls.private.config.debug("Must set id when defining an instance.");
 		}
 
 		//Check no existing instance defined with same id
-		if(Orgy.private.config.list[id] && Orgy.private.config.list[id].settled === 1){
-			return Orgy.private.config.debug("Can't define " + id + ". Already resolved.");
+		if(Cls.private.config.list[id] && Cls.private.config.list[id].settled === 1){
+			return Cls.private.config.debug("Can't define " + id + ". Already resolved.");
 		}
 
 		options.id = id;
@@ -50,11 +51,11 @@ Orgy.define = function(id,data,options){
 			//Define as a queue - can't autoresolve because we have deps
 			var deps = options.dependencies;
 			delete options.dependencies;
-			def = Orgy.queue(deps,options);
+			def = Cls.public.queue(deps,options);
 		}
 		else{
 			//Define as a deferred
-			def = Orgy.deferred(options);
+			def = Cls.public.deferred(options);
 
 			//Try to immediately settle [define]
 			if(options.resolver === null
@@ -80,9 +81,9 @@ Orgy.define = function(id,data,options){
  * @param {string} id Id of deferred or queue object.
  * @returns {object} deferred | queue | null
  */
-Orgy.get = function(id){
-	if(Orgy.private.config.list[id]){
-		return Orgy.private.config.list[id];
+Cls.public.get = function(id){
+	if(Cls.private.config.list[id]){
+		return Cls.private.config.list[id];
 	}
 	else{
 		return null;
@@ -98,13 +99,13 @@ Orgy.get = function(id){
  * @memberof orgy
  * @function assign
  *
- * @param {string|object} tgt Orgy.queue id / queue object
+ * @param {string|object} tgt Cls.public.queue id / queue object
  * @param {array}  arr	Array of promise ids or dependency objects
  * @param {boolean} add  If true <b>ADD</b> array to queue dependencies, If false <b>REMOVE</b> array from queue dependencies
  *
  * @return {object} queue
  */
-Orgy.assign = function(tgt,arr,add){
+Cls.public.assign = function(tgt,arr,add){
 
 		add = (typeof add === "boolean") ? add : 1;
 
@@ -117,12 +118,12 @@ Orgy.assign = function(tgt,arr,add){
 						id = tgt;
 						break;
 				default:
-						return Orgy.private.config.debug("Assign target must be a queue object or the id of a queue.",this);
+						return Cls.private.config.debug("Assign target must be a queue object or the id of a queue.",this);
 		}
 
 		//IF TARGET ALREADY LISTED
-		if(Orgy.private.config.list[id] && Orgy.private.config.list[id].model === 'queue'){
-				q = Orgy.private.config.list[id];
+		if(Cls.private.config.list[id] && Cls.private.config.list[id].model === 'queue'){
+				q = Cls.private.config.list[id];
 
 				//=> ADD TO QUEUE'S UPSTREAM
 				if(add){
@@ -135,16 +136,16 @@ Orgy.assign = function(tgt,arr,add){
 		}
 		//CREATE NEW QUEUE AND ADD DEPENDENCIES
 		else if(add){
-				q = Orgy.queue(arr,{
+				q = Cls.public.queue(arr,{
 						id : id
 				});
 		}
 		//ERROR: CAN'T REMOVE FROM A QUEUE THAT DOES NOT EXIST
 		else{
-				return Orgy.private.config.debug("Cannot remove dependencies from a queue that does not exist.",this);
+				return Cls.private.config.debug("Cannot remove dependencies from a queue that does not exist.",this);
 		}
 
 		return q;
 };
 
-module.exports = Orgy;
+module.exports = Cls.public;

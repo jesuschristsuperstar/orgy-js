@@ -1,4 +1,4 @@
-module.exports = function(Orgy){
+module.exports = function(Cls){
 
 	/**
 	 * Casts a thenable object into an Orgy deferred object.
@@ -23,12 +23,12 @@ module.exports = function(Orgy){
 	 *
 	 * @returns {object} deferred
 	 */
-	Orgy.cast = function(obj){
+	Cls.public.cast = function(obj){
 
 			var required = ["then","error","id"];
 			for(var i in required){
 				if(!obj.hasOwnProperty(required[i])){
-					return Orgy.private.config.debug("Cast method missing property '" + required[i] +"'");
+					return Cls.private.config.debug("Cast method missing property '" + required[i] +"'");
 				}
 			}
 
@@ -36,12 +36,12 @@ module.exports = function(Orgy){
 			options.id = obj.id;
 
 			//Make sure id does not conflict with existing
-			if(Orgy.private.config.list[options.id]){
-				return Orgy.private.config.debug("Id "+options.id+" conflicts with existing id.");
+			if(Cls.private.config.list[options.id]){
+				return Cls.private.config.debug("Id "+options.id+" conflicts with existing id.");
 			}
 
 			//Create a deferred
-			var def = Orgy.deferred(options);
+			var def = Cls.public.deferred(options);
 
 			//Create resolver
 			var resolver = function(){
@@ -61,5 +61,5 @@ module.exports = function(Orgy){
 			return def;
 	};
 
-	return Orgy;
+	return Cls;
 }
