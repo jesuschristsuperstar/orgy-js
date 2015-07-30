@@ -89,10 +89,11 @@ var q = Orgy.get("q1");
 - Browser and [nodej](https://nodejs.org/) / [iojs](https://iojs.org/en/index.html) compatible.
 
 - Handles a variety of dependency types and automatically converts them into promises.
-		- javascript files
-		- css files
-		- timers
-		- all other file types handled as text
+		
+	- javascript files
+	- css files
+	- timers
+	- all other file types handled as text
 
 - Queues can be held back from settling after their dependencies have resolved by a resolver method.
 
