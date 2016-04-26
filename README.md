@@ -5,6 +5,14 @@ Orgy
 
 Promises library that supports queues of file requests.
 
+
+- Requires nodejs > 4.0.0. 
+
+For nodejs versions 0.0.10 - 0.0.12:  
+```
+npm install orgy@2.0.7
+```
+
 ## Documentation:
 [View the API reference here.](http://tecfu.github.io/orgy-js/docs/orgy.html "API Reference")
 
