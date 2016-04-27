@@ -285,31 +285,29 @@ module.exports = function(Cls){
 	 * Creates a new queue object.
 	 * If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
 	 * is resolved.
-
+	 *
 	 * @memberof orgy
 	 * @function queue
 	 *
 	 * @param {array} deps Array of dependencies that must be resolved before <b>resolver</b> option is called.
-	 * @param {object} options	List of options:
-
-	- <b>id</b> {string} Unique id of the object.
-		- Can be used with Orgy.get(id).
-		- Optional.
-
-
-	- <b>timeout</b> {number} Time in ms after which reject is called.
-		- Defaults to Orgy.config().timeout [5000].
-		- Note the timeout is only affected by dependencies and/or the resolver callback.
-		- Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
-
-
-	- <b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.
-		- <i>result</i> is an array of the queue's resolved dependency values.
-		- <i>deferred</i> is the queue object.
-		- The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.
-
-		* @returns {object} {@link orgy/queue}
 	 *
+	 * @param {object} options	List of options:
+ 	 *
+ 	 *  - <b>id</b> {string} Unique id of the object.
+ 	 *	 - Can be used with Orgy.get(id).
+ 	 *	 - Optional.
+ 	 *
+ 	 *  - <b>timeout</b> {number} Time in ms after which reject is called.
+ 	 *	 - Defaults to Orgy.config().timeout [5000].
+ 	 *	 - Note the timeout is only affected by dependencies and/or the resolver callback.
+ 	 *	 - Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
+ 	 *
+ 	 *  - <b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.
+ 	 *	 - <i>result</i> is an array of the queue's resolved dependency values.
+ 	 *	 - <i>deferred</i> is the queue object.
+ 	 *	 - The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.
+	 *
+	 * @returns {object} {@link orgy/queue}
 	 */
 	Cls.public.queue = function(deps,options){
 

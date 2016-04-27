@@ -71,13 +71,16 @@ module.exports = function(Cls){
 	 * @memberof orgy
 	 * @function config
 	 *
-	 * @param {object} obj List of options:
-
-		- {number} <b>timeout</b>
-
-		- {string} <b>cwd</b> Sets current working directory. Server side scripts only.
-
-		- {boolean} <b>debug_mode</b> (default: false) When a queue or deferred is "rejected", shows stack trace and other debugging information if true.
+	 * @param {object} options List of options:
+	 *
+ 	 *  - <b>timeout</b> {number} default: 5000  
+ 	 *   - Sets the global defaul for the number of milliseconds before all queues/deferreds automatically are rejected by timeout. 
+ 	 *  
+ 	 *  - <b>cwd</b> {string} 
+ 	 *   - Sets current working directory. Server side scripts only.
+ 	 *  
+ 	 *  - <b>debug_mode</b> {boolean} default: false 
+ 	 *   - When a queue or deferred is "rejected", shows stack trace and other debugging information if true.
 	 * @returns {object} configuration settings
 	 */
 	Cls.public.config = function(obj){
