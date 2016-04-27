@@ -51,7 +51,7 @@ module.exports = function(Cls){
 			 */
 			,hooks : {
 			}
-			,timeout : 5000 //default timeout
+			,timeout : -1 //no default timeout
 	};
 
 
@@ -73,12 +73,15 @@ module.exports = function(Cls){
 	 *
 	 * @param {object} options List of options:
 	 *
- 	 *  - <b>timeout</b> {number} default: 5000  
+ 	 *  - <b>timeout</b> {number} default: -1   
+	 *   - Setting this value to <b>-1</b> will result in no timeout.
  	 *   - Sets the global defaul for the number of milliseconds before all queues/deferreds automatically are rejected by timeout. 
- 	 *  
+ 	 * 
+	 *
  	 *  - <b>cwd</b> {string} 
  	 *   - Sets current working directory. Server side scripts only.
- 	 *  
+ 	 * 
+	 *
  	 *  - <b>debug_mode</b> {boolean} default: false 
  	 *   - When a queue or deferred is "rejected", shows stack trace and other debugging information if true.
 	 * @returns {object} configuration settings

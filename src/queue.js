@@ -297,11 +297,13 @@ module.exports = function(Cls){
  	 *	 - Can be used with Orgy.get(id).
  	 *	 - Optional.
  	 *
+	 *
  	 *  - <b>timeout</b> {number} Time in ms after which reject is called.
  	 *	 - Defaults to Orgy.config().timeout [5000].
  	 *	 - Note the timeout is only affected by dependencies and/or the resolver callback.
  	 *	 - Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
  	 *
+	 *
  	 *  - <b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.
  	 *	 - <i>result</i> is an array of the queue's resolved dependency values.
  	 *	 - <i>deferred</i> is the queue object.
