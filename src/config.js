@@ -29,7 +29,7 @@ module.exports = function(Cls){
 	 */
 	_private.settings = {
 
-			debug_mode : 1
+			debug_mode : false
 			//set the current working directory of the callee script,
 			//because node has no constant for this
 			,cwd : false
@@ -77,8 +77,7 @@ module.exports = function(Cls){
 
 		- {string} <b>cwd</b> Sets current working directory. Server side scripts only.
 
-		- {boolean} <b>debug_mode</b>
-
+		- {boolean} <b>debug_mode</b> (default: false) When a queue or deferred is "rejected", shows stack trace and other debugging information if true.
 	 * @returns {object} configuration settings
 	 */
 	Cls.public.config = function(obj){

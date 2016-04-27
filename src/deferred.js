@@ -892,10 +892,6 @@ module.exports = function(Cls){
 			err.unshift(msg);
 			Cls.private.config.debug(err,this);
 		}
-		else{
-			msg = msg + " Turn on debug mode for more info.";
-			console.warn(msg);
-		}
 
 		//Remove auto timeout timer
 		if(this.timeout_id){
