@@ -114,7 +114,7 @@
 			 */
 			,hooks : {
 			}
-			,timeout : 5000 //default timeout
+			,timeout : -1 //no default timeout
 	};
 
 
@@ -136,12 +136,15 @@
 	 *
 	 * @param {object} options List of options:
 	 *
- 	 *  - &lt;b>timeout&lt;/b> {number} default: 5000  
+ 	 *  - &lt;b>timeout&lt;/b> {number} default: -1   
+	 *   - Setting this value to &lt;b>-1&lt;/b> will result in no timeout.
  	 *   - Sets the global defaul for the number of milliseconds before all queues/deferreds automatically are rejected by timeout. 
- 	 *  
+ 	 * 
+	 *
  	 *  - &lt;b>cwd&lt;/b> {string} 
  	 *   - Sets current working directory. Server side scripts only.
- 	 *  
+ 	 * 
+	 *
  	 *  - &lt;b>debug_mode&lt;/b> {boolean} default: false 
  	 *   - When a queue or deferred is "rejected", shows stack trace and other debugging information if true.
 	 * @returns {object} configuration settings

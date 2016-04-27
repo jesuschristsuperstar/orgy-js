@@ -558,18 +558,20 @@
 
             <td class="description last"><p>List of options:</p>
 <ul>
-<li><p><b>timeout</b> {number} default: 5000  </p>
-<ul>
+<li><b>timeout</b> {number} default: -1   <ul>
+<li>Setting this value to <b>-1</b> will result in no timeout.</li>
 <li>Sets the global defaul for the number of milliseconds before all queues/deferreds automatically are rejected by timeout. </li>
 </ul>
 </li>
-<li><p><b>cwd</b> {string} </p>
+</ul>
 <ul>
+<li><b>cwd</b> {string} <ul>
 <li>Sets current working directory. Server side scripts only.</li>
 </ul>
 </li>
-<li><p><b>debug_mode</b> {boolean} default: false </p>
+</ul>
 <ul>
+<li><b>debug_mode</b> {boolean} default: false <ul>
 <li>When a queue or deferred is &quot;rejected&quot;, shows stack trace and other debugging information if true.</li>
 </ul>
 </li>
@@ -1263,21 +1265,22 @@ is resolved.</p>
 
             <td class="description last"><p>List of options:</p>
 <ul>
-<li><p><b>id</b> {string} Unique id of the object.</p>
-<ul>
+<li><b>id</b> {string} Unique id of the object.<ul>
 <li>Can be used with Orgy.get(id).</li>
 <li>Optional.</li>
 </ul>
 </li>
-<li><p><b>timeout</b> {number} Time in ms after which reject is called.</p>
+</ul>
 <ul>
+<li><b>timeout</b> {number} Time in ms after which reject is called.<ul>
 <li>Defaults to Orgy.config().timeout [5000].</li>
 <li>Note the timeout is only affected by dependencies and/or the resolver callback.</li>
 <li>Then,done delays will not flag a timeout because they are called after the instance is considered resolved.</li>
 </ul>
 </li>
-<li><p><b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.</p>
+</ul>
 <ul>
+<li><b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.<ul>
 <li><i>result</i> is an array of the queue's resolved dependency values.</li>
 <li><i>deferred</i> is the queue object.</li>
 <li>The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.</li>

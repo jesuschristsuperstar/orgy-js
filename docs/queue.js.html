@@ -360,11 +360,13 @@
  	 *	 - Can be used with Orgy.get(id).
  	 *	 - Optional.
  	 *
+	 *
  	 *  - &lt;b>timeout&lt;/b> {number} Time in ms after which reject is called.
  	 *	 - Defaults to Orgy.config().timeout [5000].
  	 *	 - Note the timeout is only affected by dependencies and/or the resolver callback.
  	 *	 - Then,done delays will not flag a timeout because they are called after the instance is considered resolved.
  	 *
+	 *
  	 *  - &lt;b>resolver&lt;/b> {function(&lt;i>result&lt;/i>,&lt;i>deferred&lt;/i>)} Callback function to execute after all dependencies have resolved.
  	 *	 - &lt;i>result&lt;/i> is an array of the queue's resolved dependency values.
  	 *	 - &lt;i>deferred&lt;/i> is the queue object.

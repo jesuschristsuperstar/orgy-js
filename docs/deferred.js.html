@@ -362,9 +362,9 @@
 					 */
 					if(Cls.private.config.settings.debug_mode){
 							var r = _private.search_obj_recursively(this,'upstream',fn);
-							msgs.push(scope.id + ": rejected by auto timeout after "
-											+ this.timeout + "ms");
-							msgs.push("Cause:");
+							msgs.push(scope.id + ': rejected by auto timeout after '
+											+ this.timeout + 'ms. To turn off timeouts set config option: "{timeout:1}"');
+							msgs.push('Cause:');
 							msgs.push(r);
 							return this.reject.call(this,msgs);
 					}
