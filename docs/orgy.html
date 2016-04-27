@@ -101,7 +101,7 @@
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-8">line 8</a>
+				 <a href="main.js.html#sunlight-1-line-12">line 12</a>
 			</li>
 		</ul>
 	</dd>
@@ -199,7 +199,7 @@
 
             
 
-            <td class="description last"><p>Queue id / queue object</p></td>
+            <td class="description last"><p>Cls.public.queue id / queue object</p></td>
         </tr>
 
 	
@@ -282,7 +282,7 @@
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-88">line 88</a>
+				 <a href="main.js.html#sunlight-1-line-94">line 94</a>
 			</li>
 		</ul>
 	</dd>
@@ -405,13 +405,10 @@
             
 
             <td class="description last"><p>A thenable with the following properties:
- - {string} <b>id</b>  Unique id of the object.</p>
-<ul>
-<li><p>{function} <b>then</b></p>
-</li>
-<li><p>{function} <b>error</b></p>
-</li>
-</ul></td>
+    - {string} <b>id</b>    Unique id of the object.</p>
+<pre><code>- {function} &lt;b&gt;then&lt;/b&gt;
+
+- {function} &lt;b&gt;error&lt;/b&gt;</code></pre></td>
         </tr>
 
 	
@@ -448,7 +445,7 @@
 		<ul class="dummy">
 			<li>
 				<a href="cast.js.html">cast.js</a>,
-				 <a href="cast.js.html#sunlight-1-line-4">line 4</a>
+				 <a href="cast.js.html#sunlight-1-line-3">line 3</a>
 			</li>
 		</ul>
 	</dd>
@@ -501,7 +498,7 @@
         
             
 <dt>
-    <h4 class="name" id="config"><span class="type-signature">&lt;static> </span>config<span class="signature">(obj)</span><span class="type-signature"> &rarr; {object}</span></h4>
+    <h4 class="name" id="config"><span class="type-signature">&lt;static> </span>config<span class="signature">(options)</span><span class="type-signature"> &rarr; {object}</span></h4>
     
     
 </dt>
@@ -543,7 +540,7 @@
 
         <tr>
             
-                <td class="name"><code>obj</code></td>
+                <td class="name"><code>options</code></td>
             
 
             <td class="type">
@@ -561,11 +558,20 @@
 
             <td class="description last"><p>List of options:</p>
 <ul>
-<li><p>{number} <b>timeout</b></p>
+<li><p><b>timeout</b> {number} default: 5000  </p>
+<ul>
+<li>Sets the global defaul for the number of milliseconds before all queues/deferreds automatically are rejected by timeout. </li>
+</ul>
 </li>
-<li><p>{string} <b>cwd</b> Sets current working directory. Server side scripts only.</p>
+<li><p><b>cwd</b> {string} </p>
+<ul>
+<li>Sets current working directory. Server side scripts only.</li>
+</ul>
 </li>
-<li><p>{boolean} <b>debug_mode</b></p>
+<li><p><b>debug_mode</b> {boolean} default: false </p>
+<ul>
+<li>When a queue or deferred is &quot;rejected&quot;, shows stack trace and other debugging information if true.</li>
+</ul>
 </li>
 </ul></td>
         </tr>
@@ -604,7 +610,7 @@
 		<ul class="dummy">
 			<li>
 				<a href="config.js.html">config.js</a>,
-				 <a href="config.js.html#sunlight-1-line-66">line 66</a>
+				 <a href="config.js.html#sunlight-1-line-68">line 68</a>
 			</li>
 		</ul>
 	</dd>
@@ -667,11 +673,13 @@
     <div class="description">
         <p>Creates a new deferred object or if one exists by the same id,
 returns it.</p>
-<p> <b>Usage:</b></p>
-<pre><code> var Orgy = require(&quot;orgy&quot;),
-        q = Orgy.deferred({
-          id : &quot;q1&quot;
-        });</code></pre>
+<pre><code>&lt;b&gt;Usage:&lt;/b&gt;
+```
+var Orgy = require(&quot;orgy&quot;),
+q = Orgy.deferred({
+id : &quot;q1&quot;
+});
+```</code></pre>
     </div>
     
 
@@ -723,10 +731,8 @@ returns it.</p>
 
             <td class="description last"><p>List of options:</p>
 <ul>
-<li><b>id</b> {string} Unique id of the object.<ul>
-<li>Can be used with Orgy.get(id).</li>
-<li>Optional.</li>
-</ul>
+<li><b>id</b> {string} Unique id of the object.<pre><code> - Can be used with Orgy.get(id).
+ - Optional.</code></pre>
 </li>
 </ul>
 <ul>
@@ -772,7 +778,7 @@ returns it.</p>
 		<ul class="dummy">
 			<li>
 				<a href="deferred.js.html">deferred.js</a>,
-				 <a href="deferred.js.html#sunlight-1-line-7">line 7</a>
+				 <a href="deferred.js.html#sunlight-1-line-1061">line 1061</a>
 			</li>
 		</ul>
 	</dd>
@@ -930,7 +936,10 @@ resolves it.</p>
 
             
 
-            <td class="description last"><p>Passable options</p></td>
+            <td class="description last"><ul>
+<li><b>dependencies</b> {array}</li>
+<li><b>resolver</b> {function(<i>assignedValue</i>,<i>deferred</i>}</li>
+</ul></td>
         </tr>
 
 	
@@ -967,7 +976,7 @@ resolves it.</p>
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-10">line 10</a>
+				 <a href="main.js.html#sunlight-1-line-14">line 14</a>
 			</li>
 		</ul>
 	</dd>
@@ -1116,7 +1125,7 @@ Returns null if none found.</p>
 		<ul class="dummy">
 			<li>
 				<a href="main.js.html">main.js</a>,
-				 <a href="main.js.html#sunlight-1-line-68">line 68</a>
+				 <a href="main.js.html#sunlight-1-line-74">line 74</a>
 			</li>
 		</ul>
 	</dd>
@@ -1180,36 +1189,6 @@ Returns null if none found.</p>
         <p>Creates a new queue object.
 If no <b>resolver</b> option is set, resolved when all dependencies are resolved. Else, resolved when the deferred param passed to the resolver option
 is resolved.</p>
-<p> <b>Usage:</b></p>
-<pre><code> var Orgy = require(&quot;orgy&quot;),
-        q = Orgy.queue([
-           {
-             comment : &quot;This is a nested queue created on the fly.&quot;
-             ,type : &quot;json&quot;
-             ,url : &quot;/api/json/somnums&quot;
-             ,resolver : function(r,deferred){
-               //Filter out even numbers
-               var odd = arr.filter(function(val) {
-                 return 0 != val % 2;
-               });
-               deferred.resolve(odd);
-             }
-           }
-         ],{
-           id : &quot;q1&quot;,
-           resolver : function(r,deferred){
-             var primes = r[0].filter(function(val) {
-               high = Math.floor(Math.sqrt(val)) + 1;
-               for (var div = 2; div &lt;= high; div++) {
-                 if (value % div == 0) {
-                   return false;
-                 }
-               }
-               return true;
-             });
-             deferred.resolve(primes);
-           })
-         });</code></pre>
     </div>
     
 
@@ -1284,22 +1263,21 @@ is resolved.</p>
 
             <td class="description last"><p>List of options:</p>
 <ul>
-<li><b>id</b> {string} Unique id of the object.<ul>
+<li><p><b>id</b> {string} Unique id of the object.</p>
+<ul>
 <li>Can be used with Orgy.get(id).</li>
 <li>Optional.</li>
 </ul>
 </li>
-</ul>
+<li><p><b>timeout</b> {number} Time in ms after which reject is called.</p>
 <ul>
-<li><b>timeout</b> {number} Time in ms after which reject is called.<ul>
 <li>Defaults to Orgy.config().timeout [5000].</li>
 <li>Note the timeout is only affected by dependencies and/or the resolver callback.</li>
 <li>Then,done delays will not flag a timeout because they are called after the instance is considered resolved.</li>
 </ul>
 </li>
-</ul>
+<li><p><b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.</p>
 <ul>
-<li><b>resolver</b> {function(<i>result</i>,<i>deferred</i>)} Callback function to execute after all dependencies have resolved.<ul>
 <li><i>result</i> is an array of the queue's resolved dependency values.</li>
 <li><i>deferred</i> is the queue object.</li>
 <li>The queue will only resolve when <i>deferred</i>.resolve() is called. If not, it will timeout to options.timeout || Orgy.config().timeout.</li>
@@ -1342,7 +1320,7 @@ is resolved.</p>
 		<ul class="dummy">
 			<li>
 				<a href="queue.js.html">queue.js</a>,
-				 <a href="queue.js.html#sunlight-1-line-8">line 8</a>
+				 <a href="queue.js.html#sunlight-1-line-284">line 284</a>
 			</li>
 		</ul>
 	</dd>
@@ -1418,7 +1396,7 @@ is resolved.</p>
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a>
-		on Mon Mar 23rd 2015 using the <a
+		on Wed Apr 27th 2016 using the <a
 			href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>

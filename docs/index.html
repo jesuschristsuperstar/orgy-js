@@ -82,9 +82,80 @@
     <section class="readme-section">
         <article><h1>Orgy</h1>
 <p><a href="https://travis-ci.org/tecfu/orgy-js"><img src="https://travis-ci.org/tecfu/orgy-js.svg?branch=master" alt="Build Status"></a> <a href="https://david-dm.org/tecfu/orgy-js"><img src="https://david-dm.org/tecfu/orgy-js.png" alt="Dependency Status"></a> <a href="http://badge.fury.io/js/orgy"><img src="https://badge.fury.io/js/orgy.svg" alt="NPM version"></a> <a href="http://gruntjs.com/"><img src="https://cdn.gruntjs.com/builtwith.png" alt="Built with Grunt"></a></p>
-<p>Deferred / Queue library that yields to no spec.  </p>
+<p>Promises library that supports queues of file requests.</p>
+<ul>
+<li>Requires nodejs &gt; 4.0.0. </li>
+</ul>
+<p>For nodejs versions 0.0.10 - 0.0.12:  </p>
+<pre><code>npm install orgy@2.0.7</code></pre>
 <h2>Documentation:</h2>
-<p><a href="orgy.html" title="API Reference">See the API reference here.</a></p>
+<p><a href="http://tecfu.github.io/orgy-js/docs/orgy.html" title="API Reference">View the API reference here.</a></p>
+<h2>Installation:</h2>
+<ul>
+<li>Nodejs</li>
+</ul>
+<pre><code>npm install orgy</code></pre>
+<ul>
+<li>Browser (attached to window object) </li>
+</ul>
+<pre><code>&lt;script src=&quot;/dist/orgy.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+var def = Orgy.deferred();
+...
+&lt;/script&gt;</code></pre>
+<ul>
+<li>Browser (via browserify)<pre><code>&lt;script src=&quot;/dist/orgy.bundle.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+var Orgy = require(&quot;orgy&quot;);
+var def = Orgy.deferred();
+...
+&lt;/script&gt;</code></pre>
+</li>
+</ul>
+<h2>Example:</h2>
+<ul>
+<li>Fetch a group of resources asynchronously, then return manipulated results 
+down the chain.</li>
+</ul>
+<pre><code>var Orgy = require(&quot;orgy&quot;);
+
+var q = Orgy.queue([
+    {
+        type : &quot;json&quot;,
+        url : &quot;data/data1.json&quot;
+    },
+    {
+        type : &quot;json&quot;,
+        url : &quot;data/data2.json&quot;
+    },
+    {
+        type : &quot;css&quot;,
+        url : &quot;data/sample.css&quot;
+    }
+],{
+    //Set an id for the queue, so can reference it in other contexts (optional).
+    id : &quot;q1&quot; 
+});
+
+//Done can be called async and out of order.
+q.done(function(r,deferred,last){
+    console.log(last); // 2
+});
+
+// If a then function returns a value, that value is passed down to any
+// subsequent then() or done() functions.
+q.then(function(r){
+    console.log(r); //Dependency values.
+    return 1;
+});
+
+q.then(function(r,deferred,last){
+    console.log(last); // 1
+    return 2;
+});
+
+// To reference the queue above outside of the local scope:
+var q = Orgy.get(&quot;q1&quot;);</code></pre>
 <h2>Features:</h2>
 <ul>
 <li><p>Browser and <a href="https://nodejs.org/">nodej</a> / <a href="https://iojs.org/en/index.html">iojs</a> compatible.</p>
@@ -93,12 +164,9 @@
 <ul>
 <li>javascript files</li>
 <li>css files</li>
-<li>DOMContentLoaded, window.load</li>
 <li>timers</li>
 <li>all other file types handled as text</li>
 </ul>
-</li>
-<li><p>Creates deferreds or queues.</p>
 </li>
 <li><p>Queues can be held back from settling after their dependencies have resolved by a resolver method.</p>
 </li>
@@ -106,101 +174,16 @@
 </li>
 <li><p>When then() returns an unsettled instance (deferred/queue), further execution on the callback chain is halted until that instance resolves. The deferred is then passed to the next tick of the callback chain, where its return value can be accessed.</p>
 </li>
-<li><p>When running under nodejs, you can set a DOM context to modify [required when adding CSS dependencies] using JSDOM, Cheerio, or some other DOM parser.</p>
-</li>
 </ul>
-<p>For example:</p>
-<pre><code>Orgy.config({
-    document : (function(){
-        var cheerio = require('cheerio');
-        return global.$ = cheerio.load(&quot;&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;&quot;);
-    }())
-});</code></pre>
-<h2>Nodejs install:</h2>
-<pre><code>npm install orgy</code></pre>
-<h2>Browser Install:</h2>
-<pre><code>&lt;script src=&quot;/dist/orgy.min.js&quot;&gt;&lt;/script&gt;</code></pre>
-<h2>Usage:</h2>
-<ul>
-<li>Wait for an array of dependencies to resolve prior to executing a callback:</li>
-</ul>
-<pre><code>var Orgy = require(&quot;orgy&quot;);
-
-Orgy.config({
-    //SET DOM CONTEXT TO MODIFY [ONLY NEEDED IN NODEJS]
-    document : (function(){
-        var cheerio = require('cheerio');
-        return global.$ = cheerio.load(&quot;&lt;html&gt;&lt;head&gt;&lt;/head&gt;&lt;body&gt;&lt;/body&gt;&lt;/html&gt;&quot;);
-    }())
-});
-
-
-var q = Orgy.queue([
-    {
-        type : &quot;json&quot;
-        ,url : &quot;data/data1.json&quot;
-    },
-    {
-        type : &quot;json&quot;
-        ,url : &quot;data/data2.json&quot;
-    },
-    {
-        type : &quot;css&quot;
-        ,url : &quot;data/sample.css&quot;
-    }
-],{
-  id : &quot;q1&quot; //Optional. Id used to get instance outside of local scope.
-            //i.e. var q = Orgy.get(&quot;q1&quot;)
-});
-
-
-//Done can be called async and out of order.
-setTimeout(function(){
-  q.done(function(r,deferred,last){
-    console.log(last); // 2
-  });
-},500)
-
-
-/**
- * If a then function returns a value, that value is passed down to any
- * subsequent then() or done() functions.
-*/
-q.then(function(r){
-
-    //Modify some DOM content
-    $(&quot;body&quot;).append(&quot;hey!&quot;);
-
-    console.log(r); //Dependency values.
-    return 1;
-});
-
-
-q.then(function(r,deferred,last){
-
-    //Get modified DOM content
-    console.log($(&quot;body&quot;).html()); //hey!
-
-    console.log(last); // 1
-    return 2;
-});
-
-
-/**
- * To reference the queue above outside of the local scope:
- *
-*/
-var q = Orgy.get(&quot;q1&quot;);</code></pre>
+<h2>Running tests:</h2>
+<pre><code>grunt t</code></pre>
 <h2>Todo:</h2>
 <ul>
-<li>Test / deploy devel branch, which is browserified and refactored</li>
 <li>Add optional retry configuration setting when remote requests rejected due non 200 HTTP response?</li>
-<li>Extend deferred, queue from native <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">ES6</a>    promises</li>
-<li>Improve async backtraces</li>
-<li>Fix unit tests</li>
+<li>Extend deferred, queue from native <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">ES6</a>        promises</li>
 </ul>
 <h2>More examples:</h2>
-<p><a href="../test">Here</a>.</p></article>
+<p><a href="https://github.com/tecfu/orgy-js/tree/master/test">Here</a>.</p></article>
     </section>
 
 
@@ -222,7 +205,7 @@ var q = Orgy.get(&quot;q1&quot;);</code></pre>
 					
 		<span class="jsdoc-message">
 		Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.2</a>
-		on Mon Mar 23rd 2015 using the <a
+		on Wed Apr 27th 2016 using the <a
 			href="https://github.com/terryweiss/docstrap">DocStrap template</a>.
 		</span>
 				</footer>
