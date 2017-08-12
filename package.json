@@ -24,6 +24,7 @@
     "promises a+ nonconforming"
   ],
   "dependencies": {
+    "blueimp-md5": "^2.8.0",
     "lodash": "^4.11.1",
     "request": "^2.72.0"
   },

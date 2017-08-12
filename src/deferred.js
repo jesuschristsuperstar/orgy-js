@@ -1,10 +1,16 @@
-const deferred = function(resolve,reject,options){
+const createId = function(){
+  let id = Symbol();
+  return id;
+}
+module.exports.createId = createId;
+
+
+module.exports.deferred = function(resolve,reject,options){
 
   const self = this;
-  const md5 = require('blueimp-md5');
 
-  //get a hash of the callbacks in order to generate a unique id
-  this.id = md5(resolve.toString() + reject.toString()).substr(0,10);
+  //create a unique id for this deferred
+  this.id = createId();
   
   //initialize at pending state
   this.state = 'pending'; //pending,resolved,rejected
@@ -27,5 +33,3 @@ const deferred = function(resolve,reject,options){
     },options.timeout);
   }
 }
-
-module.exports = deferred;
