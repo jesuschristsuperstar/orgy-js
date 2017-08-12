@@ -8,8 +8,6 @@
     "async library",
     "queue library",
     "promise library",
-    "promise",
-    "promises",
     "deferred library",
     "deferred",
     "deferreds",
@@ -17,16 +15,10 @@
     "async",
     "fluent",
     "browser",
-    "await",
-    "fluent interface",
-    "file downloader",
-    "curl",
-    "promises a+ nonconforming"
+    "await"
   ],
   "dependencies": {
-    "blueimp-md5": "^2.8.0",
-    "lodash": "^4.11.1",
-    "request": "^2.72.0"
+    "blueimp-md5": "^2.8.0"
   },
   "devDependencies": {
     "babelify": "^5.0.4",
