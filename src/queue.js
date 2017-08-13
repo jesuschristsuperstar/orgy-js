@@ -1,13 +1,11 @@
-const deferred = require('./deferred');
-
-const queue = function(passedDeferreds){
+module.exports.queue = function(passedDeferreds){
 
   //public props
   const self = this;
   this.state = 'pending';
 
   //private props
-  let config = {}:
+  let config = {};
   config.checkInterval = 100; //time to wait between queue checks
   config.upstream = {};
   config.returnValues = [];
@@ -17,6 +15,7 @@ const queue = function(passedDeferreds){
 
   this.add = function(deferred){
     config.upstream[deferred.id] = deferred;
+    return self;
   }
 
   this.remove = function(deferred){
@@ -25,30 +24,34 @@ const queue = function(passedDeferreds){
 
     //remove from upstream
     delete config.upstream[id]; 
+    return self;
   }
 
   this.then = function(callback){
     config.thenArray.push(callback);
+    return self;
   }
 
   this.done = function(callback){
     config.done = callback;
+    return self;
   }
 
   this.error = function(callback){
     config.error = callback;
+    return self;
   }
 
   function updateState(){
     
-    let keys = Object.keys(self.upstream);
+    let keys = Object.getOwnPropertySymbols(config.upstream);
 
     //check rejections
     for(let i = 0; i < keys.length; i++){
       //run error callback and exit if any deps rejected
-      if (self.upstream[keys[i]].state == 'rejected'){
+      if (config.upstream[keys[i]].state === 'rejected'){
         self.state = 'rejected';
-        runErrorCallbacks(); 
+        runErrorCallback(config.upstream[keys[i]]); 
         return;
       }
     }
@@ -56,7 +59,7 @@ const queue = function(passedDeferreds){
     //check pendings
     for(let i = 0; i < keys.length; i++){
       //run error callback and exit if any deps rejected
-      if (self.upstream[keys[i]].state == 'pending'){
+      if (config.upstream[keys[i]].state === 'pending'){
         //set timeout to run check again
         setTimeout(updateState,config.checkInterval);
         return;
@@ -70,9 +73,8 @@ const queue = function(passedDeferreds){
     return;
   }
 
-
-  function runErrorCallbacks(){
-    config.error();
+  function runErrorCallback(reason){
+    config.error(reason);
   }
 
   function runResolutionCallbacks(){
@@ -99,9 +101,11 @@ const queue = function(passedDeferreds){
 
   //add passed deferreds to queue
   passedDeferreds.forEach(function(deferred){
-    config.upstream[deferred.id] = deferred;
-  }
+    self.add(deferred);
+  })
 
   //start checking queue status
   updateState();
+
+  return this;
 }
