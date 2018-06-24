@@ -23,7 +23,7 @@ module.exports = function(grunt) {
           }())
         },
 
-				shell: {
+        shell: {
           "browserify-prod-standalone": {
             command: function () {
               var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.js';
