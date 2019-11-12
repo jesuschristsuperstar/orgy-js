@@ -10,9 +10,9 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
 
-        pkg: grunt.file.readJSON('package.json')
+        pkg: grunt.file.readJSON('package.json'),
 
-        ,options : {
+        options : {
           timestamp : (function(){
             //A FORMATTED TIMESTAMP STRING FOR BACKUP NAMING
             var d = new Date(),dstr = '';
@@ -167,11 +167,11 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-jsdoc');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-mocha-test');
+
     grunt.registerTask('test-dsk', [
       'execute:mocha-before',
       'mochaTest:test',
-      'execute:mocha-after',
-      'karma:dsk'
+      'execute:mocha-after'
     ]);
     grunt.registerTask('test-travis', [
       'execute:mocha-before',
@@ -180,8 +180,13 @@ module.exports = function(grunt) {
       'karma:travis'
     ]);
   
+    //grunt.registerTask('karma-dsk', [
+    //  'karma:dsk'
+    //]);
+
+  
     grunt.registerTask('t', ['test-dsk']);
-    grunt.registerTask('k', ['karma:dsk']);
+    //grunt.registerTask('k', ['karma-dsk']);
     grunt.registerTask('m', ['mochaTest:test']);
 
     grunt.registerTask('default', [
