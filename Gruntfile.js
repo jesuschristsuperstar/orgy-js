@@ -26,25 +26,25 @@ module.exports = function(grunt) {
         shell: {
           "browserify-prod-standalone": {
             command: function () {
-              var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.js';
+              var cmd = 'npx browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.js';
               return cmd;
             }
           },
           "browserify-devel-standalone": {
             command: function () {
-              var cmd = 'browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.devel.js';
+              var cmd = 'npx browserify --debug --standalone=Orgy '+_ignore+' -r ./src/main.js > ./dist/<%= pkg.name %>.devel.js';
               return cmd;
             }
           },
           "browserify-prod-bundle": {
             command: function () {
-              var cmd = 'browserify '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.js';
+              var cmd = 'npx browserify '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.js';
               return cmd;
             }
           },
           "browserify-devel-bundle": {
             command: function () {
-              var cmd = 'browserify --debug '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.devel.js';
+              var cmd = 'npx browserify --debug '+_ignore+' -r ./src/main.js:<%= pkg.name %> > ./dist/<%= pkg.name %>.bundle.devel.js';
               return cmd;
             }
           },
@@ -69,7 +69,7 @@ module.exports = function(grunt) {
           }
         },
 
-        uglify: {
+        terser: {
             "min": {
                 options: {
                     banner: '/** \n<%= pkg.name %>: <%= pkg.description %> \nVersion: <%= pkg.version %> \nBuilt: <%= grunt.template.today("yyyy-mm-dd") %> <%= options.timestamp %>\nAuthor: <%= pkg.author %>  \n*/\n'
@@ -162,7 +162,7 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-execute');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-terser');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-jsdoc');
     grunt.loadNpmTasks('grunt-karma');
@@ -194,7 +194,7 @@ module.exports = function(grunt) {
       'shell:browserify-devel-standalone',
       'shell:browserify-prod-bundle',
       'shell:browserify-devel-bundle',
-      'uglify',
+      'terser',
       'shell:cleanup',
       'jsdoc'
     ]);
