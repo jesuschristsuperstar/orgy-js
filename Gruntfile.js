@@ -177,7 +177,7 @@ module.exports = function(grunt) {
       'execute:mocha-before',
       'mochaTest:test',
       'execute:mocha-after',
-      'karma:travis'
+      //      'karma:travis'
     ]);
   
     //grunt.registerTask('karma-dsk', [

@@ -1,17 +1,13 @@
 language: node_js
 node_js:
-  - "5"
-  - "5.1"
-  - "4"
-  - "4.2"
-  - "4.1"
-  - "4.0"
+  - 10
+  - 7
 before_install: 
   - npm install
-  - npm install -g grunt-cli
 before_script:
   - npm rebuild
   - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
+services:
+  - xvfb
 script: 
-  - grunt test-travis
+  - ./node_modules/.bin/grunt test-travis

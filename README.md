@@ -1,7 +1,7 @@
 Orgy
 ====
 
-[![Build Status](https://travis-ci.org/tecfu/orgy-js.svg?branch=master)](https://travis-ci.org/tecfu/orgy-js) [![Dependency Status](https://david-dm.org/tecfu/orgy-js.png)](https://david-dm.org/tecfu/orgy-js) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/)
+[![Build Status](https://travis-ci.org/tecfu/orgy-js.svg?branch=master)](https://travis-ci.org/tecfu/orgy-js) [![Dependency Status](https://david-dm.org/tecfu/orgy-js.png)](https://david-dm.org/tecfu/orgy-js) [![NPM version](https://badge.fury.io/js/orgy.svg)](http://badge.fury.io/js/orgy)
 
 Promises library that supports queues of file requests.
 
