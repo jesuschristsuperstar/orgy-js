@@ -684,7 +684,7 @@ module.exports = function(Cls) {
     }
 
     if(status === 2) {
-      var err = [`${target.id} dependency '${target.upstream[from_id].id}' was rejected.`,target.upstream[from_id].arguments]
+      var err = [`${target} dependency '${from_id}' was rejected.`]
       target.reject.apply(target,err)
     }
   }
